@@ -1,6 +1,6 @@
 // The timed coding workspace: explorer, editor, tests and output, phase
 // instructions and the AI assistant.
-import {el, api, waitJob, notify, clock, confirmDialog, store, icon, DIFFICULTY_CLASS, KIND_LABEL} from './ui.js';
+import {el, api, waitJob, notify, clock, confirmDialog, store, icon, splitter, DIFFICULTY_CLASS, KIND_LABEL} from './ui.js';
 import {CodeEditor} from './editor.js';
 import {renderMarkdown, languageOf} from './markdown.js';
 
@@ -133,35 +133,13 @@ export function createWorkspace(root, {onLeave, onFinished}) {
     const explorerSplit = el('div', {class: 'splitter', role: 'separator', 'aria-orientation': 'vertical'});
     const panelSplit = el('div', {class: 'splitter', role: 'separator', 'aria-orientation': 'vertical'});
     root.append(top, el('div', {class: 'ide-main'}, explorer, explorerSplit, center, panelSplit, side));
-    splitter(explorerSplit, '--explorer-w', x => x - explorer.getBoundingClientRect().left, 150, 420);
-    splitter(panelSplit, '--panel-w', x => window.innerWidth - x, 300, 760);
-    splitter(bottomSplit, '--bottom-h', (x, y) => center.getBoundingClientRect().bottom - y, 90, 640);
+    splitter(root, explorerSplit, '--explorer-w', x => x - explorer.getBoundingClientRect().left, 150, 420);
+    splitter(root, panelSplit, '--panel-w', x => window.innerWidth - x, 300, 760);
+    splitter(root, bottomSplit, '--bottom-h', (x, y) => center.getBoundingClientRect().bottom - y, 90, 640);
     root.onkeydown = event => {
       const mod = event.ctrlKey || event.metaKey;
       if (mod && event.key.toLowerCase() === 's' && event.target.closest('.code-editor') === null) { event.preventDefault(); saveAndRun(); }
     };
-  }
-
-  function splitter(handle, variable, measure, min, max) {
-    handle.addEventListener('pointerdown', start => {
-      start.preventDefault();
-      handle.setPointerCapture(start.pointerId);
-      handle.classList.add('dragging');
-      const move = e => {
-        const size = Math.round(Math.min(max, Math.max(min, measure(e.clientX, e.clientY))));
-        root.style.setProperty(variable, size + 'px');
-      };
-      const up = () => {
-        handle.classList.remove('dragging');
-        handle.removeEventListener('pointermove', move);
-        const sizes = store.get('dg-ide-sizes', {});
-        sizes[variable] = parseInt(root.style.getPropertyValue(variable), 10);
-        store.set('dg-ide-sizes', sizes);
-      };
-      handle.addEventListener('pointermove', move);
-      handle.addEventListener('pointerup', up, {once: true});
-      handle.addEventListener('pointercancel', up, {once: true});
-    });
   }
 
   function renderAll() {
@@ -577,7 +555,7 @@ export function createWorkspace(root, {onLeave, onFinished}) {
       if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); send(); }
     });
     refs.prompt.addEventListener('input', () => { refs.prompt.style.height = 'auto'; refs.prompt.style.height = Math.min(180, refs.prompt.scrollHeight) + 'px'; });
-    return el('div', {class: 'assistant'},
+    return el('div', {class: 'ai-panel'},
       el('div', {class: 'assistant-head'}, el('span', {text: 'Model'}), refs.model, refs.context),
       refs.messages,
       el('div', {class: 'composer'}, el('div', {class: 'composer-box'}, refs.prompt, refs.send), el('div', {class: 'hint', text: 'Enter to send · Shift+Enter for a new line · It can read your files but can\'t edit them or run code'})));

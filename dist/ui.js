@@ -86,6 +86,26 @@ export function confirmDialog({title, body, confirm = 'Continue', cancel = 'Canc
   });
 }
 
+// Drag handle that resizes a pane by setting a CSS variable on root; sizes persist under storeKey.
+export function splitter(root, handle, variable, measure, min, max, storeKey = 'dg-ide-sizes') {
+  handle.addEventListener('pointerdown', start => {
+    start.preventDefault();
+    handle.setPointerCapture(start.pointerId);
+    handle.classList.add('dragging');
+    const move = e => root.style.setProperty(variable, Math.round(Math.min(max, Math.max(min, measure(e.clientX, e.clientY)))) + 'px');
+    const up = () => {
+      handle.classList.remove('dragging');
+      handle.removeEventListener('pointermove', move);
+      const sizes = store.get(storeKey, {});
+      sizes[variable] = parseInt(root.style.getPropertyValue(variable), 10);
+      store.set(storeKey, sizes);
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', up, {once: true});
+    handle.addEventListener('pointercancel', up, {once: true});
+  });
+}
+
 export const store = {
   get(key, fallback = null) { try { const v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); } catch { return fallback; } },
   set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} },

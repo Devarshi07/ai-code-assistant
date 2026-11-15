@@ -9,21 +9,39 @@ const JS_KEYWORDS = 'async await break case catch class const continue debugger 
 const JS_BUILTINS = 'Array Boolean Date Error Infinity JSON Map Math NaN Number Object Promise RegExp Set String Symbol TypeError RangeError WeakMap console module require exports process performance BigInt Float64Array Int32Array Uint8Array Int8Array Uint32Array';
 
 const words = list => new Set(list.split(' '));
+// Shared token patterns. Groups: comment, block string, string, annotation, number, word.
+const C_LIKE = /(\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|(`(?:\\[\s\S]|[^`\\])*`?)|("(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n]){0,2}'?)|(@[A-Za-z_][\w.]*|#!?\[[^\]\n]*\]?|^[ \t]*#[ \t]*(?:include|define|undef|ifn?def|if|elif|else|endif|pragma|error)\b[^\n]*)|(\b\d[\d_]*(?:\.\d+)?(?:e[+-]?\d+)?[uUlLfFn]*\b|\b0x[\da-f]+\b)|(\$?[A-Za-z_][\w$]*)/gim;
+const HASH = /(#[^\n]*)|((?!))|("(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?)|(@{1,2}[A-Za-z_]\w*|:[A-Za-z_]\w*[?!]?|\$[A-Za-z_{][\w}]*)|(\b\d[\d_]*(?:\.\d+)?\b)|([A-Za-z_][\w-]*[?!]?)/gim;
+const spec = (pattern, keywords, builtins = '') => ({pattern, keywords: words(keywords), builtins: words(builtins)});
 const LANGS = {
   python: {
     keywords: words(PY_KEYWORDS), builtins: words(PY_BUILTINS),
     pattern: /(#[^\n]*)|([rbfu]{0,2}"""[\s\S]*?(?:"""|$)|[rbfu]{0,2}'''[\s\S]*?(?:'''|$))|([rbfu]{0,2}"(?:\\.|[^"\\\n])*"?|[rbfu]{0,2}'(?:\\.|[^'\\\n])*'?)|(@[A-Za-z_][\w.]*)|(\b\d[\d_]*(?:\.\d+)?(?:e[+-]?\d+)?j?\b|\b0x[\da-f]+\b)|([A-Za-z_]\w*)/gi
   },
   javascript: {
-    keywords: words(JS_KEYWORDS), builtins: words(JS_BUILTINS),
+    keywords: words(JS_KEYWORDS + ' interface type enum implements namespace declare readonly private public protected abstract as keyof'), builtins: words(JS_BUILTINS),
     pattern: /(\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$))|(`(?:\\[\s\S]|[^`\\])*`?)|("(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?)|(@[A-Za-z_]\w*)|(\b\d[\d_]*(?:\.\d+)?(?:e[+-]?\d+)?n?\b|\b0x[\da-f]+\b)|([A-Za-z_$][\w$]*)/gi
-  }
+  },
+  go: spec(C_LIKE, 'break case chan const continue default defer else fallthrough for func go goto if import interface map package range return select struct switch type var nil true false iota', 'append cap close copy delete len make new panic print println recover error string int int8 int16 int32 int64 uint uint8 uint16 uint32 uint64 uintptr byte rune bool float32 float64 any'),
+  java: spec(C_LIKE, 'abstract assert boolean break byte case catch char class const continue default do double else enum extends final finally float for goto if implements import instanceof int interface long native new package private protected public return short static super switch synchronized this throw throws transient try void volatile while var val fun null true false record yield when object override data sealed', 'String Integer Long Boolean Object List Map Set ArrayList HashMap Optional System Exception RuntimeException'),
+  c: spec(C_LIKE, 'auto break case char const continue default do double else enum extern float for goto if inline int long register restrict return short signed sizeof static struct switch typedef union unsigned void volatile while bool true false nullptr class namespace template typename public private protected virtual override new delete this using try catch throw constexpr noexcept operator friend explicit mutable static_cast dynamic_cast reinterpret_cast const_cast NULL', 'std size_t string vector map unique_ptr shared_ptr printf malloc free memcpy strlen'),
+  csharp: spec(C_LIKE, 'abstract as base bool break byte case catch char checked class const continue decimal default delegate do double else enum event explicit extern false finally fixed float for foreach goto if implicit in int interface internal is lock long namespace new null object operator out override params private protected public readonly ref return sbyte sealed short sizeof static string struct switch this throw true try typeof uint ulong unchecked unsafe ushort using var virtual void volatile while async await get set record', 'Console List Dictionary Task String Exception'),
+  rust: spec(C_LIKE, 'as async await break const continue crate dyn else enum extern false fn for if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while', 'Vec String Option Result Box Rc Arc RefCell HashMap HashSet Some None Ok Err println format vec panic assert assert_eq i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 usize isize f32 f64 bool str char'),
+  php: spec(C_LIKE, 'abstract and array as break callable case catch class clone const continue declare default do echo else elseif empty extends final finally fn for foreach function global goto if implements include include_once instanceof interface isset list match namespace new or print private protected public readonly require require_once return static switch throw trait try unset use var while yield null true false self parent', 'strlen count array_map array_filter in_array sprintf'),
+  swift: spec(C_LIKE, 'class deinit enum extension func import init inout internal let operator private protocol public static struct subscript typealias var break case continue default defer do else fallthrough for guard if in repeat return switch where while as catch false is nil rethrows super self Self throw throws true try async await', 'String Int Double Bool Array Dictionary print'),
+  ruby: spec(HASH, 'alias and begin break case class def defined do else elsif end ensure false for if in module next nil not or redo rescue retry return self super then true undef unless until when while yield require require_relative attr_accessor attr_reader attr_writer private protected public raise lambda proc', 'puts print p Array Hash String Integer'),
+  shell: spec(HASH, 'if then else elif fi for while do done case esac function return in export local echo set unset source true false', 'cd ls rm cp mv mkdir grep sed awk cat python node npm pip git make')
 };
-const ALIASES = {py: 'python', python: 'python', python3: 'python', js: 'javascript', javascript: 'javascript', node: 'javascript', ts: 'javascript', typescript: 'javascript', json: 'javascript', jsx: 'javascript'};
+const ALIASES = {py: 'python', python: 'python', python3: 'python', js: 'javascript', javascript: 'javascript', node: 'javascript', ts: 'javascript', typescript: 'javascript', json: 'javascript', jsx: 'javascript', tsx: 'javascript',
+  go: 'go', golang: 'go', java: 'java', kotlin: 'java', kt: 'java', scala: 'java', c: 'c', h: 'c', cpp: 'c', 'c++': 'c', cc: 'c', hpp: 'c', cs: 'csharp', csharp: 'csharp', rust: 'rust', rs: 'rust', php: 'php',
+  swift: 'swift', ruby: 'ruby', rb: 'ruby', sh: 'shell', bash: 'shell', shell: 'shell', zsh: 'shell', console: 'shell', yaml: 'shell', yml: 'shell', toml: 'shell', dockerfile: 'shell', make: 'shell', makefile: 'shell', r: 'shell', perl: 'shell', pl: 'shell', ex: 'shell', exs: 'shell', elixir: 'shell'};
+const EXTENSIONS = {py: 'python', js: 'javascript', cjs: 'javascript', mjs: 'javascript', jsx: 'javascript', ts: 'javascript', tsx: 'javascript', json: 'javascript', go: 'go', java: 'java', kt: 'java', kts: 'java', scala: 'java', c: 'c', h: 'c', cc: 'c', cpp: 'c', cxx: 'c', hpp: 'c', hh: 'c', cs: 'csharp', rs: 'rust', php: 'php', swift: 'swift', rb: 'ruby', rake: 'ruby', gemspec: 'ruby', sh: 'shell', bash: 'shell', zsh: 'shell', yml: 'shell', yaml: 'shell', toml: 'shell', cfg: 'shell', ini: 'shell', r: 'shell', pl: 'shell', pm: 'shell', ex: 'shell', exs: 'shell'};
 
 export function languageOf(name = '') {
-  if (/\.py$/i.test(name)) return 'python';
-  if (/\.(c?js|mjs|json|ts)$/i.test(name)) return 'javascript';
+  const base = String(name).split('/').pop();
+  if (/^(Makefile|Dockerfile|Gemfile|Rakefile)$/i.test(base)) return /^(Gemfile|Rakefile)$/i.test(base) ? 'ruby' : 'shell';
+  const ext = base.includes('.') ? base.split('.').pop().toLowerCase() : '';
+  if (ext && EXTENSIONS[ext]) return EXTENSIONS[ext];
   return ALIASES[String(name).toLowerCase()] || null;
 }
 
@@ -47,7 +65,7 @@ export function highlight(code, language) {
       const word = match[0];
       const next = code.slice(last).match(/^\s*\(/);
       if (spec.keywords.has(word)) out += `<span class="tok-keyword">${text}</span>`;
-      else if (previousWord === 'def' || previousWord === 'function' || previousWord === 'class') out += `<span class="tok-def">${text}</span>`;
+      else if (['def', 'function', 'class', 'func', 'fn', 'fun', 'struct', 'interface', 'trait', 'enum', 'module'].includes(previousWord)) out += `<span class="tok-def">${text}</span>`;
       else if (spec.builtins.has(word)) out += `<span class="tok-builtin">${text}</span>`;
       else if (next) out += `<span class="tok-call">${text}</span>`;
       else if (/^[A-Z][A-Z0-9_]+$/.test(word) && word.length > 1) out += `<span class="tok-constant">${text}</span>`;

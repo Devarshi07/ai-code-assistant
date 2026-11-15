@@ -337,12 +337,13 @@ body.ide-open > .topbar, body.ide-open > .shell { display: none; }
 .hint-list .icon { color: var(--warning); margin-top: 2px; }
 .phase-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .success-banner { display: flex; gap: 10px; align-items: center; padding: 10px 12px; margin-top: 12px; border-radius: 8px; background: var(--success-soft); color: var(--success); font-weight: 600; font-size: .88rem; }
-.assistant { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; min-height: 0; }
+.ai-panel { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; min-height: 0; }
 .assistant-head { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: .8rem; color: var(--muted); flex-wrap: wrap; }
 .assistant-head select { padding: 4px 8px; font-size: .82rem; max-width: 220px; }
 .context-chip { display: inline-flex; align-items: center; gap: 5px; font-size: .75rem; }
 .messages { overflow: auto; padding: 14px 14px 6px; display: flex; flex-direction: column; gap: 14px; min-height: 0; }
-.msg { max-width: 100%; }
+/* Messages must not shrink to fit the scroll area, or long answers overlap the next one. */
+.msg, .assistant-empty { max-width: 100%; flex: none; min-width: 0; }
 .msg.user { align-self: flex-end; max-width: 88%; padding: 9px 13px; border-radius: 12px 12px 3px 12px; background: var(--accent-soft); color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; font-size: .9rem; }
 .msg.assistant { padding: 2px 2px; }
 .msg.assistant .who { display: flex; align-items: center; gap: 6px; font-size: .75rem; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
@@ -433,6 +434,32 @@ body.ide-open > .topbar, body.ide-open > .shell { display: none; }
 .copy-row code { font-size: .8rem; padding: 6px 8px; border-radius: 6px; background: var(--surface-2); overflow-x: auto; white-space: nowrap; }
 .copy-label { font-size: .8rem; color: var(--muted); font-weight: 600; }
 
+/* ---------- Repo workspace ---------- */
+.tree-tools { padding: 8px 8px 6px; border-bottom: 1px solid var(--border); }
+.tree-filter { width: 100%; font-size: .82rem; padding: 6px 8px; }
+.tree-count { font-size: .72rem; color: var(--muted); padding: 5px 2px 0; }
+.tree-row { min-width: 0; }
+.tree-label { overflow: hidden; text-overflow: ellipsis; }
+.tree-hint { margin-left: auto; padding-left: 8px; max-width: 55%; overflow: hidden; text-overflow: ellipsis; font-size: .72rem; color: var(--muted); }
+.ide-chips { display: inline-flex; gap: 6px; }
+.ide .work-heading { display: flex; align-items: center; gap: 8px; }
+.ide .work-heading button { cursor: pointer; padding: 5px 12px; border-radius: var(--radius-sm); border: 1px solid var(--accent); background: var(--accent); color: var(--accent-text); font-size: .82rem; font-weight: 600; white-space: nowrap; }
+.ide .work-heading button:disabled { opacity: .5; cursor: wait; }
+.env-panel { display: grid; gap: 10px; padding: 12px 14px; max-width: 760px; }
+.env-panel label { display: grid; gap: 4px; font-size: .8rem; color: var(--text-2); }
+.env-panel input, .env-panel select { font: .84rem var(--mono); }
+.env-panel .placeholder { padding: 0; }
+.env-summary { max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 0; background: none; cursor: pointer; font-family: var(--mono); }
+.env-summary:hover { color: var(--text); text-decoration: underline; }
+.output-view .ok { color: var(--success); }
+.brief-title { font-size: 1.05rem; margin-bottom: 6px; overflow-wrap: anywhere; }
+.brief-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 14px; font-size: .8rem; }
+.brief-meta a { overflow-wrap: anywhere; }
+.expected-tests { margin: 0; padding: 0 14px 10px 32px; display: grid; gap: 4px; font-size: .78rem; overflow-wrap: anywhere; }
+.resume-banner { align-items: center; justify-content: space-between; }
+/* Issue text from trackers often marks code only with tabs, so keep its whitespace. */
+.brief-text p { white-space: pre-wrap; tab-size: 4; }
+
 /* ---------- Legacy repo practice (scoped) ---------- */
 .legacy { --legacy-panel: var(--surface); }
 .legacy .intro { margin: 0 0 28px; }
@@ -470,41 +497,7 @@ body.ide-open > .topbar, body.ide-open > .shell { display: none; }
 .legacy .repo { border: 1px solid var(--border); padding: 14px; border-radius: var(--radius-sm); background: var(--surface); }
 .legacy .repo a { overflow-wrap: anywhere; }
 .legacy .repo button { margin-top: 8px; }
-.legacy .work-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.legacy .work-heading > div:first-child { display: flex; align-items: center; gap: 16px; }
-.legacy .work-heading h1 { font-size: 1.4rem; margin: 0; }
-.legacy .session-meta { display: flex; flex-direction: column; text-align: right; color: var(--muted); font-size: .75rem; }
-.legacy #timer { color: var(--accent); font: 1.4rem var(--mono); }
-.legacy .brief { margin: 14px 0 18px; padding: 16px 20px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
-.legacy .brief p { color: var(--text-2); white-space: pre-wrap; max-height: 260px; overflow: auto; margin: 10px 0; }
-.legacy .brief small { color: var(--muted); overflow-wrap: anywhere; }
 .legacy summary { cursor: pointer; font-size: .9rem; font-weight: 600; }
-.legacy .work-grid { display: grid; grid-template-columns: 200px minmax(300px, 1fr) 340px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; min-height: 620px; background: var(--surface); }
-.legacy .file-panel { background: var(--surface); padding: 14px 0; border-right: 1px solid var(--border); max-height: 850px; overflow: auto; }
-.legacy .panel-label { font-size: .72rem; letter-spacing: .1em; color: var(--muted); padding: 0 14px 12px; font-weight: 700; }
-.legacy #fileFilter { width: calc(100% - 16px); margin: 0 8px; font-size: .82rem; }
-.legacy #newFile { margin: 0 8px 8px; width: calc(100% - 16px); }
-.legacy #fileCount { font-size: .75rem; color: var(--muted); padding: 0 12px; }
-.legacy #files button { display: block; border: 0; border-radius: 0; background: transparent; width: 100%; text-align: left; padding: 7px 14px; font: .8rem var(--mono); overflow-wrap: anywhere; }
-.legacy #files button.active { background: var(--accent-soft); color: var(--accent-strong); }
-.legacy .editor-panel { min-width: 0; background: var(--editor-bg); }
-.legacy .editor-bar { height: 46px; display: flex; align-items: center; justify-content: space-between; padding: 6px 14px; border-bottom: 1px solid var(--border); font: .8rem var(--mono); }
-.legacy .editor-bar button { padding: 5px 10px; }
-.legacy #editor { border: 0; border-radius: 0; resize: vertical; display: block; width: 100%; height: 340px; min-height: 200px; padding: 18px; font: .86rem/1.7 var(--mono); tab-size: 2; white-space: pre; overflow: auto; background: transparent; box-shadow: none; }
-.legacy .run-bar { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-.legacy .runtime-settings { padding: 10px 14px; border-bottom: 1px solid var(--border); }
-.legacy .runtime-settings p { font-size: .8rem; color: var(--muted); }
-.legacy .output-label { padding: 12px 16px 0; font-size: .72rem; letter-spacing: .08em; color: var(--muted); display: flex; justify-content: space-between; }
-.legacy pre { white-space: pre-wrap; overflow-wrap: anywhere; font: .8rem/1.6 var(--mono); }
-.legacy #output { padding: 0 16px; max-height: 280px; overflow: auto; }
-.legacy .assistant-panel { border-left: 1px solid var(--border); padding: 18px; display: flex; flex-direction: column; background: var(--surface); min-width: 0; }
-.legacy .model-badge { font: .68rem var(--mono); color: var(--accent); border: 1px solid var(--border-strong); padding: 3px 6px; border-radius: 4px; }
-.legacy .assistant-note { color: var(--muted); font-size: .8rem; margin: 12px 0; }
-.legacy #messages { flex: 1; min-height: 180px; max-height: 420px; overflow: auto; margin-bottom: 14px; }
-.legacy .message { font-size: .86rem; white-space: pre-wrap; overflow-wrap: anywhere; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 10px; }
-.legacy .message.user { background: var(--accent-soft); }
-.legacy .assistant-panel textarea { width: 100%; resize: vertical; min-height: 80px; }
-.legacy .assistant-panel form button { width: 100%; margin-top: 8px; }
 .interview-launcher { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 22px 24px; background: var(--info-soft); border: 1px solid var(--border); border-radius: var(--radius); margin: 0 0 28px; }
 .interview-launcher h2 { font-size: 1.3rem; margin: 6px 0; }
 .interview-launcher p { color: var(--text-2); max-width: 700px; }
@@ -547,8 +540,6 @@ body:not([data-view="repos"]) .interviewer-window { display: none !important; }
   .ide-main { grid-template-columns: var(--explorer-w, 190px) 5px minmax(240px, 1fr) 5px var(--panel-w, 360px); }
   .stepper .label { display: none; }
   .step { padding: 4px 6px; }
-  .legacy .work-grid { grid-template-columns: 160px minmax(0, 1fr); }
-  .legacy .assistant-panel { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--border); }
 }
 @media (max-width: 860px) {
   .shell { grid-template-columns: 1fr; }
@@ -573,7 +564,6 @@ body:not([data-view="repos"]) .interviewer-window { display: none !important; }
   .side { min-height: 70vh; border-top: 1px solid var(--border); }
   .legacy .random-panel, .legacy .cards, .legacy .github { grid-template-columns: 1fr; }
   .legacy #results { grid-template-columns: 1fr; }
-  .legacy .work-grid { display: block; }
   .interviewer-window { right: 8px; bottom: 8px; width: calc(100% - 16px); }
 }
 @media (max-width: 560px) {

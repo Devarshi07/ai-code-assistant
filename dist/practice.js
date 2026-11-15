@@ -31,6 +31,16 @@ async function route() {
   const [, section, part] = hash.split('/');
   document.querySelector('.menu')?.remove();
   try {
+    // The repo workspace lives in app.js, which loads after this module.
+    const gym = window.gym || await new Promise(resolve => window.addEventListener('gym-ready', () => resolve(window.gym), {once: true}));
+    if (section === 'repo' && part) {
+      if (workspace.id && !$('view-workspace').hidden) workspace.close();
+      show('repos'); setNav('repos');
+      document.title = 'Repository workspace · Debug Gym';
+      await gym.openSession(part);
+      return;
+    }
+    await gym.closeIde();
     if (section === 'practice' && part) {
       document.title = 'Workspace · Debug Gym';
       await workspace.open(part);
@@ -51,6 +61,7 @@ async function route() {
   } catch (error) {
     notify(error.message, 'error');
     if (section === 'practice') location.hash = '#/ai-coding';
+    if (section === 'repo') location.hash = '#/repos';
   }
 }
 

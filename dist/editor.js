@@ -4,6 +4,23 @@ import {highlight} from './markdown.js';
 
 const OPENERS = {'{': '}', '[': ']', '(': ')'};
 
+// Follows the file's own indentation: tabs, or the most common step between space indents.
+function detectIndent(text, fallback) {
+  const lines = text.split('\n').slice(0, 400);
+  if (lines.filter(line => line.startsWith('\t')).length > lines.filter(line => line.startsWith('  ')).length) return '\t';
+  const steps = {};
+  let previous = 0;
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const width = line.match(/^ */)[0].length;
+    const step = Math.abs(width - previous);
+    if (step === 2 || step === 4 || step === 8) steps[step] = (steps[step] || 0) + 1;
+    previous = width;
+  }
+  const best = Object.entries(steps).sort((a, b) => b[1] - a[1])[0];
+  return best ? ' '.repeat(Number(best[0])) : fallback;
+}
+
 export class CodeEditor {
   constructor(root, {onChange = () => {}, onSave = () => {}, onRun = () => {}, onPaste = () => {}, onCursor = () => {}} = {}) {
     this.root = root;
@@ -32,7 +49,7 @@ export class CodeEditor {
 
   setDocument(text, {language = null, readOnly = false, placeholder = ''} = {}) {
     this.language = language;
-    this.indentUnit = language === 'python' ? '    ' : '  ';
+    this.indentUnit = detectIndent(text, language === 'python' ? '    ' : '  ');
     this.input.value = text;
     this.input.readOnly = readOnly;
     this.root.classList.toggle('readonly', readOnly);
@@ -140,7 +157,7 @@ export class CodeEditor {
     if (this.input.readOnly) return;
     if (mod && event.key === '/') {
       event.preventDefault();
-      const marker = this.language === 'python' ? '#' : '//';
+      const marker = ['python', 'ruby', 'shell'].includes(this.language) ? '#' : '//';
       this.replaceLines(lines => {
         const code = lines.filter(line => line.trim());
         const commented = code.length && code.every(line => line.trimStart().startsWith(marker));

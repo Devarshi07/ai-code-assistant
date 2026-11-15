@@ -8,7 +8,7 @@ It follows the format of AI-enabled interviews (a CoderPad-style environment wit
 | --- | --- |
 | **AI Coding: Structured** | 13 in-browser problems (3 Easy, 6 Medium, 4 Hard), each in Python or JavaScript, in 45 minutes. Phase 1 fixes a bug, phase 2 builds the core feature, and phase 3 optimizes against stricter tests. You get an AI assistant, provided tests, hints, a debrief and a graded report. |
 | **AI Coding: Open-ended** | A starter project on your own machine. Build a small service in your own editor with your own AI tools, then submit your code and AI transcript. Hidden acceptance tests run, you answer questions generated from your code, and you get a verdict. |
-| **Real-world repos** | The original mode: SWE-bench Multilingual tasks, GitHub imports, a deliberately small 0.5B copilot and a voice-capable 45-minute mock interviewer. |
+| **Real-world repos** | The original mode: real SWE-bench tasks in 10 languages (including Python), GitHub imports, a deliberately small 0.5B copilot and a voice-capable 45-minute mock interviewer. |
 
 For the development history and earlier decisions, see [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md).
 
@@ -75,12 +75,12 @@ Choose a task, and the app writes a starter project to `~/debug-gym-practice/<ta
 The original Debug Gym mode remains under **Real-world repos**. It uses a deliberately limited copilot (`ollama pull qwen2.5-coder:0.5b`) and a 3B interviewer (`ollama pull qwen2.5-coder:3b`). Both can be downloaded from Local setup.
 
 - Two small built-in JavaScript incidents and a Python pricing incident with intentionally failing tests.
-- Random real-world tasks from [SWE-bench Multilingual](https://www.swebench.com/multilingual.html), checked out at their exact `base_commit`, with reference patches and hints discarded. The catalog fetched during development contained 300 tasks in nine languages. Benchmark script completion is not an official SWE-bench score; inspect the individual results.
+- Random real-world tasks, checked out at their exact `base_commit`, with reference patches and hints discarded. Python tasks come from [SWE-bench Verified](https://huggingface.co/datasets/SWE-bench/SWE-bench_Verified): 500 tasks from 12 projects such as Django, SymPy, scikit-learn, Matplotlib, Sphinx and pytest, each with an estimated fix time. Nine other languages come from [SWE-bench Multilingual](https://www.swebench.com/multilingual.html): 300 tasks. Each task runs in its own prepared Docker image, which can be several GB the first time. Benchmark script completion is not an official SWE-bench score; inspect the individual results.
 - Public GitHub repository search and import. You choose the issue and the test command.
 
 ### Repo languages
 
-16 presets: JavaScript, TypeScript, Python, Java, C, C++, C#, Go, Rust, Ruby, PHP, Swift, R, Elixir, Perl, and Bash. Presets provide toolchains, not every project's dependencies. TypeScript uses Node 24's native type stripping; projects requiring full TypeScript compilation need a prepared image. Generic commands are editable and a custom prebuilt image can be supplied. Random benchmark tasks cover the nine languages in that dataset and use its own historical environment.
+16 presets: JavaScript, TypeScript, Python, Java, C, C++, C#, Go, Rust, Ruby, PHP, Swift, R, Elixir, Perl, and Bash. Presets provide toolchains, not every project's dependencies. TypeScript uses Node 24's native type stripping; projects requiring full TypeScript compilation need a prepared image. Generic commands are editable and a custom prebuilt image can be supplied. Random benchmark tasks cover 10 languages and use each task's own historical environment.
 
 | Language | Preset image | Default test approach |
 | --- | --- | --- |
@@ -103,7 +103,7 @@ The original Debug Gym mode remains under **Real-world repos**. It uses a delibe
 
 These are presets, not a claim that every repository or every image has been verified. For example, PHPUnit, testthat, third-party packages, and repository-specific build tools must already exist in a prepared image. Network access is disabled during test execution.
 
-The historical task library covers C, C++, Go, Java, JavaScript, TypeScript, PHP, Ruby, and Rust. Python is available through the short exercise and manual imports. Other preset languages can be used by importing a codebase and starting an interview from its workspace.
+The historical task library covers Python, C, C++, Go, Java, JavaScript, TypeScript, PHP, Ruby, and Rust. Other preset languages can be used by importing a codebase and starting an interview from its workspace.
 
 ### 45-minute interview mode
 
@@ -242,6 +242,6 @@ There is no integrated repository-wide semantic retrieval, guaranteed benchmark 
 
 ## Licensing and attribution
 
-SWE-bench Multilingual is provided under its upstream dataset license; cloned repositories retain their own licenses. See [the dataset card](https://huggingface.co/datasets/SWE-bench/SWE-bench_Multilingual).
+SWE-bench Verified and SWE-bench Multilingual are provided under their upstream dataset licenses; cloned repositories retain their own licenses. See [the dataset card](https://huggingface.co/datasets/SWE-bench/SWE-bench_Multilingual).
 
 This project does not currently include its own `LICENSE` file. A repository license should be chosen before presenting this project's code as freely reusable under a specific license. Model and container images retain their respective upstream terms.
