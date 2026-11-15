@@ -1,101 +1,84 @@
 # Debug Gym
 
-A local AI-assisted debugging interview practice workspace. No npm dependencies. Requires Node.js 22+, Git, Docker Desktop with Linux containers, and Ollama.
+A local practice environment for **AI-enabled coding interviews**, the round where you get a real multi-file codebase and an AI assistant, then fix a bug, build a feature and make it scale while staying in control of the AI. No npm dependencies, no cloud services: Node.js 22+, Ollama for the AI, and Docker Desktop for Python sandboxes.
 
-Debug Gym is for candidates practicing how to investigate an unfamiliar repository, use imperfect AI assistance, implement a small change, and explain their reasoning. It opens directly into a working practice interface rather than a marketing page.
+It follows the format of AI-enabled interviews (a CoderPad-style environment with a file explorer, editor and AI chat) and the practice structure popularised by interview-prep platforms. All content is original.
 
-For the full development history, decisions, verified results, and remaining work, read [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md).
+| Mode | What you do |
+| --- | --- |
+| **AI Coding: Structured** | 13 in-browser problems (3 Easy, 6 Medium, 4 Hard), each in Python or JavaScript, in 45 minutes. Phase 1 fixes a bug, phase 2 builds the core feature, and phase 3 optimizes against stricter tests. You get an AI assistant, provided tests, hints, a debrief and a graded report. |
+| **AI Coding: Open-ended** | A starter project on your own machine. Build a small service in your own editor with your own AI tools, then submit your code and AI transcript. Hidden acceptance tests run, you answer questions generated from your code, and you get a verdict. |
+| **Real-world repos** | The original mode: SWE-bench Multilingual tasks, GitHub imports, a deliberately small 0.5B copilot and a voice-capable 45-minute mock interviewer. |
+
+For the development history and earlier decisions, see [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md).
 
 ## Quick start
 
-### Prerequisites
-
-| Requirement | Purpose |
+| Requirement | Needed for |
 | --- | --- |
-| Node.js 22 or later | Runs the local web server and automated tests |
-| Git | Imports public repositories and historical task commits |
-| Docker Desktop with Linux containers | Executes candidate code in disposable containers |
-| WSL 2 on Windows | Supplies Docker's Linux backend |
-| Ollama | Serves the two local language models |
-
-Install the prerequisites from their official sources: [Node.js](https://nodejs.org/), [Git](https://git-scm.com/), [Docker Desktop](https://www.docker.com/products/docker-desktop/), and [Ollama](https://ollama.com/download). Start Docker Desktop and Ollama before running an interview. If `ollama` is not found after installation, reopen your terminal.
-
-Clone the project:
+| Node.js 22 or later | Everything |
+| [Ollama](https://ollama.com/download) and a chat model | The AI assistant and AI feedback (the app still works without it) |
+| Docker Desktop (WSL 2 on Windows) | Python sessions and real-world repos. JavaScript sessions run in your browser. |
+| Git | Real-world repos only |
 
 ```sh
 git clone https://github.com/Devarshi07/ai-code-assistant.git
 cd ai-code-assistant
-```
-
-Download the models once:
-
-```sh
-ollama pull qwen2.5-coder:0.5b
-ollama pull qwen2.5-coder:3b
-```
-
-Start the app:
-
-```powershell
+ollama pull qwen3:8b
 npm start
 ```
 
-Open http://127.0.0.1:3210. Start Ollama and Docker Desktop first. Download the assistant once with `ollama pull qwen2.5-coder:0.5b`. The app downloads Docker images on demand.
+Open http://127.0.0.1:3210. There's no `npm install` or build step; the browser assets in `dist/` are authored by hand. **Local setup** in the top bar shows what is running and which models were picked.
 
-There is no `npm install` or frontend build step: the app uses Node's standard library and authored browser assets in `dist/`. The directory name `dist` does not mean those files should be regenerated or excluded from Git.
+Any installed Ollama chat model appears in the assistant's model picker. The app prefers `qwen3:8b`, then `qwen3.5:9b` and other 7–14B coders for the assistant, and `qwen3.5:9b` then `qwen3:8b` for reviews. Override with environment variables:
 
-Use **Local setup** to check Docker, Ollama, and model readiness. Both models can also be downloaded through that dialog while Ollama is running.
-
-### Configuration
-
-| Setting | Default | How to change it |
+| Variable | Default | Purpose |
 | --- | --- | --- |
-| App address | `http://127.0.0.1:3210` | Set the `PORT` environment variable before startup |
-| Ollama API | `http://127.0.0.1:11434` | Currently defined in `server.mjs` |
-| Coding helper | `qwen2.5-coder:0.5b` | Currently defined in `server.mjs` |
-| Interviewer | `qwen2.5-coder:3b` | Currently defined in `interview.mjs` |
+| `PORT` | `3210` | App port (smoke scripts assume 3210) |
+| `DG_ASSISTANT_MODEL` | first available from the preference list | Default assistant model |
+| `DG_REVIEW_MODEL` | first available from the preference list | Model that writes feedback and debrief questions |
+| `DG_OPEN_DIR` | `~/debug-gym-practice` | Where open-ended starter projects are created |
 
-For example, in PowerShell:
+## AI Coding: structured practice
 
-```powershell
-$env:PORT = '3211'
-npm start
-```
+1. **Choose a problem and a language.** The 45-minute timer starts when you press Start. Python needs Docker; JavaScript doesn't.
+2. **The workspace** has a file explorer, an editor with tabs, syntax highlighting, auto-indent, Tab/Shift+Tab, Ctrl+/ comments and resizable panes, plus a Tests/Output panel and a right-hand panel with **Instructions** and the **AI Assistant**.
+3. **Run** with the Run button, **Ctrl+Enter**, or **Ctrl+S** (save and run, like CoderPad). The dropdown switches between the test suite and `main.py`/`main.js`. Results are grouped by phase, with failure messages and stack traces.
+4. **Phases unlock progressively.** When every phase-N test passes, *Continue to phase N+1* adds the next phase's tests and instructions. You can skip a phase, and the skip is recorded. Provided tests are read-only and always run in their original form. Add your own tests in files like `tests/test_custom.py` or `tests/custom.test.js`; they run alongside.
+5. **The assistant** streams answers from your local model. It reads your project files, the current phase and your latest run. Like interview assistants, it can't edit files or run code: you paste its suggestions and run the tests. Code blocks have a Copy button.
+6. **Submit** (or run out of time), answer three debrief questions, and get a report.
 
-The smoke-test scripts target port 3210. Use the default port when running them unchanged.
+Every problem's answer key (root cause, approach, complexity, and reference solutions for each phase) is available from the problem list and the report.
 
-## Models and their roles
+### How sessions are graded
 
-| Model | Role | Context budget |
-| --- | --- | --- |
-| Qwen2.5 Coder 0.5B | Intentionally limited coding copilot; the candidate must verify suggestions | 4,096 tokens |
-| Qwen2.5 Coder 3B | Interview conversation, hints, and follow-up exercise suggestions | 8,192 tokens |
+The report scores the four areas AI-enabled interviews evaluate: **problem solving**, **control over the AI**, **verification**, and **communication**. Each is scored from 1 to 4, and the average maps to a practice verdict: Strong Hire, Hire, Lean Hire, Lean No Hire or No Hire.
 
-Model downloads observed during setup were approximately 397 MB and 1.9 GB respectively. These are download sizes, not total RAM or disk requirements. Docker environments can be much larger. Neither model has direct tools to modify source or execute tests; those actions belong to the candidate and the application.
+Scores are bounded by recorded evidence before any AI is involved. The app records phases passed and skipped, test runs, hints, prompts (including whether they name real files and functions, and whether you pasted the problem statement into the AI), pastes of AI code into the editor and whether a test run followed each one, lines changed, and your debrief answers. For example, no test runs caps verification at 1, and pasting the instructions into the AI caps control at 2. The local reviewer model writes the narrative and may move each score at most one level from the evidence baseline. Without a model, the bounds alone produce a rule-based report. This is practice feedback, not a hiring decision.
 
-## Practice modes
+### Problems
+
+| Difficulty | Problems |
+| --- | --- |
+| Easy | Battleship, Inventory Packer, Spell Checker |
+| Medium | Card Game, Friend Recommender, Maze Solver, Route Planner, Task Scheduler, Word Container |
+| Hard | Connect Four, Kitchen Orders, Maximize Unique Characters, Nonogram Solver |
+
+Each problem is a believable codebase of 300–580 lines with a README. `node scripts/validate-problems.mjs` checks every one: the starter fails phase 1, each reference fix unlocks the next stage, the straightforward phase-2 solution fails phase 3, and the final solution passes everything. To add problems, see [problems/AUTHORING.md](problems/AUTHORING.md).
+
+## AI Coding: open-ended practice
+
+Choose a task, and the app writes a starter project to `~/debug-gym-practice/<task>-<language>-<time>` (README brief, interface stubs and a few provided tests), then shows commands to open it and run the tests. Work in your own editor with whatever AI tools you like. When you submit, the app snapshots the folder (text files only, with size limits) and takes your pasted AI transcript. It then runs the provided tests, the hidden acceptance tests and your own tests: in Docker for Python, in the browser for JavaScript. A local model asks three questions about your submission. The report adds code-quality notes to the four areas, and hidden-test results bound the problem-solving score. Tasks live in `open-tasks/`; see [open-tasks/AUTHORING.md](open-tasks/AUTHORING.md).
+
+## Real-world repo practice
+
+The original Debug Gym mode remains under **Real-world repos**. It uses a deliberately limited copilot (`ollama pull qwen2.5-coder:0.5b`) and a 3B interviewer (`ollama pull qwen2.5-coder:3b`). Both can be downloaded from Local setup.
 
 - Two small built-in JavaScript incidents and a Python pricing incident with intentionally failing tests.
-- Random real-world tasks from [SWE-bench Multilingual](https://www.swebench.com/multilingual.html), fetched through the public Hugging Face dataset API. Filters support language and pre-2021 tasks. Selections are remembered across restarts and cycle after exhaustion. This is a finite catalog, not an infinite generator. The catalog refreshes after seven days.
-- Public GitHub repository search and import, including large/archived repositories. These imports require you to select an issue and provide a suitable test command and dependencies.
+- Random real-world tasks from [SWE-bench Multilingual](https://www.swebench.com/multilingual.html), checked out at their exact `base_commit`, with reference patches and hints discarded. The catalog fetched during development contained 300 tasks in nine languages. Benchmark script completion is not an official SWE-bench score; inspect the individual results.
+- Public GitHub repository search and import. You choose the issue and the test command.
 
-Random tasks check out their exact `base_commit` before the original fix. Reference solution patches and hints are discarded; the candidate receives the issue description and source. The task's prepared SWE-bench image and evaluation script supply the regression environment. Tasks include both bugs and feature requests. Upstream images may be large, unavailable, or require more resources than the default 4 GB/15-minute limit. The output is not an official SWE-bench score: inspect the individual test results. Some upstream evaluation scripts exit successfully even when tests fail.
-
-The catalog fetched during development contained **300 tasks, nine languages, and 41 distinct repository names**. The upstream overview describes 42 repositories; the count of 41 is what the fetched rows contained. Treat these as an observed snapshot rather than a permanent API guarantee.
-
-### Typical practice flow
-
-1. Start a short exercise, choose a random historical task, or import a GitHub URL.
-2. Read the incident brief and repository README.
-3. Use the explorer's path filter to find source and test files.
-4. Run a baseline test command and inspect the actual output.
-5. Edit and save source, or use **New file** to add a module or regression test.
-6. Ask the small copilot for a second opinion and verify its advice.
-7. Rerun tests and explain what changed and why.
-
-The editor supports Tab indentation and Ctrl/Cmd+S. Switching files saves pending edits; tests and copilot questions also save the open file before using it. New files may include nested relative paths such as `src/discount-policy.js`.
-
-## Languages
+### Repo languages
 
 16 presets: JavaScript, TypeScript, Python, Java, C, C++, C#, Go, Rust, Ruby, PHP, Swift, R, Elixir, Perl, and Bash. Presets provide toolchains, not every project's dependencies. TypeScript uses Node 24's native type stripping; projects requiring full TypeScript compilation need a prepared image. Generic commands are editable and a custom prebuilt image can be supplied. Random benchmark tasks cover the nine languages in that dataset and use its own historical environment.
 
@@ -122,7 +105,7 @@ These are presets, not a claim that every repository or every image has been ver
 
 The historical task library covers C, C++, Go, Java, JavaScript, TypeScript, PHP, Ruby, and Rust. Python is available through the short exercise and manual imports. Other preset languages can be used by importing a codebase and starting an interview from its workspace.
 
-## 45-minute interview mode
+### 45-minute interview mode
 
 Download the separate interviewer with `ollama pull qwen2.5-coder:3b`. Use **Set up an interview** to choose a language/codebase, or start an interview from any existing workspace. The environment is prepared before the clock starts. The interviewer uses a stronger 3B model; the original copilot remains 0.5B. These are local language models, not human-equivalent interview assessors.
 
@@ -140,7 +123,7 @@ Short exercises have explicit feature assignments: a maximum-discount cap for pr
 
 At the deadline, the active page requests feedback automatically. If the page is closed, the server still refuses further interview work after the deadline and feedback is requested when the session is reopened. Finish or Give up ends early. Feedback covers debugging, implementation, testing, LLD, and communication, grounded in the transcript, saved selected file, and observed actions. Unobserved areas should not be rated. If the model is unavailable, the app returns an explicitly unscored observations report. Reports and transcripts can be downloaded as JSON; previous interview records are retained in the session directory when a new interview starts.
 
-### How feedback is grounded
+#### How interview feedback is grounded
 
 The small model produced unsupported judgments during development, so the report deliberately separates **recorded evidence** from **AI suggestions**:
 
@@ -158,6 +141,8 @@ Voice uses browser SpeechRecognition for dictation and SpeechSynthesis for playb
 ## Execution and storage
 
 - Loopback-only HTTP service with Host/Origin checks. Designed for a single local user, not deployment as a public multi-user service.
+- Structured and open-ended **JavaScript** runs in a dedicated Web Worker. The worker script is served with a Content-Security-Policy of `default-src 'none'`, which blocks network requests. It has a CommonJS loader and `node:test`/`node:assert` shims (`dist/runner-core.js`), and runs are abandoned after 30 seconds (60 for open-ended submissions). **Python** runs in a `python:3.12-slim` container with no network, read-only mounts, dropped capabilities and CPU, memory, PID and time limits. The harness (`harness/pyrunner.py`) reports structured per-test results and aborts any single test after 12 s.
+- Provided tests are stored separately per session and copied over the candidate's files before every run, so editing them can't change a result.
 - Repository code runs only in Docker with networking disabled, dropped capabilities, no-new-privileges, and CPU/memory/PID/time limits. Host repositories are mounted read-only. Generic commands run in temporary writable copies; benchmark commands run in disposable writable containers.
 - No host shell execution of repository scripts. Git imports don't initialize submodules or LFS objects. Projects needing these need additional preparation.
 - Sessions persist under `.sessions/`. The slim task catalog and selection history live in `.task-cache/`. Runtime images persist in Docker. These can consume significant disk space over repeated sessions; no automatic deletion is performed.
@@ -166,13 +151,16 @@ Voice uses browser SpeechRecognition for dictation and SpeechSynthesis for playb
 
 ## Verification
 
-`npm test` checks task selection and solution exclusion, path restrictions, runtime inference, and confirms that built-in exercises fail before and pass after a repair. `node scripts/smoke.mjs` checks the running local app and optionally live Docker/Ollama integration.
+`npm test` runs 25 automated checks: the in-browser runner, the problem catalog, the practice session lifecycle (canonical tests, phase unlocking, hints, timeouts, debrief), evidence summaries, prompt signals, review bounds and clamping, open-ended bounds, task selection, path restrictions and the built-in exercises. `npm run validate` runs every structured problem and open-ended task end to end in both languages.
 
 ```sh
 # Automated checks; no model download or running app required
 npm test
+npm run validate
 
 # Start the app in another terminal before these live checks
+node scripts/practice-smoke.mjs python      # full structured session through the API (Docker)
+node scripts/practice-smoke.mjs javascript
 node scripts/smoke.mjs
 node scripts/smoke.mjs --tasks
 node scripts/python-smoke.mjs
@@ -205,7 +193,19 @@ Browser UI ──HTTP──> Node.js local server
 
 | File or directory | Responsibility |
 | --- | --- |
-| `server.mjs` | HTTP routes, session files, imports, model requests, Docker jobs, path checks |
+| `server.mjs` | HTTP server, static assets and CSP, repo-practice routes, jobs, Docker and Ollama helpers |
+| `problems.mjs` | Loads and validates structured problems; overlays, localisation, canonical tests |
+| `practice.mjs` | Structured session state: phases, canonical tests, runs, hints, evidence, assistant context |
+| `practice-routes.mjs` | Structured-practice HTTP routes and the streaming assistant |
+| `practice-review.mjs` | Evidence bounds, the local-model review, verdicts and diffs |
+| `open-ended.mjs` | Open-ended tasks: workspaces, snapshots, hidden tests, debrief questions, review |
+| `sandbox.mjs` | Python Docker sandbox and result parsing |
+| `harness/pyrunner.py` | Python test/main runner with structured results and per-test timeouts |
+| `problems/`, `open-tasks/` | Problem and task content, with authoring guides |
+| `dist/practice.js`, `dist/workspace.js` | Library, start dialog, answer key, history and guide pages; the timed IDE workspace |
+| `dist/editor.js`, `dist/markdown.js` | Code editor; syntax highlighting and safe markdown |
+| `dist/runner-core.js`, `dist/runner-worker.js` | In-browser JavaScript runner, also used by the validators |
+| `dist/open-ended.js`, `dist/report.js` | Open-ended pages; shared report components |
 | `interview.mjs` | Deadline, conversation, evidence tracking, feature assignment, reports |
 | `task-source.mjs` | Public task catalog, solution exclusion, filtering, random selection |
 | `runtimes.mjs` | Language presets and runtime inference |
@@ -236,7 +236,7 @@ There is no database, cloud LLM dependency, account system, npm package dependen
 
 ## Current scope and limitations
 
-This is a local single-user MVP. It is not a hosted multi-user interview platform. Public GitHub imports do not automatically identify a suitable bug; curated historical tasks provide the concrete issue. The task pool is finite and can repeat after exhaustion. Large codebases are supported within explorer and resource limits, not without limits.
+This is a local single-user practice tool. It is not a hosted multi-user interview platform, and its local-model feedback is practice guidance, not an assessment by a human interviewer. Phase-3 time limits were calibrated on a Ryzen 5 7500X3D. On much slower machines, limits may need loosening in the problem tests. On Windows hosts the Python per-test timeout only applies inside Docker (the validator relies on its own run timeout). Public GitHub imports do not automatically identify a suitable bug; curated historical tasks provide the concrete issue. The task pool is finite and can repeat after exhaustion. Large codebases are supported within explorer and resource limits, not without limits.
 
 There is no integrated repository-wide semantic retrieval, guaranteed benchmark scoring, automatic feature-test generation, terminal emulator, fully local speech transcription, session cleanup UI, or production authentication. These are possible future improvements, not implemented capabilities.
 

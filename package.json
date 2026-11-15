@@ -3,6 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": { "start": "node server.mjs", "test": "node --test tests/*.test.mjs" },
-  "engines": { "node": ">=22" }
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "validate": "node scripts/validate-problems.mjs && node scripts/validate-open-tasks.mjs",
+    "smoke:practice": "node scripts/practice-smoke.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
 }

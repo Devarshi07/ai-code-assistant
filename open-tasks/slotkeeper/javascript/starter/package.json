@@ -1,0 +1,10 @@
+{
+  "name": "slotkeeper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The booking engine behind a Calendly-style scheduling app",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\""
+  }
+}

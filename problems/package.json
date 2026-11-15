@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "type": "commonjs",
+  "description": "Problem sources are CommonJS so their JavaScript runs unchanged under node --test."
+}

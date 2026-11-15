@@ -10,7 +10,7 @@ async function api(url, data) { const response = await fetch(url, data ? {method
 function notify(text) { $('notice').textContent=text; $('notice').hidden=false; clearTimeout(noticeTimer); noticeTimer=setTimeout(()=>$('notice').hidden=true,7000); }
 async function busy(button, action) { const label=button.textContent; button.disabled=true; button.textContent='Working…'; try {await action();} catch(e){notify(e.message);} finally{button.disabled=false;button.textContent=label;} }
 function el(tag, text, className) { const node=document.createElement(tag); node.textContent=text; if(className)node.className=className; return node; }
-async function status() { const state=await api('/api/status'); $('health').textContent=state.docker&&state.modelReady?'●':'○'; $('setupStatus').textContent=`Docker: ${state.docker?'ready':'not running'} · Ollama: ${state.ollama?'connected':'not running'} · 0.5B helper: ${state.modelReady?'ready':'not downloaded'} · 3B interviewer: ${state.interviewerReady?'ready':'not downloaded'}`; }
+async function status() { const state=await api('/api/status'); $('setupStatus').textContent=`Docker: ${state.docker?'ready':'not running'} · Ollama: ${state.ollama?'connected':'not running'} · 0.5B helper: ${state.modelReady?'ready':'not downloaded'} · 3B interviewer: ${state.interviewerReady?'ready':'not downloaded'}`; }
 $('setupButton').onclick=()=>{$('setup').showModal();status().catch(e=>notify(e.message));};
 $('closeSetup').onclick=()=>$('setup').close();
 $('refreshStatus').onclick=e=>busy(e.currentTarget,status);

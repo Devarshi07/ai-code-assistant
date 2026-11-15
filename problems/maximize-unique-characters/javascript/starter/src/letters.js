@@ -1,0 +1,60 @@
+// Letter-set helpers shared by the whole package.
+//
+// A word's letters are stored as a 26-bit mask: bit 0 is 'a', bit 25 is 'z'.
+// Masks make the puzzle rule cheap to check, because two words share a letter
+// exactly when (a & b) is non-zero.
+//
+//   maskLetters(letterMask('tango'))  // 'agnot'
+
+const ALPHABET = 'abcdefghijklmnopqrstuvwxyz';
+const FULL_MASK = (1 << ALPHABET.length) - 1;
+
+/** Thrown for text that cannot be used as a puzzle word. */
+class WordError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'WordError';
+  }
+}
+
+/** Trim and lower-case a word. Anything except the letters a-z is rejected. */
+function normalizeWord(raw) {
+  const word = String(raw).trim().toLowerCase();
+  if (!word) throw new WordError('empty word');
+  const bad = [...new Set(word)].filter(ch => !ALPHABET.includes(ch)).sort();
+  if (bad.length) throw new WordError(`'${String(raw).trim()}' contains '${bad.join('')}'; only a-z are allowed`);
+  return word;
+}
+
+/** The mask bit for a single lower-case letter. */
+function letterBit(ch) {
+  return 1 << (ch.charCodeAt(0) - 97);
+}
+
+/** Bitmask of the distinct letters in a normalized word. */
+function letterMask(word) {
+  let mask = 0;
+  for (const ch of word) mask |= letterBit(ch);
+  return mask;
+}
+
+/** Number of letters in a mask. */
+function popcount(mask) {
+  let count = 0;
+  for (let rest = mask; rest; rest &= rest - 1) count++;
+  return count;
+}
+
+/** The letters in a mask, alphabetically: maskLetters(letterMask('otter')) === 'eort'. */
+function maskLetters(mask) {
+  let letters = '';
+  for (let i = 0; i < ALPHABET.length; i++) if (mask & (1 << i)) letters += ALPHABET[i];
+  return letters;
+}
+
+/** Letters present in both masks, alphabetically. */
+function sharedLetters(a, b) {
+  return maskLetters(a & b);
+}
+
+module.exports = { ALPHABET, FULL_MASK, WordError, normalizeWord, letterBit, letterMask, popcount, maskLetters, sharedLetters };

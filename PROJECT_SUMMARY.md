@@ -175,6 +175,37 @@ Potential next work, not implemented in this conversation:
 
 Large repositories and historical environments can consume substantial disk, memory, and time. Generic language images do not include every dependency. Small models can give incorrect suggestions. Voice may depend on an online browser service. These constraints are documented so future work starts from the actual implementation rather than assumed capabilities.
 
+## 13. AI Coding practice rebuild
+
+The next request was to make the tool work like Hello Interview's AI Coding practice. That platform's public material describes two formats. *Structured* is in-browser problems where you read a codebase, fix bugs, build features and tighten performance against test suites. *Open-ended* is your own editor and AI tools, followed by submission, debrief questions and feedback. Both are graded on problem solving, control over the AI, verification and communication. The app now provides both formats with original content, and keeps the earlier repo-practice mode under **Real-world repos**.
+
+**Structured practice**
+- 13 original problems (3 Easy, 6 Medium, 4 Hard), each in Python and JavaScript. Every problem is a 300–580 line codebase with three phases: a planted bug described only by its symptoms, a core feature, and an optimization that breaks the straightforward phase-2 solution.
+- A CoderPad-style workspace: explorer, tabbed editor with highlighting, Tests/Output panel with a Run menu and Ctrl+S save-and-run, phase stepper, countdown, Instructions with progressive hints and phase unlocking, and a streaming AI assistant with a model picker over the installed Ollama models.
+- JavaScript runs in a network-blocked Web Worker. Python runs in a Docker sandbox. Provided tests are canonical and read-only.
+- Problems were authored in parallel by sub-agents against `problems/AUTHORING.md`. `scripts/validate-problems.mjs` checks each one end to end. All 13 passed a final sequential run.
+
+**Feedback**
+- Evidence is recorded throughout: runs, phases, hints, prompt specificity, pasting the problem statement into the AI, AI pastes and whether a run followed them, diffs, and debrief answers.
+- That evidence sets per-area bounds. The local reviewer (`qwen3.5:9b` here) may move each score at most one level from the baseline and may not contradict the recorded facts. The verdict is computed from the scores, and without a model the report is rule-based.
+- Early live runs showed the reviewer miscounting test runs and calling one narrow question over-reliance. Those failures led to the facts list and the ±1 bound.
+
+**Open-ended practice**
+- `open-ended.mjs` writes a starter project to `~/debug-gym-practice`, then snapshots it on submission.
+- On submission it runs provided, hidden and candidate tests, asks model-generated debrief questions about the code, and produces a report with code-quality notes.
+- Tasks are validated by `scripts/validate-open-tasks.mjs`.
+
+**Verified in this session**
+- `npm test`: 25 tests pass.
+- All 13 problems validate.
+- API smoke runs of a full session pass in both languages (`scripts/practice-smoke.mjs`), including Docker runs and live assistant and review calls.
+- Browser checks covered editing, Ctrl+S, phase pass detection, unlocking, streaming chat, new-file creation, submit, debrief and feedback. Desktop, light and dark, and phone layouts were screenshot.
+
+**Known limits**
+- Phase-3 time limits were calibrated on this machine.
+- The Python per-test timeout relies on SIGALRM, so it works only inside Docker.
+- Local-model feedback can still be imprecise, which is why its scores are bounded by evidence.
+
 ## Reference links
 
 - [Repository](https://github.com/Devarshi07/ai-code-assistant)

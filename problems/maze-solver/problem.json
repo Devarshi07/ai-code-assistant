@@ -1,0 +1,65 @@
+{
+  "id": "maze-solver",
+  "title": "Maze Solver",
+  "difficulty": "Medium",
+  "pattern": "Graph Search & Pathfinding",
+  "summary": "Route players through puzzle levels with one-way gates, then find the shortest run that collects every gem.",
+  "minutes": 45,
+  "languages": ["python", "javascript"],
+  "overview": {
+    "python": "You've joined the tools team for **Labyrinth**, a grid puzzle game. Level designers write levels as text, and this codebase checks them: it parses a layout, finds the shortest route from the start tile `S` to the exit `E`, and renders previews.\n\nLevels contain walls `#`, floor `.`, gems `$`, and **one-way gates** `> < ^ v`. A gate can only be entered while moving in its arrow's direction, and the player must keep moving that way to leave it.\n\nStart with `README.md`, then `maze/level.py` (the grid model and movement rules) and `maze/solver.py` (route finding). `main.py` prints routes for the sample levels in `maze/levels.py`.",
+    "javascript": "You've joined the tools team for **Labyrinth**, a grid puzzle game. Level designers write levels as text, and this codebase checks them: it parses a layout, finds the shortest route from the start tile `S` to the exit `E`, and renders previews.\n\nLevels contain walls `#`, floor `.`, gems `$`, and **one-way gates** `> < ^ v`. A gate can only be entered while moving in its arrow's direction, and the player must keep moving that way to leave it.\n\nStart with `README.md`, then `src/level.js` (the grid model and movement rules) and `src/solver.js` (route finding). `main.js` prints routes for the sample levels in `src/levels.js`."
+  },
+  "phases": [
+    {
+      "kind": "bug",
+      "title": "Levels the solver gets wrong",
+      "instructions": "The design team filed two reports this morning:\n\n> *\"The solver says the **tutorial** and **canyon** levels have no route. Both are clearly solvable, and players finish them every day.\"*\n\n> *\"On the tall **spire** level, the solver either crashes or draws a route that walks off the edge of the map.\"*\n\nThe square test levels work fine. Find the root cause, fix it, and make every phase 1 test pass. Keep the fix small. The existing API and movement rules must not change.\n\n**Done when:** all tests in the phase 1 test file pass.",
+      "hints": [
+        "Compare the failing levels with the passing ones. What do the tutorial, canyon and spire levels have in common that the square test levels don't?",
+        "Every step the solver takes goes through the `Level` class's movement checks. Read how it decides whether a position is on the map.",
+        {"python": "Look closely at `Level.in_bounds`: which dimension is each coordinate compared against?", "javascript": "Look closely at `Level#inBounds`: which dimension is each coordinate compared against?"}
+      ],
+      "answer": {
+        "python": "**Root cause.** `Level.in_bounds` compared the column against `self.height` instead of `self.width`:\n\n```python\nreturn 0 <= pos.row < self.height and 0 <= pos.col < self.height\n```\n\nOn **wide** levels (width > height), columns at or past `height` count as out of bounds, so the exit becomes unreachable and `solve` returns `None`. On **tall** levels, columns past the real width count as in bounds, and `cell()` raises `IndexError`. Square levels hide the bug, which is why the original tests passed.\n\n**Fix.**\n\n```python\nreturn 0 <= pos.row < self.height and 0 <= pos.col < self.width\n```\n\n**Verify.** Run the phase 1 tests. The wide and tall cases now pass and the square ones still pass. A strong answer also explains *why* the original tests missed it: every fixture was square.",
+        "javascript": "**Root cause.** `Level#inBounds` compared the column against `this.height` instead of `this.width`:\n\n```javascript\nreturn pos.row >= 0 && pos.row < this.height && pos.col >= 0 && pos.col < this.height;\n```\n\nOn **wide** levels (width > height), columns at or past `height` count as out of bounds, so the exit becomes unreachable and `solve` returns `null`. On **tall** levels, columns past the real width count as in bounds. `cell()` then returns `undefined`, which isn't a wall, so the route walks off the map. Square levels hide the bug, which is why the original tests passed.\n\n**Fix.**\n\n```javascript\nreturn pos.row >= 0 && pos.row < this.height && pos.col >= 0 && pos.col < this.width;\n```\n\n**Verify.** Run the phase 1 tests. The wide and tall cases now pass and the square ones still pass. A strong answer also explains *why* the original tests missed it: every fixture was square."
+      }
+    },
+    {
+      "kind": "feature",
+      "title": "Perfect runs: collect every gem",
+      "instructions": {
+        "python": "Designers want to publish a *par* for each level: the fewest moves needed to **collect every gem and then reach the exit**.\n\nImplement `collect_all_gems(level)` in `maze/solver.py`:\n\n- Return a `Run(path, moves)`. `path` lists every tile from `level.start` to `level.exit` inclusive, with legal single steps only, and steps on every gem in `level.gems`.\n- `moves` must be the **minimum** possible and equal `len(path) - 1`.\n- Return `None` if any gem or the exit can't be reached.\n- With no gems, the result matches `solve(level)`.\n\nLevels have at most 6 gems in this phase. Remember that gates make movement **directional**: the way from A to B may be longer than the way from B to A.\n\n**Done when:** phase 1 and phase 2 tests pass.",
+        "javascript": "Designers want to publish a *par* for each level: the fewest moves needed to **collect every gem and then reach the exit**.\n\nImplement `collectAllGems(level)` in `src/solver.js`:\n\n- Return `{ path, moves }`. `path` lists every tile from `level.start` to `level.exit` inclusive, with legal single steps only, and steps on every gem in `level.gems`.\n- `moves` must be the **minimum** possible and equal `path.length - 1`.\n- Return `null` if any gem or the exit can't be reached.\n- With no gems, the result matches `solve(level)`.\n\nLevels have at most 6 gems in this phase. Remember that gates make movement **directional**: the way from A to B may be longer than the way from B to A.\n\n**Done when:** phase 1 and phase 2 tests pass."
+      },
+      "hints": [
+        "Break the problem in two: (1) how far is it between any two *stops* (start, each gem, exit)? (2) in which order should the gems be visited?",
+        "The existing BFS gives the shortest leg between two stops. With at most 6 gems, trying every visiting order is affordable (6! = 720). Greedy nearest-gem-first is not always optimal; one test is built to catch it.",
+        "Store legs directionally, keyed by (from, to). Don't assume dist(a, b) == dist(b, a), because one-way gates break that. Stitch the chosen legs together, dropping the duplicated tile where two legs meet."
+      ],
+      "answer": {
+        "python": "**Approach: pairwise BFS + permutations.**\n\n1. Stops are `start`, every gem, and `exit`.\n2. Run `shortest_path` for every ordered pair of stops and keep the legs in a dict keyed `(a, b)`. Legs are **directional** because of gates.\n3. Try every permutation of gems: `start → g1 → … → gk → exit`. Sum the leg lengths and skip any order with an unreachable leg.\n4. Stitch the best order's legs into one path, dropping each leg's first tile after the first leg.\n\n```python\nfor order in permutations(gems):\n    route = [level.start, *order, level.exit]\n    total = sum(len(legs[a, b]) - 1 for a, b in zip(route, route[1:]))\n```\n\n**Complexity.** O(k² · BFS) for the legs plus O(k! · k) for the orders. That's fine for k ≤ 6 (720 orders).\n\nWhy is this optimal even though passing over a gem collects it early? Any route that visits all gems has a first-visit order, and its length is at least the sum of shortest legs in that order.",
+        "javascript": "**Approach: pairwise BFS + permutations.**\n\n1. Stops are `start`, every gem, and `exit`.\n2. Run `shortestPath` for every ordered pair of stops and keep the legs in a matrix `legs[a][b]`. Legs are **directional** because of gates.\n3. Depth-first search over every order of gems: `start → g1 → … → gk → exit`. Sum the leg lengths and skip any order with an unreachable leg.\n4. Stitch the best order's legs into one path, dropping each leg's first tile after the first leg.\n\n**Complexity.** O(k² · BFS) for the legs plus O(k! · k) for the orders. That's fine for k ≤ 6 (720 orders).\n\nWhy is this optimal even though passing over a gem collects it early? Any route that visits all gems has a first-visit order, and its length is at least the sum of shortest legs in that order."
+      }
+    },
+    {
+      "kind": "optimize",
+      "title": "Par for the big levels",
+      "instructions": "The level editor now generates large levels: **61×61 tiles with 10 or more gems**. The par calculator has to stay interactive.\n\nMake gem runs fast enough for the phase 3 tests while keeping every earlier test green. The tests check correctness on new levels, and they check that a 10+ gem level solves within a strict time limit.\n\nBefore you change code, explain where your phase 2 solution spends its time and what you'll change.\n\n**Done when:** all phase 1–3 tests pass.",
+      "hints": [
+        "Measure first: how many visiting orders exist with 10 or 11 gems? How many BFS runs does your phase 2 code do?",
+        "You don't need a separate BFS for every *pair* of stops. One BFS from each stop reaches every tile, so k + 1 searches give every leg.",
+        "The order search has overlapping subproblems: *the best way to have collected this set of gems and be standing on gem j*. A dynamic program over bitmasks (Held-Karp) solves it in O(2^k · k²)."
+      ],
+      "answer": {
+        "python": "**Where phase 2 breaks.** 10! = 3.6 million orders × 11 legs is tens of millions of Python operations, so it takes seconds. The (k+2)² pairwise BFS runs also add up on a 61×61 map.\n\n**Optimized approach.**\n\n1. **One BFS per source.** Run `search_from(level, s)` once from the start and from each gem, recording every tile's parent. That's k + 1 searches, and each one yields the leg to every other stop.\n2. **Held-Karp DP.** `best[mask][j]` is the fewest moves to start at S, collect exactly the gems in `mask`, and stand on gem `j`:\n\n```python\nbest[1 << j][j] = dist(start, gem j)\nbest[mask | 1 << n][n] = min(best[mask][j] + dist(gem j, gem n))\nanswer = min(best[full][j] + dist(gem j, exit))\n```\n\n3. Keep a `parent` table to recover the order, then rebuild the path from the BFS parent trees.\n\n**Complexity.** O((k+1) · V) for the searches plus O(2^k · k²) for the DP. With k = 10 that's about 100k DP steps instead of 36 million.\n\n**Tradeoff.** Memory is O(2^k · k), which is fine to about 20 gems. Beyond that you'd need heuristics, such as branch and bound or A* over (tile, mask).",
+        "javascript": "**Where phase 2 breaks.** 11! ≈ 40 million orders is seconds of work, even in V8. The (k+2)² pairwise BFS runs also add up on a large map.\n\n**Optimized approach.**\n\n1. **One BFS per source.** Run `searchFrom(level, s)` once from the start and from each gem, recording every tile's parent. That's k + 1 searches, and each one yields the leg to every other stop.\n2. **Held-Karp DP.** `best[mask][j]` is the fewest moves to start at S, collect exactly the gems in `mask`, and stand on gem `j`:\n\n```javascript\nbest[1 << j][j] = toGem[0][j];\nbest[mask | (1 << n)][n] = Math.min(best[mask][j] + toGem[j + 1][n]);\nanswer = Math.min(best[full][j] + toExit[j + 1]);\n```\n\n3. Keep a `parent` table to recover the order, then rebuild the path from the BFS parent trees.\n\n**Complexity.** O((k+1) · V) for the searches plus O(2^k · k²) for the DP. With k = 11 that's about 250k DP steps instead of 40 million orders.\n\n**Tradeoff.** Memory is O(2^k · k), which is fine to about 20 gems. Beyond that you'd need heuristics, such as branch and bound or A* over (tile, mask)."
+      }
+    }
+  ],
+  "debrief": [
+    "What was the root cause of the phase 1 bug, and why did the original tests not catch it?",
+    "Walk through how your phase 2 solution chooses the gem order. Why are legs directional, and what is its time complexity?",
+    "What did you change in phase 3 to make it fast enough? What did the AI get right or wrong along the way, and how did you check its output?"
+  ]
+}

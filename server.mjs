@@ -8,6 +8,8 @@ import { challenges } from './challenges.mjs';
 import { runtimes, detectRuntime } from './runtimes.mjs';
 import { loadTasks, chooseTask, publicTask } from './task-source.mjs';
 import { INTERVIEW_MODEL, readInterview, publicInterview, startInterview, interviewTurn, endInterview, assertPracticeOpen, recordEvidence, exclusive, writeInterview } from './interview.mjs';
+import { practiceRoutes } from './practice-routes.mjs';
+import { openRoutes } from './open-ended.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SESSIONS = path.join(ROOT, '.sessions');
@@ -84,7 +86,12 @@ async function ollama(endpoint, data, timeout = 120000) {
   if (!response.ok || result.error) throw new Error(result.error || 'Ollama request failed.');
   return result;
 }
+const practice = practiceRoutes({SESSIONS, run, listFiles: root => files(root), job, ollama, OLLAMA});
+const openEnded = openRoutes({SESSIONS, run, job, ollama, models: () => practice.models()});
 async function api(req, url) {
+  if (req.method === 'GET') {
+    for (const routes of [practice, openEnded]) { const handled = await routes.handle(req, url, {}); if (handled !== undefined) return handled; }
+  }
   if (req.method === 'GET' && url.pathname === '/api/runtimes') return runtimes;
   if (req.method === 'GET' && url.pathname === '/api/job') { const state=jobs.get(url.searchParams.get('id')); if(!state)throw new Error('Job expired. Please retry.');return state; }
   if (req.method === 'GET' && url.pathname === '/api/tasks') { const tasks=await loadTasks(CACHE);return {count:tasks.length,languages:[...new Set(tasks.map(t=>t.language))],repositories:new Set(tasks.map(t=>t.repo)).size}; }
@@ -108,6 +115,7 @@ async function api(req, url) {
   }
   if (req.method !== 'POST') throw new Error('Unknown endpoint.');
   const data = await body(req);
+  for (const routes of [practice, openEnded]) { const handled = await routes.handle(req, url, data); if (handled !== undefined) return handled; }
   if (url.pathname === '/api/task/random') return job(async progress=>{
     progress('Loading the public task library…');const tasks=await loadTasks(CACHE);let seen=[];try{seen=JSON.parse(await fs.readFile(path.join(CACHE,'seen.json'),'utf8'));}catch{}
     const chosen=chooseTask(tasks,seen,data.language||'all',data.scope||'all');
@@ -191,13 +199,23 @@ export const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
     if (url.pathname.startsWith('/api/')) {
       if (req.method === 'POST' && !req.headers['content-type']?.startsWith('application/json')) throw new Error('JSON required.');
+      if (req.method === 'POST' && url.pathname === '/api/practice/chat') { await practice.chat(req, res, await body(req)); return; }
       const result = await api(req, url); res.writeHead(200, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'}); res.end(JSON.stringify(result));
     } else {
-      const assets = {'/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/interview-ui.js':['interview-ui.js','text/javascript'], '/style.css': ['style.css', 'text/css']};
-      const asset = assets[url.pathname]; if (!asset) { res.writeHead(404); res.end('Not found'); return; }
-      const content = await fs.readFile(path.join(ROOT, 'dist', asset[0]));
-      res.writeHead(200, {'Content-Type': asset[1], 'X-Content-Type-Options': 'nosniff', 'Content-Security-Policy': "default-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'"}); res.end(content);
+      const name = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
+      const type = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8', svg: 'image/svg+xml'}[name.split('.').pop()];
+      if (!/^[\w-]+\.(html|js|css|svg)$/.test(name) || !type) { res.writeHead(404); res.end('Not found'); return; }
+      let content;
+      try { content = await fs.readFile(path.join(ROOT, 'dist', name)); } catch { res.writeHead(404); res.end('Not found'); return; }
+      // Candidate JavaScript runs in a worker that may evaluate code but has no network access.
+      const policy = /^runner-(worker|core)\.js$/.test(name)
+        ? "default-src 'none'; script-src 'self' 'unsafe-eval'"
+        : "default-src 'self'; style-src 'self'; script-src 'self'; worker-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'";
+      res.writeHead(200, {'Content-Type': type, 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-cache', 'Content-Security-Policy': policy}); res.end(content);
     }
-  } catch (error) { res.writeHead(400, {'Content-Type': 'application/json'}); res.end(JSON.stringify({error: error.message})); }
+  } catch (error) {
+    if (res.headersSent) { if (!res.writableEnded) res.end(); return; }
+    res.writeHead(400, {'Content-Type': 'application/json'}); res.end(JSON.stringify({error: error.message}));
+  }
 });
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) server.listen(PORT, '127.0.0.1', () => console.log(`Debug Gym ready at http://127.0.0.1:${PORT}`));

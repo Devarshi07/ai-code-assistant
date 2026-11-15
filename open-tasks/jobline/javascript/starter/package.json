@@ -1,0 +1,10 @@
+{
+  "name": "jobline",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "An in-process background job queue with leases and retries.",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\""
+  }
+}

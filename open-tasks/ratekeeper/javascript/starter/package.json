@@ -1,0 +1,10 @@
+{
+  "name": "ratekeeper",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Per-customer rate limiting for an API gateway.",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\""
+  }
+}
