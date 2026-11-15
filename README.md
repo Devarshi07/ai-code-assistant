@@ -21,6 +21,24 @@ For the development history and earlier decisions, see [PROJECT_SUMMARY.md](PROJ
 | Docker Desktop (WSL 2 on Windows) | Running code for coding questions, Python repos, real-world repos and agent commands. Guided JavaScript repos run their tests in the browser. |
 | Git | Real-world repos and GitHub imports |
 
+**Set up Docker first.** Install [Docker Desktop](https://www.docker.com/products/docker-desktop/); on Windows, choose the WSL 2 backend and Linux containers. Start it and wait until it reports that the engine is running, then check from a terminal:
+
+```sh
+docker info   # should print server details, not "Cannot connect to the Docker daemon"
+```
+
+Docker Desktop has to be running whenever you use the app. You don't need to pull images yourself: the app downloads each one the first time it's needed, so the first run in a language can take a few minutes. Coding questions use `python:3.12-slim`, `node:22-alpine`, `eclipse-temurin:21-jdk-alpine`, `gcc:14` and `golang:1.24-alpine`; Python guided repos use `python:3.12-slim`; other runtime presets and real-world tasks pull their own images, and SWE-bench task images can be several GB. To download the coding-question images ahead of time:
+
+```sh
+docker pull python:3.12-slim
+docker pull node:22-alpine
+docker pull eclipse-temurin:21-jdk-alpine
+docker pull gcc:14
+docker pull golang:1.24-alpine
+```
+
+Then get the code, pull the models and start the app:
+
 ```sh
 git clone https://github.com/Devarshi07/ai-code-assistant.git
 cd ai-code-assistant
