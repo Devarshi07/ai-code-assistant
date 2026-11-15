@@ -1,0 +1,33 @@
+{
+  "id": "longest-climb-count",
+  "title": "Longest Climb Count",
+  "difficulty": "Hard",
+  "maxScore": 80,
+  "skills": ["Dynamic Programming", "Searching"],
+  "summary": "Find the longest strictly rising subsequence of altitudes and count how many there are.",
+  "statement": "A trail-running app records the altitude at each checkpoint of a run. A **climb** is any selection of checkpoints, kept in their original order, whose altitudes are **strictly increasing**. The app's achievements screen shows the length of the longest climb in the run and the number of different longest climbs.\n\nGiven the altitudes `alt[0..n-1]`, find the length `L` of the longest strictly increasing subsequence, and the number of strictly increasing subsequences of length `L`.\n\nTwo climbs are different if they use a different set of checkpoint indices, even when their altitudes are the same. The count can be very large, so report it modulo `10^9 + 7`.",
+  "functionDescription": "Complete the **longestClimb** function in the editor below.\n\n**longestClimb** has the following parameter:\n\n- `int alt[n]`: the altitudes, in checkpoint order\n\n**Returns**\n\n- `int[2]`: the length of the longest climb, then the number of longest climbs modulo `10^9 + 7`",
+  "inputFormat": "The first line contains an integer, `n`.\n\nThe second line contains `n` space-separated integers, `alt[i]`.",
+  "constraints": "- `1 ≤ n ≤ 10^5`\n- `-10^9 ≤ alt[i] ≤ 10^9`",
+  "outputFormat": "Print two space-separated integers: the length of the longest climb and the number of longest climbs modulo `10^9 + 7`.",
+  "samples": [
+    {"input": "7\n3 1 4 1 5 9 2\n", "output": "4 2\n", "explanation": "The longest climbs have length `4`: `3 4 5 9` (indices `0, 2, 4, 5`) and `1 4 5 9` (indices `1, 2, 4, 5`). The second `1` comes after the `4`, so it cannot start a climb through `4`."},
+    {"input": "4\n5 5 5 5\n", "output": "1 4\n", "explanation": "Equal altitudes do not form a climb, so every longest climb is a single checkpoint, and there are `4` of them."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09"},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2},
+    {"file": "13", "weight": 2}
+  ]
+}

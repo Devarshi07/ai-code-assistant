@@ -1,0 +1,32 @@
+{
+  "id": "warmer-days-ahead",
+  "title": "Warmer Days Ahead",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "skills": ["Stacks", "Arrays"],
+  "summary": "For each day, find how many days you wait until a strictly warmer reading.",
+  "statement": "A weather station logs one temperature reading per day, in tenths of a degree Celsius (so `215` means 21.5 °C). Its forecast dashboard shows, for every day, how long you would have to wait for a **strictly warmer** day.\n\nGiven the readings `temperatures[0], …, temperatures[n − 1]`, compute for each day `i` the smallest `k > 0` such that `temperatures[i + k] > temperatures[i]`. If no later day is warmer, the answer for day `i` is `0`.",
+  "functionDescription": "Complete the **daysUntilWarmer** function in the editor below.\n\n**daysUntilWarmer** has the following parameter:\n\n- `int temperatures[n]`: the daily readings, in tenths of a degree\n\n**Returns**\n\n- `int[n]`: for each day, the number of days until a strictly warmer reading, or `0` if there is none",
+  "inputFormat": "The first line contains an integer, `n`.\n\nThe second line contains `n` space-separated integers, `temperatures[i]`.",
+  "constraints": "- `1 ≤ n ≤ 3 × 10^5`\n- `-900 ≤ temperatures[i] ≤ 600`",
+  "outputFormat": "Print `n` space-separated integers on a single line: the answer for each day, in order.",
+  "samples": [
+    {"input": "8\n152 148 160 171 165 158 175 170\n", "output": "2 1 1 3 2 1 0 0\n", "explanation": "Day 0 (15.2 °C) first sees a warmer reading on day 2 (16.0 °C), so its answer is `2`. Day 3 (17.1 °C) waits until day 6 (17.5 °C), so its answer is `3`. No later reading beats days 6 and 7, so both answers are `0`."},
+    {"input": "5\n-15 -15 -20 -15 -10\n", "output": "4 3 1 1 0\n", "explanation": "Equal readings don't count as warmer. Day 0 (−1.5 °C) is matched on days 1 and 3 but not beaten until day 4 (−1.0 °C), so its answer is `4`."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08", "weight": 2},
+    {"file": "09", "weight": 2},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

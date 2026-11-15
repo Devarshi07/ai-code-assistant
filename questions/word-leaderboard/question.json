@@ -1,0 +1,32 @@
+{
+  "id": "word-leaderboard",
+  "title": "Word Leaderboard",
+  "difficulty": "Easy",
+  "maxScore": 30,
+  "skills": ["Hash Tables", "Sorting", "Strings"],
+  "summary": "Rank the words of a text by frequency and report the top k.",
+  "statement": "An editor wants to know which words a writer leans on too much, so she asks for a leaderboard of the `k` most frequent words in an article.\n\nThe article is split over `m` lines. Each line holds lowercase words separated by single spaces, and a word counts every time it appears, on any line.\n\nRank the words by how many times they appear, most frequent first. Break ties alphabetically, in dictionary order: a word that is a prefix of another comes first, so `art` ranks above `artist`.\n\nReport the top `k` words with their counts. If the article has fewer than `k` distinct words, report all of them.",
+  "functionDescription": "Complete the **topWords** function in the editor below.\n\n**topWords** has the following parameters:\n\n- `string lines[m]`: the lines of the article\n- `int k`: the number of leaderboard entries to report\n\n**Returns**\n\n- `string[]`: the leaderboard in rank order, each entry formatted as the word, a single space, and its count",
+  "inputFormat": "The first line contains two space-separated integers, `m` and `k`.\n\nEach of the next `m` lines contains one line of the article.",
+  "constraints": "- `1 ≤ m ≤ 10^4`\n- `1 ≤ k ≤ 10^5`\n- Each line contains at least one word, with single spaces between words and no leading or trailing spaces.\n- Each word has 1 to 12 lowercase English letters (`a`–`z`).\n- The article has at most `10^5` words in total.",
+  "outputFormat": "Print each leaderboard entry on its own line: the word, a space, and the number of times it appears.",
+  "samples": [
+    {"input": "3 3\nthe cat sat on the mat\nthe dog sat\na cat and a dog\n", "output": "the 3\na 2\ncat 2\n", "explanation": "`the` appears 3 times. Four words appear twice (`a`, `cat`, `dog` and `sat`), and alphabetical order gives the remaining two places to `a` and `cat`."},
+    {"input": "2 6\nnote notes no\nnotebook no note\n", "output": "no 2\nnote 2\nnotebook 1\nnotes 1\n", "explanation": "`no` and `note` both appear twice, and `no` ranks first because it is a prefix of `note`. Only four distinct words appear, fewer than `k = 6`, so all four are reported."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09"},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

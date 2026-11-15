@@ -1,0 +1,32 @@
+{
+  "id": "playlist-rotation",
+  "title": "Playlist Rotation",
+  "difficulty": "Easy",
+  "maxScore": 30,
+  "skills": ["Arrays"],
+  "summary": "Rotate a looping playlist left by d slots and look up the tracks at given positions.",
+  "statement": "A radio station plays its music from a looping playlist of `n` tracks. Every time the schedule advances, the track at the front of the playlist moves to the back: a **left rotation** by one slot. Overnight the schedule advances `d` times, and `d` can be far larger than `n`.\n\nIn the morning, the host asks `q` questions of the form *which track is at position `p` now?* Positions are 0-based, so position `0` is the track that plays next.\n\nAnswer every question.",
+  "functionDescription": "Complete the **playlistQueries** function in the editor below.\n\n**playlistQueries** has the following parameters:\n\n- `int tracks[n]`: the track ids, in playing order before any rotation\n- `int d`: the number of left rotations\n- `int positions[q]`: the 0-based positions to look up after the rotations\n\n**Returns**\n\n- `int[]`: the track id at each queried position, in the order the questions are asked",
+  "inputFormat": "The first line contains three space-separated integers, `n`, `d` and `q`.\n\nThe second line contains `n` space-separated integers, `tracks[i]`.\n\nThe third line contains `q` space-separated integers, `positions[j]`.",
+  "constraints": "- `1 ≤ n ≤ 10^5`\n- `0 ≤ d ≤ 10^9`\n- `1 ≤ q ≤ 10^5`\n- `1 ≤ tracks[i] ≤ 10^6`\n- `0 ≤ positions[j] < n`",
+  "outputFormat": "Print `q` lines: the track id at each queried position, in the order the questions are asked.",
+  "samples": [
+    {"input": "5 2 3\n4 8 15 16 23\n0 3 4\n", "output": "15\n4\n8\n", "explanation": "After two left rotations the playlist is `[15, 16, 23, 4, 8]`. Position `0` holds `15`, position `3` holds `4` and position `4` holds `8`."},
+    {"input": "3 7 3\n10 20 30\n0 1 2\n", "output": "20\n30\n10\n", "explanation": "Every 3 rotations bring the playlist back to `[10, 20, 30]`, so after 7 rotations it reads `[20, 30, 10]`."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09", "weight": 2},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

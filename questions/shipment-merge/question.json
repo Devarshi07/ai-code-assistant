@@ -1,0 +1,32 @@
+{
+  "id": "shipment-merge",
+  "title": "Shipment Merge",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "skills": ["Intervals", "Sorting"],
+  "summary": "Merge overlapping or touching dock bookings into busy periods.",
+  "statement": "A warehouse has one loading dock. Each of `n` shipments books the dock for a closed time window `[start, end]`, which includes both endpoints.\n\nTo publish the dock's schedule, the manager wants the **busy periods**. Two windows belong to the same busy period if they share at least one moment, either directly or through a chain of other windows. Windows that only touch also share a moment: `[1, 3]` and `[3, 5]` form the busy period `[1, 5]`, while `[1, 3]` and `[4, 5]` stay separate.\n\nEach busy period runs from the earliest start to the latest end of its windows. Return the busy periods sorted by start time.",
+  "functionDescription": "Complete the **mergeShipments** function in the editor below.\n\n**mergeShipments** has the following parameter:\n\n- `int windows[n][2]`: each row `[start, end]` is one booking\n\n**Returns**\n\n- `int[][]`: the busy periods as `[start, end]` pairs, sorted by start",
+  "inputFormat": "The first line contains an integer, `n`, the number of shipments.\n\nEach of the next `n` lines contains two space-separated integers, `start` and `end`.",
+  "constraints": "- `1 ≤ n ≤ 10^5`\n- `0 ≤ start ≤ end ≤ 10^9`",
+  "outputFormat": "Print the number of busy periods on the first line. Then print each busy period on its own line as two space-separated integers, `start` and `end`, in increasing order of `start`.",
+  "samples": [
+    {"input": "6\n14 20\n3 5\n9 11\n1 4\n20 22\n7 8\n", "output": "4\n1 5\n7 8\n9 11\n14 22\n", "explanation": "`[1, 4]` and `[3, 5]` overlap, and `[14, 20]` and `[20, 22]` touch at time `20`. `[7, 8]` and `[9, 11]` share no moment, so they stay separate."},
+    {"input": "4\n6 6\n2 10\n4 5\n11 11\n", "output": "2\n2 10\n11 11\n", "explanation": "`[4, 5]` and the single moment `[6, 6]` lie inside `[2, 10]`. `[11, 11]` starts after `[2, 10]` ends, so it's a busy period of its own."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09", "weight": 2},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

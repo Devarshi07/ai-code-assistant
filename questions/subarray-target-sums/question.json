@@ -1,0 +1,32 @@
+{
+  "id": "subarray-target-sums",
+  "title": "Subarray Target Sums",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "skills": ["Hash Tables", "Arrays"],
+  "summary": "Count the stretches of consecutive days whose net cash flow is exactly k.",
+  "statement": "A café records its net cash flow for each of `n` consecutive days. Slow days lose money, so some values are negative. To compare against a savings goal, the owner wants to know how many **stretches of consecutive days** had a total net flow of exactly `k`.\n\nGiven an array `arr` of `n` integers and an integer `k`, count the pairs of indices `(i, j)` with `i ≤ j` such that `arr[i] + arr[i+1] + … + arr[j] = k`.",
+  "functionDescription": "Complete the **countSubarrays** function in the editor below.\n\n**countSubarrays** has the following parameters:\n\n- `int arr[n]`: the daily net cash flows\n- `long k`: the target total\n\n**Returns**\n\n- `long`: the number of contiguous subarrays whose sum is exactly `k`",
+  "inputFormat": "The first line contains two space-separated integers, `n` and `k`.\n\nThe second line contains `n` space-separated integers, `arr[i]`.",
+  "constraints": "- `1 ≤ n ≤ 10^5`\n- `-10^9 ≤ arr[i] ≤ 10^9`\n- `-10^14 ≤ k ≤ 10^14`",
+  "outputFormat": "Print the number of subarrays as a single integer.",
+  "samples": [
+    {"input": "6 3\n1 2 -1 1 3 -3\n", "output": "5\n", "explanation": "The five stretches are `[1, 2]`, `[1, 2, -1, 1]`, `[-1, 1, 3]`, `[3]` and the whole array `[1, 2, -1, 1, 3, -3]`."},
+    {"input": "4 0\n2 -2 2 -2\n", "output": "4\n", "explanation": "`[2, -2]` appears twice, plus `[-2, 2]` and the whole array `[2, -2, 2, -2]`."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07", "weight": 2},
+    {"file": "08", "weight": 2},
+    {"file": "09", "weight": 2},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

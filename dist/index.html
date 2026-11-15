@@ -3,66 +3,62 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Practice AI-enabled coding interviews locally: fix a bug, build a feature and make a real codebase scale with an AI assistant.">
-<title>Debug Gym · AI coding practice</title>
+<meta name="description" content="Practise AI-assisted coding interviews locally: coding questions with an AI assistant, real code repos with an AI agent, and AI mock interviews.">
+<title>Debug Gym · AI-assisted coding practice</title>
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/app.css">
 <script src="/theme.js"></script>
 </head>
 <body>
 <header class="topbar" id="topbar">
   <button class="icon-button sidebar-toggle" id="sidebarToggle" aria-label="Toggle navigation" aria-expanded="false"><span></span><span></span><span></span></button>
-  <a class="brand" href="#/ai-coding"><span class="brand-mark" aria-hidden="true">dg</span><span class="brand-name">debug gym</span></a>
+  <a class="brand" href="#/home"><span class="brand-mark" aria-hidden="true">dg</span><span class="brand-name">debug gym</span></a>
   <span class="topbar-spacer"></span>
   <button class="icon-button" id="themeToggle" aria-label="Switch colour theme" title="Switch colour theme"></button>
   <button class="button ghost small" id="setupButton"><span id="health" class="health" aria-hidden="true">○</span> Local setup</button>
 </header>
 <div class="shell" id="shell">
   <nav class="sidebar" id="sidebar" aria-label="Main">
-    <p class="nav-group">Practice</p>
-    <a class="nav-link" href="#/ai-coding" data-nav="ai-coding">AI Coding</a>
-    <a class="nav-link nested" href="#/ai-coding" data-nav="structured">Structured</a>
-    <a class="nav-link nested" href="#/ai-coding/open-ended" data-nav="open-ended">Open-ended</a>
-    <a class="nav-link" href="#/history" data-nav="history">Your sessions</a>
-    <p class="nav-group">More practice</p>
-    <a class="nav-link" href="#/repos" data-nav="repos">Real-world repos</a>
-    <p class="nav-group">Guide</p>
-    <a class="nav-link" href="#/guide" data-nav="guide">How sessions are graded</a>
-    <p class="sidebar-foot">Runs on your machine. Code executes in your browser (JavaScript) or Docker (Python). The assistant runs on Ollama.</p>
+    <p class="nav-group">Prepare</p>
+    <a class="nav-link" href="#/home" data-nav="home"><span class="nav-icon" data-icon="home"></span>Home</a>
+    <a class="nav-link" href="#/questions" data-nav="questions"><span class="nav-icon" data-icon="code"></span>Coding questions</a>
+    <a class="nav-link" href="#/repos" data-nav="repos"><span class="nav-icon" data-icon="repo"></span>Code repos</a>
+    <a class="nav-link" href="#/mock" data-nav="mock"><span class="nav-icon" data-icon="mic"></span>Mock interviews</a>
+    <p class="nav-group">You</p>
+    <a class="nav-link" href="#/activity" data-nav="activity"><span class="nav-icon" data-icon="history"></span>Your activity</a>
+    <a class="nav-link" href="#/guide" data-nav="guide"><span class="nav-icon" data-icon="book"></span>How it works</a>
+    <p class="sidebar-foot">Everything runs on this computer: code runs in Docker or your browser, and the AI runs on Ollama.</p>
   </nav>
   <main class="content" id="content">
-    <section id="view-library" class="view" aria-live="polite"></section>
-    <section id="view-history" class="view" hidden></section>
+    <section id="view-home" class="view" aria-live="polite"></section>
+    <section id="view-questions" class="view" hidden></section>
+    <section id="view-repos" class="view" hidden></section>
+    <section id="view-mock" class="view" hidden></section>
+    <section id="view-activity" class="view" hidden></section>
     <section id="view-guide" class="view" hidden></section>
     <section id="view-feedback" class="view" hidden></section>
     <section id="view-open" class="view" hidden></section>
-    <section id="view-repos" class="view legacy" hidden>
-<section id="lobby"><div class="intro"><p class="eyebrow">PRACTICE / DEBUGGING</p><h1>Your reasoning.<br>A little AI assistance.</h1><p>Find the bug, question the suggestion, ship the fix.<br>Practice with a small local coding model by your side.</p></div>
-<section class="random-panel"><div><p class="eyebrow">REAL-WORLD REPOSITORIES</p><h2>A new codebase. A real issue.</h2><p>Random tasks from SWE-bench Verified (Python: Django, SymPy, scikit-learn and more) and SWE-bench Multilingual (nine other languages). Work in the historical source of established projects, with the issue brief and its regression tests.</p><a href="https://www.swebench.com/multilingual.html" target="_blank" rel="noreferrer">About the task library ↗</a></div><div><label for="taskLanguage">Task language</label><select id="taskLanguage"><option value="all">Surprise me · All 10 languages</option><option value="python">Python</option><option value="c">C</option><option value="cpp">C++</option><option value="go">Go</option><option value="java">Java</option><option value="node">JavaScript</option><option value="typescript">TypeScript</option><option value="php">PHP</option><option value="ruby">Ruby</option><option value="rust">Rust</option></select><label for="taskScope">Codebase era</label><select id="taskScope"><option value="all">All historical tasks</option><option value="legacy">Legacy · 2020 and earlier</option></select><button id="randomTask" class="primary">Find my next task ↗</button></div><div id="taskPreview" hidden></div><p id="taskProgress" role="status"></p><small>Tasks include bug fixes and feature work. New selections avoid repeats until the matching pool is exhausted. Large environments can require several GB of disk and minutes to prepare.</small></section>
-<div class="section-title"><h2>Or warm up with a short incident</h2><span>Real files · Failing tests · Local execution</span></div><div id="challenges" class="cards"></div>
-<section class="github"><div><p class="eyebrow">BRING A CODEBASE</p><h2>Start from GitHub</h2><p>Import any public repository, including large or archived projects. Choose your own issue and configure its test command.</p></div><div class="repo-controls"><form id="importForm"><label for="repoUrl">Public repository URL</label><div class="inline"><input id="repoUrl" placeholder="https://github.com/owner/repo" type="url" required><button class="primary">Import repo</button></div></form><form id="searchForm"><label for="query">Find repositories</label><div class="inline"><input id="query" value="stars:>1000"><button>Search GitHub</button></div></form></div><div id="results"></div></section>
-<p class="footnote">A 0.5B model can be wrong. Verifying its advice is part of the exercise.</p></section>
-
-    </section>
+    <section id="view-mockreport" class="view" hidden></section>
   </main>
 </div>
-<section id="view-workspace" class="ide" hidden aria-label="Coding workspace"></section>
-<section id="repo-ide" class="ide" hidden aria-label="Repository workspace"></section>
+<section id="coding-ide" class="fullscreen" hidden aria-label="Coding question"></section>
+<section id="ade" class="fullscreen" hidden aria-label="Code repo workspace"></section>
+<section id="mock-room" class="fullscreen" hidden aria-label="Mock interview"></section>
 <dialog id="setup" class="dialog">
   <div class="dialog-heading"><h2>Local setup</h2><button class="icon-button" id="closeSetup" aria-label="Close setup">×</button></div>
-  <p>Everything runs on this computer. Two local services power practice sessions.</p>
-  <h3>Ollama: the AI assistant and reviewer</h3>
-  <p>Install <a href="https://ollama.com/download" target="_blank" rel="noreferrer">Ollama</a>, then download a chat model. Any installed chat model appears in the assistant's model picker. A 7–9B coding-capable model gives the most realistic experience:</p>
+  <p>Everything runs on this computer. Two local services power practice.</p>
+  <h3>Ollama: the AI assistant, agent and interviewer</h3>
+  <p>Install <a href="https://ollama.com/download" target="_blank" rel="noreferrer">Ollama</a>, then download a chat model with tool support. A 7–9B model gives the most realistic agent:</p>
   <pre>ollama pull qwen3:8b</pre>
+  <p>For AI inline suggestions in the editor, add a small fill-in-the-middle model:</p>
+  <pre>ollama pull qwen2.5-coder:3b</pre>
   <div id="setupModels" class="setup-models"></div>
-  <h3>Docker Desktop: Python sandbox</h3>
-  <p>Python sessions and real-world repos run in disposable containers with no network access. JavaScript sessions run inside your browser and don't need Docker.</p>
-  <h3>Repo practice models</h3>
-  <p>The real-world repo mode uses a deliberately small 0.5B copilot and a 3B interviewer.</p>
-  <div class="setup-actions"><button class="button" id="pull">Download 0.5B copilot</button><button class="button" id="refreshStatus">Check connections</button></div>
+  <h3>Docker Desktop: code execution</h3>
+  <p>Coding questions, Python repos and real-world repos run in disposable containers with no network access. Guided JavaScript repos run inside your browser.</p>
+  <div class="setup-actions"><button class="button" id="pullChat">Download qwen3:8b</button><button class="button" id="pullCoder">Download qwen2.5-coder:3b</button><button class="button ghost" id="refreshStatus">Check again</button></div>
   <p id="setupStatus" role="status"></p>
 </dialog>
 <div id="notice" role="status" hidden></div>
-<script type="module" src="/practice.js"></script>
 <script type="module" src="/app.js"></script>
 </body>
 </html>

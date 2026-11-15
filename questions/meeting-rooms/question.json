@@ -1,0 +1,31 @@
+{
+  "id": "meeting-rooms",
+  "title": "Meeting Rooms",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "skills": ["Intervals", "Sorting", "Heaps"],
+  "summary": "Find the fewest rooms that can host every meeting without two meetings sharing a room at once.",
+  "statement": "An office manager is booking rooms for tomorrow's `n` meetings. Meeting `i` needs a room from time `start[i]` up to, but not including, time `end[i]`: the half-open interval `[start[i], end[i])`.\n\nA room can host only one meeting at a time. Because the intervals are half-open, a meeting that ends at time `t` frees its room in time for another meeting that starts at time `t`.\n\nFind the minimum number of rooms needed so that every meeting has a room for its whole duration.",
+  "functionDescription": "Complete the **minMeetingRooms** function in the editor below.\n\n**minMeetingRooms** has the following parameter:\n\n- `int meetings[n][2]`: each row holds the `start` and `end` time of one meeting\n\n**Returns**\n\n- `int`: the minimum number of rooms needed",
+  "inputFormat": "The first line contains an integer, `n`, the number of meetings.\n\nEach of the next `n` lines contains two space-separated integers, `start[i]` and `end[i]`.",
+  "constraints": "- `1 ≤ n ≤ 10^5`\n- `0 ≤ start[i] < end[i] ≤ 10^9`",
+  "outputFormat": "Print the minimum number of rooms as a single integer.",
+  "samples": [
+    {"input": "5\n1 4\n2 6\n4 7\n6 9\n8 10\n", "output": "2\n", "explanation": "`[1, 4)` and `[2, 6)` overlap, so one room is not enough. Two rooms work: the first hosts `[1, 4)`, `[4, 7)` and `[8, 10)`, and the second hosts `[2, 6)` and `[6, 9)`. Each meeting that starts exactly when another ends can reuse its room."},
+    {"input": "4\n0 10\n2 5\n3 8\n5 6\n", "output": "3\n", "explanation": "At time `3`, the meetings `[0, 10)`, `[2, 5)` and `[3, 8)` are all in progress, so at least `3` rooms are needed. `[5, 6)` starts when `[2, 5)` ends and can take its room, so `3` rooms are enough."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09", "weight": 2},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2}
+  ]
+}

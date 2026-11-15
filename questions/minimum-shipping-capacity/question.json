@@ -1,0 +1,32 @@
+{
+  "id": "minimum-shipping-capacity",
+  "title": "Minimum Shipping Capacity",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "skills": ["Searching", "Arrays"],
+  "summary": "Find the smallest truck capacity that ships every package, in order, within d days.",
+  "statement": "A distribution center ships packages from a conveyor belt with a single delivery truck. Packages leave in belt order. Each day, the truck is loaded with the next packages in line, one after another, as long as the total weight stays within its **capacity**. The first package that doesn't fit waits for the next day. Packages are never split, skipped or reordered.\n\nGiven the weights of the `n` packages in belt order and a deadline of `d` days, find the **minimum truck capacity** that ships every package within `d` days.",
+  "functionDescription": "Complete the **minimumCapacity** function in the editor below.\n\n**minimumCapacity** has the following parameters:\n\n- `int weights[n]`: the package weights, in belt order\n- `int d`: the number of days available\n\n**Returns**\n\n- `int`: the smallest capacity that ships every package within `d` days",
+  "inputFormat": "The first line contains two space-separated integers, `n` and `d`.\n\nThe second line contains `n` space-separated integers, `weights[i]`.",
+  "constraints": "- `1 ≤ d ≤ n ≤ 10^5`\n- `1 ≤ weights[i] ≤ 10^4`",
+  "outputFormat": "Print the minimum capacity as a single integer.",
+  "samples": [
+    {"input": "8 3\n4 8 3 6 2 5 7 1\n", "output": "13\n", "explanation": "With capacity `13` the truck carries `[4, 8]`, `[3, 6, 2]` and `[5, 7, 1]`, so it finishes in 3 days. With capacity `12` the loads are `[4, 8]`, `[3, 6, 2]`, `[5, 7]` and `[1]`, which takes 4 days."},
+    {"input": "5 4\n1 2 10 3 4\n", "output": "10\n", "explanation": "The truck must be able to carry the package of weight `10`, so the capacity is at least `10`. With capacity `10` the loads are `[1, 2]`, `[10]` and `[3, 4]`: three days, within the limit of four."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08", "weight": 2},
+    {"file": "09", "weight": 2},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

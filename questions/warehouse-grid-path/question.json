@@ -1,0 +1,32 @@
+{
+  "id": "warehouse-grid-path",
+  "title": "Warehouse Grid Path",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "skills": ["BFS", "Graphs"],
+  "summary": "Find the fewest moves a warehouse robot needs to reach the loading dock.",
+  "statement": "A delivery robot drives across a warehouse floor laid out as a grid with `rows` rows and `cols` columns. Each cell is one of:\n\n- `.`: open floor\n- `#`: a shelf, which the robot cannot enter\n- `S`: the robot's starting cell\n- `E`: the loading dock the robot must reach\n\nIn one move, the robot steps to the adjacent cell above, below, left or right of it. It cannot move diagonally, enter a shelf or leave the grid. `S` and `E` are open cells.\n\nFind the fewest moves the robot needs to get from `S` to `E`, or `-1` if it cannot reach `E` at all.",
+  "functionDescription": "Complete the **shortestPath** function in the editor below.\n\n**shortestPath** has the following parameter:\n\n- `string grid[rows]`: the rows of the floor plan, from top to bottom, each of length `cols`\n\n**Returns**\n\n- `int`: the fewest moves from `S` to `E`, or `-1` if `E` cannot be reached",
+  "inputFormat": "The first line contains two space-separated integers, `rows` and `cols`.\n\nEach of the next `rows` lines contains a string of `cols` characters: one row of the grid, from top to bottom.",
+  "constraints": "- `1 ≤ rows, cols ≤ 1000`\n- Each row contains only the characters `.`, `#`, `S` and `E`.\n- The grid contains exactly one `S` and exactly one `E`.",
+  "outputFormat": "Print the fewest number of moves from `S` to `E`, or `-1` if `E` is unreachable.",
+  "samples": [
+    {"input": "4 5\nS..#.\n.#...\n.#.#.\n...#E\n", "output": "7\n", "explanation": "One shortest route is right, right, down, right, right, down, down: `7` moves. Following the left edge and the bottom row instead runs into the shelf just left of `E`."},
+    {"input": "3 3\nS#.\n##.\n..E\n", "output": "-1\n", "explanation": "Both cells next to `S` are shelves, so the robot cannot move and `E` is unreachable."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09"},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

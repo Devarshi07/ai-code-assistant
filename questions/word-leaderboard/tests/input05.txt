@@ -1,0 +1,10 @@
+9 9
+abd a a
+bab b abcd
+abc b ab
+abcd ba bab ba
+bab b abd aa abd
+aa
+abc a ab
+abc
+ab aa ba abcd

@@ -70,7 +70,7 @@ export async function renderOpenSession(root, id) {
   clearInterval(ticker);
   const state = await api('/api/open?id=' + id);
   const header = el('div', {},
-    el('a', {href: '#/ai-coding/open-ended', class: 'button link', style: 'margin-bottom:10px'}, '← Open-ended tasks'),
+    el('a', {href: '#/repos/open-ended', class: 'button link', style: 'margin-bottom:10px'}, '← Open-ended tasks'),
     el('div', {class: 'feedback-head'}, el('h1', {text: state.title}), el('span', {class: 'chip', text: LANGUAGE_LABEL[state.language]}), el('span', {class: 'chip', text: state.task.tagline})));
   if (state.status === 'active') return renderActive(root, state, header);
   if (state.status === 'abandoned') { root.replaceChildren(header, el('div', {class: 'empty-state', text: 'You abandoned this session. Start the task again from the open-ended list.'})); return; }
@@ -106,7 +106,7 @@ function renderActive(root, state, header) {
   const abandon = el('button', {class: 'button link', onclick: async () => {
     if (!await confirmDialog({title: 'Abandon this session?', body: 'It will be marked abandoned. Your workspace folder stays on disk.', confirm: 'Abandon', danger: true})) return;
     await api('/api/open/abandon', {id: state.id});
-    location.hash = '#/ai-coding/open-ended';
+    location.hash = '#/repos/open-ended';
   }}, 'Abandon session');
   root.replaceChildren(header,
     el('div', {class: 'open-grid'},
@@ -199,10 +199,10 @@ function renderReport(root, state, header) {
     verdictHero(report),
     testsPanel(state),
     areaGrid(report),
-    report.codeQuality?.length ? el('section', {class: 'panel'}, el('h2', {text: 'Code quality notes'}), el('ul', {class: 'fix-list'}, report.codeQuality.map(note => el('li', {text: note})))) : null,
+    ...(report.codeQuality?.length ? [el('section', {class: 'panel'}, el('h2', {text: 'Code quality notes'}), el('ul', {class: 'fix-list'}, report.codeQuality.map(note => el('li', {text: note}))))] : []),
     fixesPanel(report),
     el('section', {class: 'panel'}, el('h2', {text: 'Session'}), el('div', {class: 'stats-grid'}, stat(`${report.stats.minutesUsed} min`, 'time to submit'), stat(report.stats.filesSubmitted, 'files submitted'), stat(report.stats.transcriptWords.toLocaleString(), 'transcript words'))),
     el('details', {class: 'panel'}, el('summary', {}, el('strong', {text: 'Debrief answers'})),
       el('div', {class: 'transcript', style: 'margin-top:12px'}, state.debrief.questions.map((q, i) => el('div', {class: 'item'}, el('small', {text: q}), state.debrief.answers?.[i] || '(no answer)')))),
-    el('div', {class: 'feedback-actions'}, el('a', {class: 'button ghost', href: '#/ai-coding/open-ended'}, 'Back to tasks')));
+    el('div', {class: 'feedback-actions'}, el('a', {class: 'button ghost', href: '#/repos/open-ended'}, 'Back to tasks')));
 }

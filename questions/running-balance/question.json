@@ -1,0 +1,33 @@
+{
+  "id": "running-balance",
+  "title": "Running Balance",
+  "difficulty": "Easy",
+  "maxScore": 30,
+  "skills": ["Arrays", "Implementation"],
+  "summary": "Find when a cash ledger first dips below zero and how low it ever goes.",
+  "statement": "A coffee shop keeps its cash account as a ledger. The account opens with a balance of `b`, and then `n` transactions are applied in order: a positive amount is money coming in and a negative amount is money going out.\n\nThe owner wants two numbers from the ledger:\n\n1. The **1-based index** of the first transaction after which the balance is **below zero**, or `-1` if the balance never drops below zero.\n2. The **lowest balance** the account ever holds, counting the opening balance `b` before any transaction is applied.\n\nA balance of exactly `0` is not below zero.",
+  "functionDescription": "Complete the **auditLedger** function in the editor below.\n\n**auditLedger** has the following parameters:\n\n- `int b`: the opening balance\n- `int transactions[n]`: the transaction amounts, in the order they are applied\n\n**Returns**\n\n- `long[2]`: the index of the first transaction that leaves the balance below zero (or `-1`), followed by the lowest balance",
+  "inputFormat": "The first line contains two space-separated integers, `n` and `b`.\n\nThe second line contains `n` space-separated integers, `transactions[i]`.",
+  "constraints": "- `1 ≤ n ≤ 10^5`\n- `0 ≤ b ≤ 10^9`\n- `-10^9 ≤ transactions[i] ≤ 10^9`",
+  "outputFormat": "Print two space-separated integers on one line: the index of the first transaction after which the balance is below zero (or `-1`), and the lowest balance.",
+  "samples": [
+    {"input": "6 50\n-20 15 -60 40 -30 -25\n", "output": "3 -30\n", "explanation": "The balance goes `50 → 30 → 45 → -15 → 25 → -5 → -30`. It first drops below zero after transaction `3`, and the lowest balance, `-30`, comes after transaction `6`."},
+    {"input": "4 10\n-10 5 -5 8\n", "output": "-1 0\n", "explanation": "The balance goes `10 → 0 → 5 → 0 → 8`. It touches `0` twice but never drops below it, so the first number is `-1`. The lowest balance is `0`."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09"},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2},
+    {"file": "13", "weight": 2}
+  ]
+}

@@ -1,0 +1,9 @@
+a 3
+aa 3
+ab 3
+abc 3
+abcd 3
+abd 3
+b 3
+ba 3
+bab 3

@@ -1,0 +1,31 @@
+{
+  "id": "inventory-range-queries",
+  "title": "Inventory Range Queries",
+  "difficulty": "Hard",
+  "maxScore": 80,
+  "skills": ["Trees", "Arrays"],
+  "summary": "Apply shelf recounts and answer range-total queries over a warehouse aisle.",
+  "statement": "A warehouse aisle has `n` shelves, numbered `1` to `n`, and shelf `i` holds `stock[i]` units. During the day the inventory system receives `q` operations, in order:\n\n- `1 i v`: a recount. Shelf `i` now holds exactly `v` units.\n- `2 l r`: a picker asks for the total number of units on shelves `l` through `r`, inclusive.\n\nProcess the operations in order and answer every type `2` operation using the stock levels at that moment.",
+  "functionDescription": "Complete the **processOperations** function in the editor below.\n\n**processOperations** has the following parameters:\n\n- `int stock[n]`: the initial stock of shelves `1` to `n`\n- `int operations[q][3]`: each operation as `[type, x, y]`, either `[1, i, v]` or `[2, l, r]`\n\n**Returns**\n\n- `long[]`: the answers to the type `2` operations, in order",
+  "inputFormat": "The first line contains two space-separated integers, `n` and `q`.\n\nThe second line contains `n` space-separated integers, `stock[1], …, stock[n]`.\n\nEach of the next `q` lines contains three space-separated integers describing one operation: `1 i v` or `2 l r`.",
+  "constraints": "- `1 ≤ n ≤ 10^5`\n- `1 ≤ q ≤ 10^5`\n- `0 ≤ stock[i] ≤ 10^9`\n- For a recount `1 i v`: `1 ≤ i ≤ n` and `0 ≤ v ≤ 10^9`\n- For a query `2 l r`: `1 ≤ l ≤ r ≤ n`\n- At least one operation is a query",
+  "outputFormat": "Print the answer to each type `2` operation on its own line.",
+  "samples": [
+    {"input": "5 5\n4 0 7 2 9\n2 1 3\n1 2 5\n2 1 3\n1 5 0\n2 3 5\n", "output": "11\n16\n9\n", "explanation": "Shelves `1` to `3` start with `4 + 0 + 7 = 11` units. After shelf `2` is recounted at `5`, the same range totals `16`. After shelf `5` is recounted as empty, shelves `3` to `5` hold `7 + 2 + 0 = 9`."},
+    {"input": "3 3\n1000000000 1000000000 1000000000\n2 1 3\n1 2 0\n2 1 3\n", "output": "3000000000\n2000000000\n", "explanation": "The first total, `3 × 10^9`, does not fit in a 32-bit integer. After shelf `2` is recounted as empty, the total is `2 × 10^9`."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09"},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2}
+  ]
+}

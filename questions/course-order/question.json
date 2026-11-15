@@ -1,0 +1,32 @@
+{
+  "id": "course-order",
+  "title": "Course Order",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "skills": ["Graphs"],
+  "summary": "Find the smallest order to take every course that respects the prerequisites.",
+  "statement": "An online academy offers `n` self-paced courses, numbered `1` to `n`. Some courses have prerequisites: the pair `a b` means course `a` must be finished before course `b` can start.\n\nA student takes the courses one at a time and wants to finish all of them. Find an order of all `n` courses that respects every prerequisite. When several orders work, choose the **lexicographically smallest** one: compare two orders position by position, and at the first position where they differ, the order with the smaller course number there is smaller.\n\nIf the prerequisites form a cycle, no order works, so report `IMPOSSIBLE`.",
+  "functionDescription": "Complete the **courseOrder** function in the editor below.\n\n**courseOrder** has the following parameters:\n\n- `int n`: the number of courses\n- `int prerequisites[m][2]`: each row `[a, b]` means course `a` must come before course `b`\n\n**Returns**\n\n- `string`: the course numbers in order, separated by single spaces, or `IMPOSSIBLE` if no order works",
+  "inputFormat": "The first line contains two space-separated integers, `n` and `m`, the number of courses and prerequisite pairs.\n\nEach of the next `m` lines contains two space-separated integers, `a` and `b`, meaning course `a` must come before course `b`.",
+  "constraints": "- `1 ≤ n ≤ 10^5`\n- `0 ≤ m ≤ 10^5`\n- `1 ≤ a, b ≤ n` and `a ≠ b`\n- The same pair may appear more than once.",
+  "outputFormat": "Print the course order on a single line, or `IMPOSSIBLE`.",
+  "samples": [
+    {"input": "5 4\n3 1\n2 1\n4 5\n3 2\n", "output": "3 2 1 4 5\n", "explanation": "At first only courses `3` and `4` have no unfinished prerequisites, and `3` is smaller. Finishing `3` frees course `2`, now the smallest choice, and finishing `2` frees course `1`. Courses `4` and `5` come last. Orders such as `3 4 2 5 1` also work, but `3 2 1 4 5` is the smallest."},
+    {"input": "3 3\n1 2\n2 3\n3 1\n", "output": "IMPOSSIBLE\n", "explanation": "Course `1` must come before `2`, `2` before `3`, and `3` before `1`. That's a cycle, so no order works."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09", "weight": 2},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

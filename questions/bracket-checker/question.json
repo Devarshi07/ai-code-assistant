@@ -1,0 +1,32 @@
+{
+  "id": "bracket-checker",
+  "title": "Bracket Checker",
+  "difficulty": "Easy",
+  "maxScore": 30,
+  "skills": ["Stacks", "Strings"],
+  "summary": "Decide whether each string of brackets is properly balanced.",
+  "statement": "Before a config file is deployed, a linter strips out everything except the brackets and checks that what is left is well formed.\n\nA string of brackets is **balanced** when every bracket can be paired up so that:\n\n- each pair is an opening bracket followed later by a closing bracket of the same type: `()`, `[]` or `{}`, and\n- pairs nest properly: whatever sits between the two brackets of a pair is itself balanced.\n\nFor example, `[()]{}` is balanced, while `[(])` is not, because the `(` is still open when the `]` arrives.\n\nGiven `q` strings made only of the characters `()[]{}`, decide for each one whether it is balanced.",
+  "functionDescription": "Complete the **isBalanced** function in the editor below.\n\n**isBalanced** has the following parameter:\n\n- `string s`: a string of brackets\n\n**Returns**\n\n- `string`: `YES` if `s` is balanced, otherwise `NO`",
+  "inputFormat": "The first line contains an integer, `q`, the number of strings.\n\nEach of the next `q` lines contains a string, `s`.",
+  "constraints": "- `1 ≤ q ≤ 10^4`\n- `1 ≤ |s| ≤ 10^5`\n- The total length of all `q` strings is at most `5 × 10^5`.\n- Each character of `s` is one of `(`, `)`, `[`, `]`, `{` or `}`.",
+  "outputFormat": "For each string, print `YES` if it is balanced or `NO` if it is not, each on its own line.",
+  "samples": [
+    {"input": "4\n{[()]}\n([)]\n()[]{}\n((\n", "output": "YES\nNO\nYES\nNO\n", "explanation": "`{[()]}` nests three pairs correctly, and `()[]{}` places three pairs side by side. In `([)]` the `)` arrives while `[` is still open, so the pairs cross. In `((` both brackets are left open."},
+    {"input": "3\n)(\n[{}]}\n{{[]}()}\n", "output": "NO\nNO\nYES\n", "explanation": "`)(` starts with a closing bracket that has nothing to close. `[{}]}` is balanced until its last character, a `}` with no partner. `{{[]}()}` is balanced."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09", "weight": 2},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

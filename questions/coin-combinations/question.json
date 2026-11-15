@@ -1,0 +1,33 @@
+{
+  "id": "coin-combinations",
+  "title": "Coin Combinations",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "skills": ["Dynamic Programming"],
+  "summary": "Count the different coin payouts that add up to an exact amount.",
+  "statement": "A ferry terminal's ticket machine pays out change from an unlimited supply of coins in `n` different denominations. Before rolling out new firmware, the operations team wants to know how many **different payouts** add up to exactly `amount`.\n\nTwo payouts are the same if they use the same number of coins of each denomination; the order in which the coins drop out doesn't matter. Paying out `0` takes no coins, which counts as one payout.\n\nThe count can be huge, so return it modulo `10^9 + 7`.",
+  "functionDescription": "Complete the **countWays** function in the editor below.\n\n**countWays** has the following parameters:\n\n- `int amount`: the amount to pay out\n- `int coins[n]`: the coin denominations\n\n**Returns**\n\n- `int`: the number of different payouts, modulo `10^9 + 7`",
+  "inputFormat": "The first line contains two space-separated integers, `n` and `amount`.\n\nThe second line contains `n` space-separated integers, `coins[i]`.",
+  "constraints": "- `1 ≤ n ≤ 100`\n- `0 ≤ amount ≤ 10^5`\n- `1 ≤ coins[i] ≤ 10^5`\n- All `coins[i]` are distinct.",
+  "outputFormat": "Print the number of different payouts modulo `10^9 + 7`.",
+  "samples": [
+    {"input": "3 6\n4 1 3\n", "output": "4\n", "explanation": "The four payouts are `1+1+1+1+1+1`, `1+1+1+3`, `3+3` and `1+1+4`."},
+    {"input": "2 7\n4 6\n", "output": "0\n", "explanation": "Any mix of `4`s and `6`s adds up to an even amount, so `7` can't be paid out."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09"},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2},
+    {"file": "13", "weight": 2}
+  ]
+}

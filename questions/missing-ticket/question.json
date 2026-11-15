@@ -1,0 +1,31 @@
+{
+  "id": "missing-ticket",
+  "title": "Missing Ticket",
+  "difficulty": "Easy",
+  "maxScore": 30,
+  "skills": ["Math", "Bit Manipulation"],
+  "summary": "Find the ticket the scanner logged twice and the ticket it never logged.",
+  "statement": "A theater sells tickets numbered from `1` to `n` for a sold-out show. Every ticket is scanned once at the door, so the scanner's log should list each number from `1` to `n` exactly once.\n\nTonight a glitch made the scanner record one ticket **twice**. The log still has exactly `n` entries, so one other ticket number **never appears** in it.\n\nGiven the log, find the ticket number that appears twice and the ticket number that is missing.",
+  "functionDescription": "Complete the **findDuplicateAndMissing** function in the editor below.\n\n**findDuplicateAndMissing** has the following parameter:\n\n- `int scans[n]`: the ticket numbers in the order they were logged\n\n**Returns**\n\n- `int[2]`: the ticket number that appears twice, followed by the missing ticket number",
+  "inputFormat": "The first line contains an integer, `n`, the number of tickets and of log entries.\n\nThe second line contains `n` space-separated integers, `scans[i]`.",
+  "constraints": "- `2 ≤ n ≤ 2 × 10^5`\n- `1 ≤ scans[i] ≤ n`\n- Exactly one number appears twice in `scans` and exactly one number from `1` to `n` is absent. Every other number from `1` to `n` appears exactly once.",
+  "outputFormat": "Print two space-separated integers: the ticket number that appears twice, then the missing ticket number.",
+  "samples": [
+    {"input": "6\n3 1 4 4 6 2\n", "output": "4 5\n", "explanation": "Ticket `4` was logged twice, and ticket `5` never appears in the log."},
+    {"input": "5\n2 5 1 5 3\n", "output": "5 4\n", "explanation": "Ticket `5` was logged twice. The log still has `5` entries, so one ticket is missing: ticket `4`."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09", "weight": 2},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2}
+  ]
+}

@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
-import {exclusive} from './interview.mjs';
+import {exclusive} from './locks.mjs';
 import {LANGUAGES, readTree, localize} from './problems.mjs';
 import {AREAS, LEVELS, verdictFor, diffText} from './practice-review.mjs';
 import {ensurePythonImage, runPython} from './sandbox.mjs';

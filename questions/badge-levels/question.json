@@ -1,0 +1,32 @@
+{
+  "id": "badge-levels",
+  "title": "Badge Levels",
+  "difficulty": "Easy",
+  "maxScore": 30,
+  "skills": ["Implementation", "Math"],
+  "summary": "Apply a near-miss rounding rule to turn each player's score into the score shown on their badge.",
+  "statement": "A puzzle game awards a badge at every multiple of `m` points. To reward near misses, the game rounds a player's score up to the next badge when they fall just short of it, by less than a grace margin `g`. Beginners are left alone: scores below a threshold `t` are never rounded.\n\nFor a score `s`, let `c` be the smallest multiple of `m` that is greater than or equal to `s`.\n\n- If `s ≥ t` and `c - s < g`, the displayed score is `c`.\n- Otherwise, the displayed score is `s`.\n\nGiven the scores of `n` players, compute every displayed score.",
+  "functionDescription": "Complete the **badgeScores** function in the editor below.\n\n**badgeScores** has the following parameters:\n\n- `int scores[n]`: the players' scores\n- `int m`: the badge step\n- `int g`: the grace margin\n- `int t`: the lowest score that may be rounded\n\n**Returns**\n\n- `int[]`: the displayed scores, in input order",
+  "inputFormat": "The first line contains four space-separated integers, `n`, `m`, `g` and `t`.\n\nThe second line contains `n` space-separated integers, `scores[i]`.",
+  "constraints": "- `1 ≤ n ≤ 10^5`\n- `1 ≤ m ≤ 10^9`\n- `0 ≤ g ≤ 10^9`\n- `0 ≤ t ≤ 10^9`\n- `0 ≤ scores[i] ≤ 10^9`",
+  "outputFormat": "Print `n` lines: the displayed score of each player, in input order.",
+  "samples": [
+    {"input": "5 5 3 40\n39 42 43 59 60\n", "output": "39\n42\n45\n60\n60\n", "explanation": "`39` is below `t = 40`, so it is never rounded, even though it is only 1 short of 40. `42` is 3 short of 45, which is not less than `g = 3`, so it stays. `43` and `59` fall short by less than 3 and round up to `45` and `60`. `60` is already a multiple of 5."},
+    {"input": "4 100 25 0\n0 180 275 1000000000\n", "output": "0\n200\n275\n1000000000\n", "explanation": "`0` is a multiple of every `m`, so it stays `0`. `180` is 20 short of 200 and rounds up, but `275` is exactly 25 short of 300 and stays. `1000000000` is already a multiple of 100."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09"},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

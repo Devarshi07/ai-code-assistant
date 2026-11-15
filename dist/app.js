@@ -1,550 +1,228 @@
-// Real-world repo practice: the lobby (random SWE-bench tasks, short incidents,
-// GitHub import and search) and a full-screen workspace for any codebase.
-import {$, el, api, waitJob, notify, busy, clock, store, icon, splitter} from './ui.js';
-import {CodeEditor} from './editor.js';
-import {renderMarkdown, languageOf} from './markdown.js';
+// The app shell: navigation, routing, local setup, the home page, your
+// activity and the guide. Each area lives in its own module.
+import {$, el, api, waitJob, notify, store, icon, icons, DIFFICULTY_CLASS, VERDICT_CLASS} from './ui.js';
+import {renderMarkdown} from './markdown.js';
 
-const root = $('repo-ide');
-const FOLDER_LIMIT = 400;
-const refs = {};
-let runtimes = {}, current = null, editor = null, tabs = [], active = null, index = new Map(), expanded = new Set(['']);
-let filterText = '', chatHistory = [], lastOutput = '', lastResult = null, running = false, locked = false;
-let sideTab = 'brief', panelTab = 'output', clockTimer = null, smallModel = 'qwen2.5-coder:0.5b';
+const views = ['home', 'questions', 'repos', 'mock', 'activity', 'guide', 'feedback', 'open', 'mockreport'];
+const fullscreens = ['coding-ide', 'ade', 'mock-room'];
+let status = null;
+const modules = {};
+const load = name => modules[name] ||= import(`./${name}.js`);
 
-const dirty = tab => !!tab && tab.content !== tab.saved;
-// interview-ui.js still uses the original (tag, text, className) helper.
-const legacyEl = (tag, text, className) => { const node = document.createElement(tag); node.textContent = text; if (className) node.className = className; return node; };
+export function getStatus() { return status; }
 
-// ---------- lobby ----------
-async function status() {
-  const state = await api('/api/status');
-  smallModel = state.model || smallModel;
-  $('setupStatus').textContent = `Docker: ${state.docker ? 'ready' : 'not running'} · Ollama: ${state.ollama ? 'connected' : 'not running'} · 0.5B copilot: ${state.modelReady ? 'ready' : 'not downloaded'} · 3B interviewer: ${state.interviewerReady ? 'ready' : 'not downloaded'}`;
+// ---------- shell ----------
+function show(name) {
+  for (const view of views) $(`view-${view}`).hidden = view !== name;
+  document.body.dataset.view = name;
+  $('sidebar').classList.remove('open');
+  $('sidebarToggle').setAttribute('aria-expanded', 'false');
+}
+function setNav(key) {
+  for (const link of document.querySelectorAll('.nav-link')) link.classList.toggle('active', link.dataset.nav === key);
+}
+async function closeFullscreens(except) {
+  for (const id of fullscreens) {
+    if (id === except || $(id).hidden) continue;
+    const module = {'coding-ide': 'coding', ade: 'ade', 'mock-room': 'mock'}[id];
+    try { const m = await load(module); await m.closeFullscreen?.(); } catch {}
+    $(id).hidden = true;
+  }
+  document.body.classList.toggle('fs-open', fullscreens.some(id => !$(id).hidden));
+}
+export function enterFullscreen(id) {
+  for (const other of fullscreens) if (other !== id) $(other).hidden = true;
+  $(id).hidden = false;
+  document.body.classList.add('fs-open');
 }
 
-function initLobby() {
-  $('setupButton').addEventListener('click', () => { $('setup').showModal(); status().catch(error => notify(error.message, 'error')); });
-  $('closeSetup').onclick = () => $('setup').close();
-  $('refreshStatus').onclick = event => busy(event.currentTarget, status);
-  $('pull').onclick = event => busy(event.currentTarget, async () => {
-    $('setupStatus').textContent = 'Downloading the model. This can take several minutes…';
-    await waitJob(await api('/api/model/pull', {}), text => { $('setupStatus').textContent = text; });
-    await status();
-  });
-  $('randomTask').onclick = event => busy(event.currentTarget, async () => {
-    const task = await waitJob(await api('/api/task/random', {language: $('taskLanguage').value, scope: $('taskScope').value}), text => { $('taskProgress').textContent = text; });
-    $('taskProgress').textContent = task.recycled ? 'You have seen every matching task. Starting a new rotation.' : `${task.total} tasks in this rotation`;
-    const open = el('button', {class: 'primary'}, 'Open this codebase');
-    open.onclick = e => busy(e.currentTarget, async () => {
-      await enter(await waitJob(await api('/api/task/start', {taskId: task.id}), text => { $('taskProgress').textContent = text; }));
-      $('taskProgress').textContent = '';
-    });
-    const preview = $('taskPreview');
-    preview.hidden = false;
-    preview.replaceChildren(
-      el('h3', {text: task.repo}),
-      el('p', {text: task.brief.slice(0, 1800)}),
-      el('small', {text: `${task.id} · ${task.created.slice(0, 10)} · ${task.commit.slice(0, 12)}${task.difficulty ? ' · estimated fix: ' + task.difficulty : ''}`}),
-      open);
-  });
-  $('importForm').onsubmit = event => { event.preventDefault(); busy(event.submitter, async () => enter(await api('/api/session', {url: $('repoUrl').value.trim()})), 'Cloning…'); };
-  $('searchForm').onsubmit = event => {
-    event.preventDefault();
-    busy(event.submitter, async () => {
-      const repos = await api('/api/search?q=' + encodeURIComponent($('query').value));
-      $('results').replaceChildren(...(repos.length ? repos.map(repo => {
-        const button = el('button', {}, 'Practice with this repo');
-        button.onclick = e => busy(e.currentTarget, async () => enter(await api('/api/session', {url: repo.url})), 'Cloning…');
-        return el('article', {class: 'repo'}, el('a', {href: repo.url, target: '_blank', rel: 'noreferrer', text: repo.name}), el('p', {text: `${repo.language ? repo.language + ' · ' : ''}${repo.description || 'No description provided.'}`}), button);
-      }) : [el('p', {text: 'No repositories found. Try another search.'})]));
-    });
-  };
-}
+const REDIRECTS = {'#/ai-coding': '#/repos/guided', '#/ai-coding/open-ended': '#/repos/open-ended', '#/history': '#/activity', '#/': '#/home', '': '#/home'};
 
-async function renderChallenges() {
-  const challenges = await api('/api/challenges');
-  $('challenges').replaceChildren(...challenges.map((challenge, i) => {
-    const start = el('button', {class: 'primary'}, 'Start debugging →');
-    start.onclick = event => busy(event.currentTarget, async () => enter(await api('/api/session', {challenge: challenge.id})));
-    return el('article', {class: 'card'}, el('span', {class: 'card-number', text: `0${i + 1}`}), el('h3', {text: challenge.title}), el('p', {text: challenge.brief}),
-      el('footer', {}, el('span', {text: `${challenge.category} · ${challenge.minutes} min`}), start));
-  }));
-}
-
-async function renderResume() {
-  $('repoResume')?.remove();
-  let id = store.get('debug-gym-session', null);
-  // The original workspace stored the id as a raw string rather than JSON.
-  if (!id) try { id = localStorage.getItem('debug-gym-session'); } catch {}
-  if (!id || !/^[a-f0-9-]{36}$/.test(String(id))) return;
+async function route() {
+  let hash = location.hash || '#/home';
+  if (REDIRECTS[hash] !== undefined) { location.replace(REDIRECTS[hash]); return; }
+  const parts = hash.slice(2).split('/');
+  if (parts[0] === 'practice' && parts[1]) { location.replace(`#/ade/practice/${parts[1]}`); return; }
+  if (parts[0] === 'repo' && parts[1]) { location.replace(`#/ade/repo/${parts[1]}`); return; }
+  document.querySelector('.menu.floating')?.remove();
+  const [section, a, b, c, d] = parts;
   try {
-    const session = await api('/api/session?id=' + id);
-    $('repoResume')?.remove();
-    $('lobby').prepend(el('div', {class: 'notice-banner info resume-banner', id: 'repoResume'},
-      el('p', {}, el('strong', {text: 'Continue where you left off: '}), session.title),
-      el('button', {class: 'primary', onclick: () => enter(session)}, 'Open workspace')));
-  } catch { store.remove('debug-gym-session'); }
-}
-
-// ---------- workspace layout ----------
-function buildIde() {
-  refs.back = el('button', {class: 'icon-button', id: 'back', 'aria-label': 'Back to repositories', title: 'Back to repositories', onclick: () => { location.hash = '#/repos'; }}, icon('back'));
-  refs.title = el('strong');
-  refs.chips = el('span', {class: 'ide-chips'});
-  refs.heading = el('div', {class: 'work-heading'});
-  refs.timer = el('div', {class: 'timer', title: 'Time since this session started'});
-  const top = el('header', {class: 'ide-top'}, refs.back, el('div', {class: 'ide-title'}, refs.title, refs.chips), el('span', {class: 'topbar-spacer'}), refs.heading, refs.timer);
-
-  refs.filter = el('input', {class: 'tree-filter', type: 'search', placeholder: 'Find a file…', 'aria-label': 'Filter files by path'});
-  refs.filter.addEventListener('input', () => { filterText = refs.filter.value.trim().toLowerCase(); renderTree(); });
-  refs.count = el('div', {class: 'tree-count'});
-  refs.tree = el('div', {class: 'file-tree', role: 'tree'});
-  refs.newFile = el('button', {class: 'icon-button', id: 'newFile', title: 'New file', 'aria-label': 'New file', onclick: newFile}, icon('plus'));
-  const explorer = el('aside', {class: 'explorer', 'aria-label': 'Files'},
-    el('div', {class: 'pane-header'}, el('span', {text: 'Explorer'}), refs.newFile),
-    el('div', {class: 'tree-tools'}, refs.filter, refs.count), refs.tree);
-
-  refs.tabs = el('div', {class: 'tabs-bar', role: 'tablist'});
-  refs.cursor = el('span');
-  refs.saveState = el('span');
-  refs.save = el('button', {class: 'button small', id: 'save', onclick: () => saveAll().catch(error => notify(error.message, 'error'))}, 'Save');
-  const tabsRow = el('div', {class: 'tabs-bar'}, refs.tabs, el('span', {class: 'tabs-spacer'}),
-    el('div', {class: 'editor-status'}, refs.cursor, refs.saveState, el('span', {}, el('kbd', {text: 'Ctrl'}), '+', el('kbd', {text: 'S'}), ' save · ', el('kbd', {text: 'Ctrl'}), '+', el('kbd', {text: 'Enter'}), ' run'), refs.save));
-  const editorHost = el('div');
-  editor = new CodeEditor(editorHost, {
-    onChange: value => { if (!active) return; active.content = value; renderTabs(); },
-    onSave: () => saveAll().catch(error => notify(error.message, 'error')),
-    onRun: () => runTests(),
-    onCursor: ({line, column}) => { refs.cursor.textContent = `Ln ${line}, Col ${column}`; }
-  });
-  editor.input.id = 'editor';
-
-  refs.testState = el('span', {class: 'count', text: 'Not run'});
-  refs.outputTab = el('button', {class: 'panel-tab', onclick: () => setPanel('output')}, 'Output', refs.testState);
-  refs.envTab = el('button', {class: 'panel-tab', onclick: () => setPanel('env')}, 'Environment');
-  refs.envSummary = el('button', {class: 'run-status env-summary', title: 'Change the test command or image', onclick: () => setPanel('env')});
-  refs.run = el('button', {class: 'button primary small', id: 'run', onclick: () => runTests()});
-  refs.panelBody = el('div', {class: 'panel-body'});
-  const bottom = el('section', {class: 'bottom'},
-    el('div', {class: 'bottom-bar'}, refs.outputTab, refs.envTab, el('div', {class: 'run-group'}, refs.envSummary, refs.run)),
-    refs.panelBody);
-  const bottomSplit = el('div', {class: 'splitter horizontal', role: 'separator', 'aria-orientation': 'horizontal'});
-  const center = el('section', {class: 'center'}, tabsRow, editorHost, bottomSplit, bottom);
-
-  refs.briefTab = el('button', {class: 'side-tab', onclick: () => setSide('brief')}, icon('file'), 'Brief');
-  refs.copilotTab = el('button', {class: 'side-tab', onclick: () => setSide('copilot')}, icon('spark'), 'Copilot');
-  refs.brief = el('div', {class: 'instructions'});
-  refs.copilot = buildCopilot();
-  refs.sidePanel = el('div', {class: 'side-panel'});
-  const side = el('aside', {class: 'side', 'aria-label': 'Brief and copilot'}, el('div', {class: 'side-tabs', role: 'tablist'}, refs.briefTab, refs.copilotTab), refs.sidePanel);
-
-  const explorerSplit = el('div', {class: 'splitter', role: 'separator', 'aria-orientation': 'vertical'});
-  const panelSplit = el('div', {class: 'splitter', role: 'separator', 'aria-orientation': 'vertical'});
-  root.append(top, el('div', {class: 'ide-main'}, explorer, explorerSplit, center, panelSplit, side));
-  for (const [name, value] of Object.entries(store.get('dg-repo-sizes', {}))) root.style.setProperty(name, value + 'px');
-  splitter(root, explorerSplit, '--explorer-w', x => x - explorer.getBoundingClientRect().left, 160, 520, 'dg-repo-sizes');
-  splitter(root, panelSplit, '--panel-w', x => window.innerWidth - x, 300, 760, 'dg-repo-sizes');
-  splitter(root, bottomSplit, '--bottom-h', (x, y) => center.getBoundingClientRect().bottom - y, 90, 700, 'dg-repo-sizes');
-  root.addEventListener('keydown', event => {
-    if (!(event.ctrlKey || event.metaKey) || event.target.closest('.code-editor')) return;
-    if (event.key.toLowerCase() === 's') { event.preventDefault(); saveAll().catch(error => notify(error.message, 'error')); }
-    if (event.key === 'Enter') { event.preventDefault(); runTests(); }
-  });
-  renderRun();
-}
-
-// Called by the mock interviewer: lock editing when the interview has ended.
-function setLocked(lock, lockBack) {
-  locked = !!lock;
-  editor.setReadOnly(locked || !active);
-  refs.save.disabled = locked;
-  refs.newFile.disabled = locked;
-  refs.back.disabled = !!lockBack;
-  renderRun();
-}
-
-// ---------- session ----------
-async function openSession(input) {
-  const id = typeof input === 'string' ? input : input.id;
-  if (current?.id === id && !root.hidden) return;
-  const session = typeof input === 'string' ? await api('/api/session?id=' + id) : input;
-  if (current && current.id !== session.id && tabs.some(dirty)) await saveAll().catch(() => {});
-  current = session;
-  tabs = []; active = null; chatHistory = []; lastOutput = ''; lastResult = null; filterText = ''; refs.filter.value = '';
-  buildIndex();
-  expanded = new Set(['']);
-  refs.title.textContent = current.title;
-  const runtime = runtimes[current.runtime || 'node'];
-  refs.chips.replaceChildren(
-    el('span', {class: 'chip', text: runtime?.label || current.runtime || 'Code'}),
-    el('span', {class: 'chip', text: current.benchmark ? 'SWE-bench task' : current.source?.startsWith('https://github.com') ? 'GitHub import' : 'Practice incident'}));
-  configureEnvironment();
-  setTestState('Not run');
-  renderBrief();
-  renderMessages();
-  setSide(sideTab, false);
-  setPanel('output');
-  editor.setDocument('', {placeholder: 'Open a file from the explorer.'});
-  renderTabs();
-  renderTree();
-  root.hidden = false;
-  document.body.classList.add('ide-open');
-  store.set('debug-gym-session', session.id);
-  clearInterval(clockTimer);
-  clockTimer = setInterval(tick, 1000);
-  tick();
-  const first = current.files.find(name => /^readme(\.\w+)?$/i.test(name))
-    || current.files.find(name => /\.(mjs|js|py|go|rs|java|rb|php|ts|c|cpp)$/.test(name) && !/(test|spec)/i.test(name))
-    || current.files[0];
-  if (first) await openFile(first).catch(error => notify(error.message, 'error'));
-  window.dispatchEvent(new CustomEvent('gym-session', {detail: session}));
-}
-
-function enter(session) {
-  if (location.hash !== `#/repo/${session.id}`) history.pushState(null, '', `#/repo/${session.id}`);
-  document.body.dataset.view = 'repos';
-  return openSession(session);
-}
-
-async function closeIde() {
-  if (root.hidden) return;
-  if (tabs.some(dirty) && !locked) await saveAll().catch(() => {});
-  root.hidden = true;
-  document.body.classList.remove('ide-open');
-  clearInterval(clockTimer);
-  renderResume();
-}
-
-function tick() {
-  if (current) refs.timer.replaceChildren(icon('clock'), clock(Date.now() - current.started));
-}
-
-// ---------- explorer ----------
-function buildIndex() {
-  index = new Map([['', {dirs: [], files: []}]]);
-  for (const name of current.files) {
-    const parts = name.split('/');
-    let path = '';
-    for (let i = 0; i < parts.length - 1; i++) {
-      const next = path ? `${path}/${parts[i]}` : parts[i];
-      if (!index.has(next)) { index.set(next, {dirs: [], files: []}); index.get(path).dirs.push(next); }
-      path = next;
+    if (section === 'question' && a) {
+      await closeFullscreens('coding-ide');
+      setNav('questions');
+      await (await load('coding')).openQuestion($('coding-ide'), a);
+      return;
     }
-    index.get(path).files.push(name);
-  }
-  for (const entry of index.values()) { entry.dirs.sort((a, b) => a.localeCompare(b)); entry.files.sort((a, b) => a.localeCompare(b)); }
-}
-
-function fileRow(name, depth, label = name.split('/').pop(), hint = '') {
-  return el('button', {class: `tree-row${active?.path === name ? ' active' : ''}`, style: `padding-left:${24 + depth * 14}px`, role: 'treeitem', title: name, onclick: () => openFile(name).catch(error => notify(error.message, 'error'))},
-    icon('file'), el('span', {class: 'tree-label', text: label}), hint ? el('span', {class: 'tree-hint', text: hint}) : null);
-}
-
-function renderTree() {
-  if (!current) return;
-  const rows = [];
-  if (filterText) {
-    const matches = current.files.filter(name => name.toLowerCase().includes(filterText));
-    refs.count.textContent = `${matches.length.toLocaleString()} match${matches.length === 1 ? '' : 'es'}${matches.length > 300 ? ' · showing 300' : ''}`;
-    for (const name of matches.slice(0, 300)) {
-      const slash = name.lastIndexOf('/');
-      rows.push(fileRow(name, 0, name.slice(slash + 1), slash > 0 ? name.slice(0, slash) : ''));
+    if (section === 'ade' && a && b) {
+      await closeFullscreens('ade');
+      setNav(c === 'mock' ? 'mock' : 'repos');
+      await (await load('ade')).openAde($('ade'), a, b, {mock: c === 'mock' ? d : null});
+      return;
     }
-    if (!matches.length) rows.push(el('p', {class: 'placeholder', text: 'No files match.'}));
-  } else {
-    refs.count.textContent = `${current.files.length.toLocaleString()} files`;
-    const walk = (dir, depth) => {
-      const entry = index.get(dir);
-      for (const sub of entry.dirs) {
-        const open = expanded.has(sub);
-        rows.push(el('button', {class: `tree-row${open ? ' open' : ''}`, style: `padding-left:${10 + depth * 14}px`, role: 'treeitem', 'aria-expanded': String(open), title: sub,
-          onclick: () => { open ? expanded.delete(sub) : expanded.add(sub); renderTree(); }},
-          icon('chevron', 'icon chev'), icon('folder'), el('span', {class: 'tree-label', text: sub.split('/').pop()})));
-        if (open) walk(sub, depth + 1);
-      }
-      for (const name of entry.files.slice(0, FOLDER_LIMIT)) rows.push(fileRow(name, depth));
-      if (entry.files.length > FOLDER_LIMIT) rows.push(el('p', {class: 'placeholder', style: `padding-left:${24 + depth * 14}px`, text: `${entry.files.length - FOLDER_LIMIT} more files. Use Find a file.`}));
-    };
-    walk('', 0);
-  }
-  refs.tree.replaceChildren(...rows);
-}
-
-function reveal(name) {
-  const parts = name.split('/');
-  for (let i = 1; i < parts.length; i++) expanded.add(parts.slice(0, i).join('/'));
-}
-
-// ---------- tabs & files ----------
-function renderTabs() {
-  refs.tabs.replaceChildren(...tabs.map(tab => el('button', {class: `file-tab${tab === active ? ' active' : ''}`, role: 'tab', 'aria-selected': String(tab === active), title: tab.path, onclick: event => { if (!event.target.closest('.close')) openFile(tab.path).catch(error => notify(error.message, 'error')); }},
-    tab.path.split('/').pop(),
-    dirty(tab) ? el('span', {class: 'dirty', title: 'Unsaved changes'}) : null,
-    el('span', {class: 'close', role: 'button', 'aria-label': `Close ${tab.path}`, onclick: () => closeTab(tab)}, '×'))));
-  refs.saveState.textContent = !active ? '' : dirty(active) ? 'Unsaved' : 'Saved';
-}
-
-async function openFile(name) {
-  if (active) active.view = editor.viewState();
-  let tab = tabs.find(t => t.path === name);
-  if (!tab) {
-    const file = await api(`/api/file?id=${current.id}&path=${encodeURIComponent(name)}`);
-    tab = {path: name, content: file.content, saved: file.content};
-    tabs.push(tab);
-  }
-  active = tab;
-  editor.setDocument(tab.content, {language: languageOf(name)});
-  editor.setReadOnly(locked);
-  editor.restore(tab.view);
-  reveal(name);
-  renderTabs();
-  if (!filterText) renderTree();
-  else for (const row of refs.tree.querySelectorAll('.tree-row')) row.classList.toggle('active', row.title === name);
-  refs.tree.querySelector('.tree-row.active')?.scrollIntoView({block: 'nearest'});
-}
-
-async function closeTab(tab) {
-  if (dirty(tab) && !locked) await saveTab(tab).catch(error => notify(error.message, 'error'));
-  const position = tabs.indexOf(tab);
-  tabs.splice(position, 1);
-  if (active !== tab) { renderTabs(); return; }
-  active = null;
-  const next = tabs[position] || tabs[position - 1];
-  if (next) await openFile(next.path);
-  else { editor.setDocument('', {placeholder: 'Open a file from the explorer.'}); renderTabs(); renderTree(); }
-}
-
-async function saveTab(tab) {
-  if (!dirty(tab)) return;
-  const content = tab.content;
-  await api('/api/file', {id: current.id, path: tab.path, content});
-  tab.saved = content;
-}
-
-async function saveAll() {
-  if (!current) return;
-  if (active) active.content = editor.value;
-  for (const tab of tabs) if (dirty(tab)) await saveTab(tab);
-  renderTabs();
-}
-
-function newFile() {
-  if (!current || locked) return;
-  const input = el('input', {value: active ? active.path.replace(/[^/]+$/, '') : '', maxlength: 500, placeholder: 'tests/test_regression.py', 'aria-label': 'File path', style: 'width:100%'});
-  const dialog = el('dialog', {class: 'dialog small'});
-  const close = () => { dialog.close(); dialog.remove(); };
-  dialog.append(el('form', {onsubmit: async event => {
-    event.preventDefault();
-    const name = input.value.trim();
-    close();
-    if (!name) return;
-    try {
-      await saveAll();
-      current.files = (await api('/api/file/create', {id: current.id, path: name})).files;
-      buildIndex();
-      await openFile(name);
-    } catch (error) { notify(error.message, 'error'); }
-  }},
-    el('h2', {text: 'New file'}),
-    el('p', {text: 'A relative path. Missing folders are created, for example tests/test_regression.py.'}),
-    input,
-    el('div', {class: 'dialog-actions'}, el('button', {class: 'button ghost', type: 'button', onclick: close}, 'Cancel'), el('button', {class: 'button primary', type: 'submit'}, 'Create'))));
-  document.body.append(dialog);
-  dialog.showModal();
-  input.focus();
-}
-
-// ---------- running ----------
-function configureEnvironment() {
-  const runtime = runtimes[current.runtime || 'node'] || runtimes.node;
-  refs.env = {
-    runtime: el('select', {'aria-label': 'Language runtime'}, Object.entries(runtimes).map(([id, r]) => el('option', {value: id, text: r.label}))),
-    command: el('input', {'aria-label': 'Test command', value: current.benchmark ? 'Task-specific regression suite' : runtime.command}),
-    image: el('input', {'aria-label': 'Runtime image', value: current.benchmark ? current.image : runtime.image})
-  };
-  refs.env.runtime.value = current.runtime || 'node';
-  for (const field of Object.values(refs.env)) field.disabled = !!current.benchmark;
-  refs.env.runtime.onchange = () => {
-    const chosen = runtimes[refs.env.runtime.value];
-    refs.env.command.value = chosen.command;
-    refs.env.image.value = chosen.image;
-    renderEnvSummary();
-  };
-  refs.env.command.oninput = renderEnvSummary;
-  renderEnvSummary();
-}
-
-function renderEnvSummary() {
-  refs.envSummary.textContent = current.benchmark ? 'Task regression suite' : `${runtimes[refs.env.runtime.value]?.label || ''} · ${refs.env.command.value}`.slice(0, 60);
-}
-
-function renderRun() {
-  refs.run.disabled = running || locked || !current;
-  refs.run.replaceChildren(icon('play'), running ? 'Running…' : 'Run tests');
-}
-
-function setPanel(name) {
-  panelTab = name;
-  refs.outputTab.classList.toggle('active', name === 'output');
-  refs.envTab.classList.toggle('active', name === 'env');
-  if (name !== 'env') { renderOutput(); return; }
-  refs.panelBody.replaceChildren(el('div', {class: 'env-panel'},
-    el('label', {}, 'Runtime', refs.env.runtime),
-    el('label', {}, 'Test command', refs.env.command),
-    el('label', {}, 'Image (must contain the project\'s dependencies)', refs.env.image),
-    el('p', {class: 'placeholder', text: current.benchmark
-      ? 'This SWE-bench task uses its own prepared image and regression script. Read the output yourself: a finished run is not a correctness score.'
-      : 'Commands run in a disposable copy of the code with no network access. Compilers are included, but third-party dependencies need a prepared image.'})));
-}
-
-function renderOutput(message) {
-  if (panelTab !== 'output') return;
-  const pre = el('pre', {class: 'output-view'});
-  if (message) pre.append(el('span', {class: 'meta'}, el('span', {class: 'spinner', style: 'display:inline-block;vertical-align:middle;margin-right:8px'}), message));
-  else if (!lastResult) pre.append(el('span', {class: 'meta', text: current?.benchmark ? 'Run the task\'s regression suite to see what fails before you change anything.' : 'Run the tests to establish your starting point.'}));
-  else for (const line of lastResult.output.split('\n').slice(-3000)) {
-    const kind = /\b(FAIL(ED|URE)?|ERROR|Error|panicked|failed|AssertionError|Traceback)\b/.test(line) ? 'stderr' : /\b(PASS(ED)?|ok|OK)\b/.test(line) ? 'ok' : '';
-    pre.append(kind ? el('span', {class: kind, text: line + '\n'}) : line + '\n');
-  }
-  refs.panelBody.replaceChildren(pre);
-  refs.panelBody.scrollTop = refs.panelBody.scrollHeight;
-}
-
-function setTestState(text, kind = '') {
-  refs.testState.textContent = text;
-  refs.testState.className = `count ${kind}`;
-}
-
-async function runTests() {
-  if (running || locked || !current) return;
-  running = true;
-  renderRun();
-  setPanel('output');
-  setTestState('Running');
-  renderOutput('Starting an isolated container…');
-  try {
-    await saveAll();
-    const result = await waitJob(await api('/api/run', {id: current.id, runtime: refs.env.runtime.value, image: refs.env.image.value, command: refs.env.command.value}), message => renderOutput(message));
-    lastResult = {...result, output: result.output || '(no output)'};
-    lastOutput = result.output;
-    if (result.timedOut) setTestState('Timed out', 'bad');
-    else if (result.benchmark) setTestState('Suite finished');
-    else setTestState(result.code === 0 ? 'Passed' : `Exit ${result.code}`, result.code === 0 ? 'good' : 'bad');
+    if (section === 'mock' && a) {
+      await closeFullscreens('mock-room');
+      setNav('mock');
+      await (await load('mock')).openRoom($('mock-room'), a);
+      return;
+    }
+    await closeFullscreens();
+    if (section === 'questions') { show('questions'); setNav('questions'); document.title = 'Coding questions · Debug Gym'; await (await load('coding')).renderLibrary($('view-questions')); }
+    else if (section === 'repos') { show('repos'); setNav('repos'); document.title = 'Code repos · Debug Gym'; await (await load('repos')).renderRepos($('view-repos'), a || 'guided'); }
+    else if (section === 'feedback' && a) { show('feedback'); setNav('activity'); document.title = 'Feedback · Debug Gym'; await (await load('repos')).renderFeedback($('view-feedback'), a); }
+    else if (section === 'open' && a) { show('open'); setNav('repos'); document.title = 'Open-ended session · Debug Gym'; await (await load('open-ended')).renderOpenSession($('view-open'), a, {loadStatus}); }
+    else if (section === 'mock') { show('mock'); setNav('mock'); document.title = 'Mock interviews · Debug Gym'; await (await load('mock')).renderMockLobby($('view-mock')); }
+    else if (section === 'mockreport' && a) { show('mockreport'); setNav('mock'); document.title = 'Interview feedback · Debug Gym'; await (await load('mock')).renderReport($('view-mockreport'), a); }
+    else if (section === 'activity') { show('activity'); setNav('activity'); document.title = 'Your activity · Debug Gym'; await renderActivity(); }
+    else if (section === 'guide') { show('guide'); setNav('guide'); document.title = 'How it works · Debug Gym'; renderGuide(); }
+    else { show('home'); setNav('home'); document.title = 'Debug Gym · AI-assisted coding practice'; await renderHome(); }
   } catch (error) {
-    lastResult = {output: error.message};
-    setTestState('Could not run', 'bad');
     notify(error.message, 'error');
-  } finally {
-    running = false;
-    renderRun();
-    renderOutput();
+    if (section === 'question') location.hash = '#/questions';
+    else if (section === 'ade') location.hash = '#/repos';
+    else if (section === 'mock' && a) location.hash = '#/mock';
   }
 }
 
-// ---------- brief ----------
-function renderBrief() {
-  const meta = [];
-  if (current.source?.startsWith('http')) meta.push(el('a', {href: current.source, target: '_blank', rel: 'noreferrer', text: current.source.replace(/^https:\/\/(github\.com|huggingface\.co\/datasets)\//, '').replace(/\.git$/, '')}));
-  else if (current.source) meta.push(el('span', {text: current.source}));
-  if (current.commit) meta.push(el('span', {class: 'chip', text: `commit ${current.commit.slice(0, 12)}`}));
-  if (current.difficulty) meta.push(el('span', {class: 'chip', text: `estimated fix: ${current.difficulty}`}));
-  let expected = [];
-  try { expected = Array.isArray(current.expectedFailures) ? current.expectedFailures : JSON.parse(current.expectedFailures || '[]'); } catch {}
-  refs.brief.replaceChildren(
-    el('h2', {class: 'brief-title', text: current.title}),
-    el('div', {class: 'brief-meta'}, meta),
-    el('div', {class: 'md brief-text'}, renderMarkdown(current.brief || '')),
-    expected.length ? el('details', {class: 'overview-card'}, el('summary', {text: `Tests the fix should make pass (${expected.length})`}), el('ul', {class: 'expected-tests'}, expected.slice(0, 50).map(name => el('li', {}, el('code', {text: name}))))) : null,
-    el('div', {class: 'notice-banner info'}, el('p', {text: current.benchmark
-      ? 'Workflow: run the regression suite, read the failure, find the code responsible, fix it, then run the suite again.'
-      : 'Workflow: read the README and tests, run a baseline, reproduce a failure, make a small fix, and verify it.'})));
-}
-
-// ---------- copilot ----------
-function buildCopilot() {
-  refs.model = el('select', {'aria-label': 'Copilot model', onchange: () => store.set('dg-repo-model', refs.model.value)});
-  refs.messages = el('div', {class: 'messages', role: 'log', 'aria-live': 'polite'});
-  refs.prompt = el('textarea', {rows: 1, placeholder: 'Ask your copilot…', 'aria-label': 'Message the copilot', maxlength: 4000});
-  refs.send = el('button', {class: 'icon-button', 'aria-label': 'Send', title: 'Send (Enter)', onclick: () => sendCopilot()}, icon('send'));
-  refs.prompt.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); sendCopilot(); } });
-  refs.prompt.addEventListener('input', () => { refs.prompt.style.height = 'auto'; refs.prompt.style.height = Math.min(160, refs.prompt.scrollHeight) + 'px'; });
-  return el('div', {class: 'ai-panel'},
-    el('div', {class: 'assistant-head'}, el('span', {text: 'Model'}), refs.model, el('span', {class: 'context-chip'}, icon('file'), 'Sees the open file and last run')),
-    refs.messages,
-    el('div', {class: 'composer'}, el('div', {class: 'composer-box'}, refs.prompt, refs.send), el('div', {class: 'hint', text: 'The default 0.5B copilot is deliberately small: check what it tells you. It can\'t edit files or run code.'})));
-}
-
-async function loadModels() {
-  try {
-    const models = await api('/api/models');
-    const preferred = store.get('dg-repo-model', null);
-    refs.model.replaceChildren(...models.models.map(m => el('option', {value: m.name, text: `${m.name}${m.parameterSize ? ' · ' + m.parameterSize : ''}${m.name === smallModel ? ' (default)' : ''}`})));
-    refs.model.value = models.models.some(m => m.name === preferred) ? preferred : models.models.some(m => m.name === smallModel) ? smallModel : models.models[0]?.name || '';
-    if (!models.models.length) refs.model.append(el('option', {value: '', text: 'No models installed'}));
-  } catch { refs.model.replaceChildren(el('option', {value: '', text: 'Ollama not running'})); }
-}
-
-function copilotNode(message) {
-  if (message.role === 'user') return el('div', {class: 'msg user', text: message.content});
-  if (message.role === 'error') return el('div', {class: 'msg error', text: message.content});
-  return el('div', {class: 'msg assistant'}, el('div', {class: 'who'}, icon('spark'), message.model || 'Copilot'), el('div', {class: 'md'}, renderMarkdown(message.content, {language: languageOf(active?.path || '') || ''})));
-}
-
-function renderMessages(pending) {
-  const nodes = chatHistory.map(copilotNode);
-  if (!nodes.length && !pending) nodes.push(el('div', {class: 'assistant-empty'}, el('h3', {text: 'Practice copilot'}),
-    el('p', {text: 'Run the tests, inspect the failure, then ask what to investigate. It sees the file open in the editor, the brief and your latest test output.'})));
-  if (pending) nodes.push(el('div', {class: 'msg user', text: pending}), el('div', {class: 'msg assistant'}, el('div', {class: 'who'}, icon('spark'), refs.model.value || 'Copilot'), el('p', {}, el('span', {class: 'spinner', style: 'display:inline-block;vertical-align:middle;margin-right:8px'}), 'Thinking…')));
-  refs.messages.replaceChildren(...nodes);
-  refs.messages.scrollTop = refs.messages.scrollHeight;
-}
-
-async function sendCopilot() {
-  const prompt = refs.prompt.value.trim();
-  if (!prompt || !current || refs.send.disabled) return;
-  refs.send.disabled = true;
-  refs.prompt.value = '';
-  refs.prompt.style.height = 'auto';
-  renderMessages(prompt);
-  try {
-    if (!locked) await saveAll();
-    const past = chatHistory.filter(m => m.role !== 'error').map(({role, content}) => ({role, content}));
-    const answer = await api('/api/chat', {id: current.id, path: active?.path || '', prompt, history: past, output: lastOutput, model: refs.model.value});
-    chatHistory.push({role: 'user', content: prompt}, {role: 'assistant', content: answer.content, model: answer.model});
-  } catch (error) {
-    chatHistory.push({role: 'user', content: prompt}, {role: 'error', content: error.message});
-  } finally {
-    refs.send.disabled = false;
-    renderMessages();
-  }
-}
-
-function setSide(name, focus = true) {
-  sideTab = name;
-  refs.briefTab.classList.toggle('active', name === 'brief');
-  refs.copilotTab.classList.toggle('active', name === 'copilot');
-  refs.sidePanel.replaceChildren(name === 'copilot' ? refs.copilot : refs.brief);
-  if (name === 'copilot' && focus) refs.prompt.focus();
-}
-
-// ---------- start ----------
-window.addEventListener('beforeunload', event => { if (tabs.some(dirty)) { event.preventDefault(); event.returnValue = ''; } });
-
-async function init() {
-  runtimes = await api('/api/runtimes');
-  buildIde();
-  initLobby();
-  window.gym = {
-    api, waitJob, enter, notify, el: legacyEl,
-    save: saveAll,
-    current: () => current,
-    file: () => active?.path || '',
-    isDirty: () => tabs.some(dirty),
-    setLocked, openSession, closeIde
+function initShell() {
+  for (const node of document.querySelectorAll('.nav-icon')) node.innerHTML = icons[node.dataset.icon] || '';
+  $('sidebarToggle').onclick = () => {
+    const open = !$('sidebar').classList.contains('open');
+    $('sidebar').classList.toggle('open', open);
+    $('sidebarToggle').setAttribute('aria-expanded', String(open));
   };
-  window.dispatchEvent(new Event('gym-ready'));
-  await import('./interview-ui.js').catch(error => notify(error.message, 'error'));
-  await Promise.all([status().catch(() => {}), renderChallenges().catch(error => notify(error.message, 'error')), loadModels()]);
-  renderResume();
+  const theme = () => document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const paint = () => { $('themeToggle').innerHTML = theme() === 'dark' ? icons.sun : icons.moon; };
+  $('themeToggle').onclick = () => {
+    const next = theme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    store.set('dg-theme', next);
+    paint();
+  };
+  paint();
+  $('setupButton').addEventListener('click', () => { $('setup').showModal(); renderSetup(); });
+  $('closeSetup').onclick = () => $('setup').close();
+  $('refreshStatus').onclick = () => renderSetup();
+  const pull = model => async event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      const result = await api('/api/model/pull', {model});
+      await waitJob(result, text => { $('setupStatus').textContent = text; });
+      $('setupStatus').textContent = `${model} is ready.`;
+      await renderSetup();
+    } catch (error) { $('setupStatus').textContent = error.message; }
+    finally { button.disabled = false; }
+  };
+  $('pullChat').onclick = pull('qwen3:8b');
+  $('pullCoder').onclick = pull('qwen2.5-coder:3b');
+  window.addEventListener('hashchange', route);
 }
-init().catch(error => notify(error.message, 'error'));
+
+export async function loadStatus() {
+  const [base, models] = await Promise.allSettled([api('/api/status'), api('/api/models')]);
+  status = {
+    docker: base.status === 'fulfilled' && base.value.docker,
+    ollama: base.status === 'fulfilled' && base.value.ollama,
+    models: models.status === 'fulfilled' ? models.value : {models: [], assistant: null, reviewer: null}
+  };
+  const health = $('health');
+  const ready = status.ollama && status.models.models.length;
+  health.textContent = ready ? '●' : '○';
+  health.className = `health ${ready && status.docker ? 'ok' : ready ? 'partial' : ''}`;
+  health.title = ready ? (status.docker ? 'AI and Docker ready' : 'AI ready · Docker not running') : 'Ollama not running or no models';
+  return status;
+}
+
+async function renderSetup() {
+  const box = $('setupModels');
+  box.replaceChildren(el('div', {class: 'progress-line'}, el('span', {class: 'spinner'}), 'Checking local services…'));
+  const s = await loadStatus();
+  const fim = s.models.models.find(m => m.insert);
+  const row = (label, ok, detail) => el('div', {class: 'row'}, el('span', {text: label}), el('span', {class: ok ? 'ok' : 'bad', text: detail}));
+  box.replaceChildren(
+    row('Ollama', s.ollama, s.ollama ? 'Running' : 'Not running'),
+    row('Assistant, agent and interviewer', !!s.models.assistant, s.models.assistant || 'No chat model installed'),
+    row('Feedback reviewer', !!s.models.reviewer, s.models.reviewer || 'None. Feedback uses rule-based scores only'),
+    row('Inline suggestions', !!fim, fim ? fim.name : 'No fill-in-the-middle model'),
+    row('Docker (code execution)', s.docker, s.docker ? 'Running' : 'Not running'));
+}
+
+// ---------- home ----------
+async function renderHome() {
+  const root = $('view-home');
+  const [questions, problems, mocks, s] = await Promise.all([
+    api('/api/coding/questions').catch(() => []), api('/api/problems').catch(() => []), api('/api/mock/list').catch(() => []), status ? Promise.resolve(status) : loadStatus().catch(() => null)]);
+  const solved = questions.filter(q => q.status === 'solved').length;
+  const reviewed = problems.filter(p => p.best).length;
+  const card = (href, iconName, title, text, meta, cta) => el('a', {class: 'track-card', href},
+    el('div', {class: 'track-icon'}, icon(iconName)),
+    el('h2', {text: title}), el('p', {text}),
+    el('div', {class: 'track-meta', text: meta}),
+    el('span', {class: 'track-cta'}, cta, icon('chevron')));
+  const banners = [];
+  if (s && !s.ollama) banners.push(el('div', {class: 'notice-banner'}, icon('bulb'), el('p', {}, 'Ollama isn\'t running, so the AI assistant, agent and interviewer are off. Start Ollama and download a model (', el('code', {text: 'ollama pull qwen3:8b'}), ').')));
+  if (s && !s.docker) banners.push(el('div', {class: 'notice-banner'}, icon('bulb'), el('p', {text: 'Docker Desktop isn\'t running. Start it to run code for coding questions, Python repos and real-world repos. Guided JavaScript repos still run in your browser.'})));
+  const recent = mocks.slice(0, 3);
+  root.replaceChildren(
+    el('div', {class: 'home-hero'},
+      el('p', {class: 'eyebrow', text: 'AI-assisted interview practice'}),
+      el('h1', {text: 'Practise the way AI-assisted coding interviews really run.'}),
+      el('p', {class: 'page-lead', text: 'Solve coding questions with an AI assistant at your side, work through real codebases with an AI agent you direct and review, and rehearse with an AI interviewer who gives you a scored report.'})),
+    ...banners,
+    el('div', {class: 'track-grid'},
+      card('#/questions', 'code', 'Coding questions', 'Single-file problems with hidden test cases in Python, JavaScript, Java, C++ and Go. Run against samples, submit for a score, and ask the AI assistant when you\'re stuck.', `${questions.length} questions · ${solved} solved`, 'Solve a question'),
+      card('#/repos', 'repo', 'Code repos', 'Multi-file codebases in an AI-assisted development environment: file tree, editor, diff, terminal and an agent with Ask, Plan and Agent modes. Guided problems, real open-source issues, or any GitHub repo.', `${problems.length} guided problems · ${reviewed} reviewed`, 'Open a code repo'),
+      card('#/mock', 'mic', 'Mock interviews', 'A live interview with an AI interviewer, by text or voice. A coding interview, or an AI-fluency interview where you work with the agent while it watches. Scored feedback at the end.', `${mocks.length} interview${mocks.length === 1 ? '' : 's'} taken`, 'Start an interview')),
+    recent.length ? el('section', {class: 'panel'}, el('div', {class: 'panel-title-row'}, el('h2', {text: 'Recent interviews'}), el('a', {href: '#/activity', text: 'All activity →'})),
+      el('div', {class: 'recent-list'}, recent.map(m => el('a', {class: 'recent-row', href: m.status === 'ended' ? `#/mockreport/${m.id}` : m.type === 'fluency' ? `#/ade/practice/${m.practiceId}/mock/${m.id}` : `#/mock/${m.id}`},
+        el('span', {class: 'recent-title', text: m.title}), el('span', {class: 'muted', text: `${m.type === 'coding' ? 'Coding interview' : 'AI fluency'} · ${new Date(m.started).toLocaleDateString()}`}),
+        m.recommendation ? el('span', {class: `result-chip verdict-text ${VERDICT_CLASS[m.recommendation]}`, text: m.recommendation}) : el('span', {class: 'status-pill active', text: m.status === 'active' ? 'In progress' : 'Reviewing'}))))) : el('span'));
+}
+
+// ---------- activity ----------
+async function renderActivity() {
+  const root = $('view-activity');
+  root.replaceChildren(el('div', {class: 'progress-line'}, el('span', {class: 'spinner'}), 'Loading your activity…'));
+  const [questions, practice, open, repos, mocks] = await Promise.all([
+    api('/api/coding/questions').catch(() => []), api('/api/practice/history').catch(() => []), api('/api/open/history').catch(() => []), api('/api/repos/history').catch(() => []), api('/api/mock/list').catch(() => [])]);
+  const label = {active: 'In progress', debrief: 'Awaiting debrief', reviewing: 'Reviewing', ended: 'Reviewed'};
+  const rows = [
+    ...mocks.map(m => ({at: m.started, kind: m.type === 'coding' ? 'Mock · coding' : 'Mock · AI fluency', title: m.title, status: m.status === 'ended' ? 'Feedback ready' : m.status === 'active' ? 'In progress' : 'Reviewing', result: m.recommendation, href: m.status === 'ended' ? `#/mockreport/${m.id}` : m.type === 'fluency' ? `#/ade/practice/${m.practiceId}/mock/${m.id}` : `#/mock/${m.id}`})),
+    ...practice.filter(p => !p.mock).map(p => ({at: p.started, kind: 'Guided repo', title: p.title, status: label[p.status] || p.status, result: p.verdict || (p.phasesPassed !== undefined ? `${p.phasesPassed}/3 phases` : ''), href: p.status === 'ended' ? `#/feedback/${p.id}` : `#/ade/practice/${p.id}`})),
+    ...repos.map(r => ({at: r.started, kind: r.benchmark ? 'Real-world repo' : r.challenge ? 'Incident' : 'GitHub repo', title: r.title, status: 'Open', result: '', href: `#/ade/repo/${r.id}`})),
+    ...open.map(o => ({at: o.started, kind: 'Take-home', title: o.title, status: label[o.status] || o.status, result: o.verdict || '', href: `#/open/${o.id}`}))
+  ].sort((x, y) => (y.at || 0) - (x.at || 0));
+  const attempted = questions.filter(q => q.status !== 'new');
+  root.replaceChildren(
+    el('div', {class: 'page-title'}, el('h1', {text: 'Your activity'})),
+    el('p', {class: 'page-lead', text: 'Everything is stored locally in the .sessions folder. Reopen a workspace, resume an interview or read your feedback.'}),
+    el('div', {class: 'stats-grid'},
+      stat(questions.filter(q => q.status === 'solved').length, 'questions solved'), stat(attempted.length, 'questions attempted'),
+      stat(practice.filter(p => !p.mock).length + repos.length, 'code repo sessions'), stat(mocks.length, 'mock interviews')),
+    attempted.length ? el('section', {class: 'panel'}, el('h2', {text: 'Coding questions'}),
+      el('table', {class: 'mini-table'}, el('thead', {}, el('tr', {}, el('th', {text: 'Question'}), el('th', {text: 'Difficulty'}), el('th', {text: 'Status'}), el('th', {text: 'Best score'}))),
+        el('tbody', {}, attempted.map(q => el('tr', {}, el('td', {}, el('a', {href: `#/question/${q.id}`, text: q.title})), el('td', {}, el('span', {class: `difficulty ${DIFFICULTY_CLASS[q.difficulty]}`, text: q.difficulty})),
+          el('td', {}, el('span', {class: `status-pill ${q.status === 'solved' ? 'passed' : 'active'}`, text: q.status === 'solved' ? 'Solved' : 'Attempted'})), el('td', {text: q.best ? `${q.best.score} / ${q.maxScore}` : '—'})))))) : el('span'),
+    el('section', {class: 'panel'}, el('h2', {text: 'Sessions and interviews'}),
+      rows.length ? el('table', {class: 'mini-table'}, el('thead', {}, el('tr', {}, el('th', {text: 'What'}), el('th', {text: 'Type'}), el('th', {text: 'Started'}), el('th', {text: 'Status'}), el('th', {text: 'Result'}))),
+        el('tbody', {}, rows.map(r => el('tr', {}, el('td', {}, el('a', {href: r.href, text: r.title})), el('td', {text: r.kind}), el('td', {text: r.at ? new Date(r.at).toLocaleString() : '—'}), el('td', {text: r.status}),
+          el('td', {}, r.result ? el('span', {class: `result-chip ${VERDICT_CLASS[r.result] ? 'verdict-text ' + VERDICT_CLASS[r.result] : ''}`, text: r.result}) : '—'))))) : el('p', {class: 'muted', text: 'Nothing yet. Pick a coding question, open a code repo or start a mock interview.'})));
+}
+const stat = (value, label) => el('div', {class: 'stat'}, el('strong', {text: String(value)}), el('span', {text: label}));
+
+// ---------- guide ----------
+function renderGuide() {
+  const section = (title, md) => el('section', {class: 'panel guide-section'}, el('h2', {text: title}), el('div', {class: 'md'}, renderMarkdown(md)));
+  $('view-guide').replaceChildren(el('div', {class: 'guide'},
+    el('div', {class: 'page-title'}, el('h1', {text: 'How it works'})),
+    el('p', {class: 'page-lead', text: 'AI-assisted interviews give you an AI assistant and judge how you use it: whether you stay in control, verify what it produces, and can explain your decisions. Debug Gym recreates the three formats you are likely to meet.'}),
+    section('Coding questions', 'A statement, a starter template whose `main` already reads **stdin** and prints to **stdout**, and a function for you to complete.\n\n- **Run Code** compiles your program and runs the sample test cases. Tick **Test against custom input** to try your own input.\n- **Submit Code** runs every test case, including hidden ones, and scores you by the share of weighted test cases passed (30, 50 or 80 points for Easy, Medium and Hard).\n- Verdicts: *Success*, *Wrong Answer*, *Runtime Error*, *Terminated due to timeout* (time limits: Python and JavaScript 10 s, Java and Go 4 s, C++ 2 s) and *Compilation error*.\n- The **AI assistant** beside the editor sees the statement and your code. Use *Guided* help for hints only, or *Full* help when you want code.'),
+    section('Code repos and the AI agent', 'Code repos open in an AI-assisted development environment: a file tree and editor, a Diff view of everything changed, a Terminal and Tests, and the AI assistant in the middle.\n\n- **Ask** answers questions and reads files. **Plan** investigates and proposes numbered steps. **Agent** edits files, runs commands and runs the tests.\n- Every edit or command the agent wants to make appears as a **pending tool call**: review the diff, then **Allow** or **Cancel**.\n- Type **@** to attach a file, the problem statement, your changes, the terminal output or the latest test results. Type **/** for commands such as `/fix`, `/review` and `/plan`.\n- Each message is a **checkpoint**: *Restore checkpoint* undoes every change the agent made from that message on.\n- **Guided** repos have three timed phases (debug, build, optimize) and end with a debrief and a scored review of problem solving, control over the AI, verification and communication. **Real-world** repos come from public bug-fix datasets with their regression tests. You can also import **any GitHub repository**.'),
+    section('Mock interviews', '- **Coding interview:** the AI interviewer presents a question, asks for your approach and its complexity, watches your runs and submissions, gives hints when you ask, and follows up after you submit. Talk by text or, in browsers that support it, by voice.\n- **AI-fluency interview:** you solve a guided code repo with the AI agent while the interviewer asks how you frame tasks for the AI, judge its output and steer it.\n- Ending the interview produces a report: each area is scored from 1 to 5 within bounds set by the recorded evidence (tests passed, runs, words spoken, prompts and approvals), with an overall recommendation from **Strong Hire** to **No Hire**. For 15 minutes afterwards you can ask the interviewer about the feedback.'),
+    section('Good habits the scores reward', '1. **Orient first.** Read the statement or the code before your first prompt.\n2. **Plan, then delegate one scoped task at a time.** Name files, functions and constraints.\n3. **Review every change before you approve it, then run the tests.** Never stack unverified AI changes.\n4. **Explain** your approach, its complexity and what the AI got right or wrong.'),
+    el('p', {class: 'disclaimer', text: 'Scores come from local models and recorded evidence. They are practice feedback, not a hiring decision. Debug Gym is an independent practice tool and is not affiliated with any interview platform.'})));
+}
+
+initShell();
+loadStatus().catch(() => {});
+route();

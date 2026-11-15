@@ -1,0 +1,32 @@
+{
+  "id": "toll-roads-with-pass",
+  "title": "Toll Roads With a Pass",
+  "difficulty": "Hard",
+  "maxScore": 80,
+  "skills": ["Graphs", "Heaps"],
+  "summary": "Find the cheapest trip from town 1 to town n when one road's toll can be halved.",
+  "statement": "A region has `n` towns, numbered `1` to `n`, linked by `m` two-way toll roads. A road connects towns `u` and `v` and charges `c` coins every time you drive it. Several roads may connect the same pair of towns.\n\nYou have one **half-price pass**. You may use it on at most one road of your trip, and that road then costs `⌊c / 2⌋` coins (rounded down) instead of `c`.\n\nFind the minimum total toll for a trip from town `1` to town `n`. If town `n` can't be reached, report `-1`.",
+  "functionDescription": "Complete the **cheapestTrip** function in the editor below.\n\n**cheapestTrip** has the following parameters:\n\n- `int n`: the number of towns\n- `int roads[m][3]`: each row `[u, v, c]` is a two-way road between towns `u` and `v` with toll `c`\n\n**Returns**\n\n- `long`: the minimum total toll from town `1` to town `n`, or `-1` if town `n` can't be reached",
+  "inputFormat": "The first line contains two space-separated integers, `n` and `m`.\n\nEach of the next `m` lines contains three space-separated integers, `u`, `v` and `c`, describing a road.",
+  "constraints": "- `2 ≤ n ≤ 10^5`\n- `0 ≤ m ≤ 10^5`\n- `1 ≤ u, v ≤ n` and `u ≠ v`\n- `1 ≤ c ≤ 10^6`",
+  "outputFormat": "Print the minimum total toll as a single integer, or `-1` if town `n` can't be reached.",
+  "samples": [
+    {"input": "5 6\n1 2 30\n2 3 20\n3 5 25\n1 5 101\n2 4 7\n4 5 70\n", "output": "50\n", "explanation": "Without the pass, the cheapest trip is `1 → 2 → 3 → 5` for `30 + 20 + 25 = 75` coins, and the best discount on that route gives `15 + 20 + 25 = 60`. Using the pass on the direct road `1 → 5` costs only `⌊101 / 2⌋ = 50`."},
+    {"input": "4 3\n1 2 4\n2 1 6\n3 4 2\n", "output": "-1\n", "explanation": "Towns `1` and `2` are linked by two roads, but no road connects them to towns `3` or `4`, so town `4` can't be reached."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09", "weight": 2},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "id": "weighted-edit-distance",
+  "title": "Weighted Edit Distance",
+  "difficulty": "Hard",
+  "maxScore": 80,
+  "skills": ["Dynamic Programming", "Strings"],
+  "summary": "Find the cheapest way to turn one string into another when inserts, deletes and replacements cost different amounts.",
+  "statement": "A document-sync service sends edit scripts instead of whole files. To turn the old version `a` of a line into the new version `b`, it can apply three operations, each with its own cost:\n\n- **Insert** one character anywhere: `insertCost`\n- **Delete** one character: `deleteCost`\n- **Replace** one character with a different character: `replaceCost`\n\nFind the minimum total cost of turning `a` into `b`.\n\n**Follow-up:** a full table of subproblems uses `O(|a| × |b|)` memory. Can you solve it with `O(min(|a|, |b|))` extra memory?",
+  "functionDescription": "Complete the **minimumEditCost** function in the editor below.\n\n**minimumEditCost** has the following parameters:\n\n- `string a`: the old version\n- `string b`: the new version\n- `int insertCost`: the cost of inserting one character\n- `int deleteCost`: the cost of deleting one character\n- `int replaceCost`: the cost of replacing one character\n\n**Returns**\n\n- `long`: the minimum total cost of turning `a` into `b`",
+  "inputFormat": "The first line contains the string `a`.\n\nThe second line contains the string `b`.\n\nThe third line contains three space-separated integers: `insertCost`, `deleteCost` and `replaceCost`.",
+  "constraints": "- `1 ≤ |a|, |b| ≤ 3000`\n- `a` and `b` contain only lowercase English letters\n- `1 ≤ insertCost, deleteCost, replaceCost ≤ 10^6`",
+  "outputFormat": "Print the minimum total cost as a single integer.",
+  "samples": [
+    {"input": "monday\nmoney\n2 3 4\n", "output": "7\n", "explanation": "Keep `mon`, replace `d` with `e` (cost `4`), delete `a` (cost `3`) and keep `y`: `4 + 3 = 7`. Deleting `d` and `a` and inserting `e` would cost `3 + 3 + 2 = 8`."},
+    {"input": "abc\nadc\n1 1 5\n", "output": "2\n", "explanation": "Replacing `b` with `d` costs `5`, but deleting `b` (cost `1`) and inserting `d` (cost `1`) costs only `2`."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08", "weight": 2},
+    {"file": "09", "weight": 2},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

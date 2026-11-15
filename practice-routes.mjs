@@ -24,7 +24,12 @@ export function practiceRoutes({SESSIONS, run, listFiles, job, ollama, OLLAMA}) 
     const tags = await ollama('/api/tags', null, 4000);
     const list = tags.models
       .filter(m => !(m.capabilities || []).includes('embedding') && !/embed/i.test(m.name))
-      .map(m => ({name: m.name, parameterSize: m.details?.parameter_size || '', family: m.details?.family || '', thinking: (m.capabilities || []).includes('thinking'), size: m.size}));
+      .map(m => {
+        const caps = m.capabilities || [];
+        // Older Ollama builds omit capabilities from /api/tags; assume tool support then.
+        return {name: m.name, parameterSize: m.details?.parameter_size || '', family: m.details?.family || '', size: m.size,
+          thinking: caps.includes('thinking'), tools: caps.length ? caps.includes('tools') : true, insert: caps.length ? caps.includes('insert') : /coder/i.test(m.name), vision: caps.includes('vision')};
+      });
     const pick = (preference, env) => list.find(m => m.name === env) || preference.map(name => list.find(m => m.name === name)).find(Boolean) || [...list].sort((a, b) => (b.size || 0) - (a.size || 0))[0] || null;
     return {models: list, assistant: pick(ASSISTANT_PREFERENCE, process.env.DG_ASSISTANT_MODEL)?.name || null, reviewer: pick(REVIEW_PREFERENCE, process.env.DG_REVIEW_MODEL)?.name || null};
   }
@@ -64,7 +69,7 @@ export function practiceRoutes({SESSIONS, run, listFiles, job, ollama, OLLAMA}) 
     if (req.method === 'GET' && p === '/api/problems') {
       const [problems, history] = await Promise.all([loadProblems(), listPractice(SESSIONS)]);
       return problems.map(problem => {
-        const attempts = history.filter(h => h.problemId === problem.id);
+        const attempts = history.filter(h => h.problemId === problem.id && !h.mock);
         const best = attempts.filter(a => a.score !== null).sort((a, b) => b.score - a.score)[0];
         const active = attempts.find(a => a.status === 'active' || a.status === 'debrief' || a.status === 'reviewing');
         return {...problemSummary(problem), attempts: attempts.length, best: best ? {verdict: best.verdict, score: best.score, id: best.id} : null, active: active ? {id: active.id, status: active.status, language: active.language} : null};

@@ -3,7 +3,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
-import {exclusive} from './interview.mjs';
+import {exclusive} from './locks.mjs';
 import {LANGUAGES, overlay, localize, problemFor, readTree} from './problems.mjs';
 
 const STATE = 'practice.json';
@@ -260,12 +260,15 @@ export function summarize(state) {
   const runs = events.filter(e => e.type === 'run');
   const prompts = events.filter(e => e.type === 'prompt');
   const pastes = events.filter(e => e.type === 'paste');
-  const aiPastes = pastes.filter(e => e.fromAI);
+  const pastedAI = pastes.filter(e => e.fromAI);
+  // Code the agent wrote counts like pasted AI code.
+  const agentEdits = events.filter(e => (e.type === 'save' || e.type === 'create') && e.source === 'ai');
+  const aiPastes = [...pastedAI, ...agentEdits].sort((a, b) => a.at - b.at);
   const copies = events.filter(e => e.type === 'copy');
-  const saves = events.filter(e => e.type === 'save');
+  const saves = events.filter(e => e.type === 'save' || e.type === 'create');
   const firstPrompt = prompts[0];
   const end = state.ended || Math.min(Date.now(), state.deadline);
-  // Verification: did a run follow each AI paste before the next prompt/paste?
+  // Verification: did a run follow each AI change before the next prompt or pasted AI code?
   let verified = 0;
   for (const paste of aiPastes) {
     const later = events.filter(e => e.at > paste.at);
@@ -286,7 +289,8 @@ export function summarize(state) {
     firstPromptMinute: firstPrompt ? Math.round((firstPrompt.at - state.started) / 6000) / 10 : null,
     filesOpenedBeforeFirstPrompt: new Set(events.filter(e => e.type === 'open' && (!firstPrompt || e.at < firstPrompt.at)).map(e => e.path)).size,
     aiPastes: aiPastes.length,
-    aiPastedChars: aiPastes.reduce((s, p) => s + (p.chars || 0), 0),
+    agentEdits: agentEdits.length,
+    aiPastedChars: pastedAI.reduce((s, p) => s + (p.chars || 0), 0),
     typedPasteChars: pastes.filter(p => !p.fromAI).reduce((s, p) => s + (p.chars || 0), 0),
     aiCopies: copies.length,
     aiPastesVerified: verified,
@@ -396,7 +400,9 @@ export async function listPractice(sessionsDir) {
     if (!entry.isDirectory()) continue;
     const state = await readPractice(path.join(sessionsDir, entry.name)).catch(() => null);
     if (!state || state.kind !== 'structured') continue;
-    items.push({id: state.id, problemId: state.problemId, language: state.language, title: state.title, started: state.started, status: state.status, phasesPassed: state.phases.filter(p => p.passedAt).length, verdict: state.report?.verdict || null, score: state.report?.average ?? null});
+    // A session whose timer ran out is awaiting its debrief, even before it is reopened.
+    const status = state.status === 'active' && Date.now() >= state.deadline ? 'debrief' : state.status;
+    items.push({id: state.id, problemId: state.problemId, language: state.language, title: state.title, started: state.started, status, phasesPassed: state.phases.filter(p => p.passedAt).length, verdict: state.report?.verdict || null, score: state.report?.average ?? null, mock: state.mock || null});
   }
   return items.sort((a, b) => b.started - a.started);
 }

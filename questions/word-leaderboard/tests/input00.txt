@@ -1,0 +1,4 @@
+3 3
+the cat sat on the mat
+the dog sat
+a cat and a dog

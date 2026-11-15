@@ -90,13 +90,23 @@ function inline(text) {
   return html.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${codes[Number(i)]}</code>`);
 }
 
-function codeBlock(code, language, {onCopy} = {}) {
+function codeBlock(code, language, {onCopy, codeActions = []} = {}) {
   const wrapper = document.createElement('div');
   wrapper.className = 'md-code';
   const bar = document.createElement('div');
   bar.className = 'md-code-bar';
   const label = document.createElement('span');
   label.textContent = language || 'text';
+  // Extra buttons, such as "Insert in editor", supplied by the caller.
+  const extras = codeActions.map(({label: text, title, action}) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'md-copy';
+    button.textContent = text;
+    if (title) button.title = title;
+    button.addEventListener('click', () => action(code, language));
+    return button;
+  });
   const copy = document.createElement('button');
   copy.type = 'button';
   copy.className = 'md-copy';
@@ -107,7 +117,7 @@ function codeBlock(code, language, {onCopy} = {}) {
     setTimeout(() => { copy.textContent = 'Copy'; }, 1500);
     onCopy?.(code);
   });
-  bar.append(label, copy);
+  bar.append(label, ...extras, copy);
   const pre = document.createElement('pre');
   const element = document.createElement('code');
   element.innerHTML = highlight(code, language);

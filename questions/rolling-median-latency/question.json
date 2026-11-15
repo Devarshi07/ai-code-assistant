@@ -1,0 +1,32 @@
+{
+  "id": "rolling-median-latency",
+  "title": "Rolling Median Latency",
+  "difficulty": "Hard",
+  "maxScore": 80,
+  "skills": ["Heaps", "Sliding Window"],
+  "summary": "Report the median latency of every window of k consecutive requests.",
+  "statement": "An API gateway records the latency, in milliseconds, of every request it serves. Its on-call dashboard plots a **rolling median**: for every block of `k` consecutive requests, the median latency of that block. Unlike an average, the median is not dragged around by a single slow request.\n\nGiven the latencies of `n` requests in arrival order and the window size `k`, compute the median of each of the `n - k + 1` windows `latency[i..i+k-1]`, from left to right.\n\nThe dashboard uses the **lower median**: sort the window's `k` values in non-decreasing order, keeping duplicates, and take the value at 1-based position `⌈k / 2⌉`. For odd `k` this is the middle value; for even `k` it is the smaller of the two middle values.",
+  "functionDescription": "Complete the **rollingMedian** function in the editor below.\n\n**rollingMedian** has the following parameters:\n\n- `int latency[n]`: the request latencies, in arrival order\n- `int k`: the window size\n\n**Returns**\n\n- `int[n - k + 1]`: the lower median of each window, from left to right",
+  "inputFormat": "The first line contains two space-separated integers, `n` and `k`.\n\nThe second line contains `n` space-separated integers, `latency[i]`.",
+  "constraints": "- `1 ≤ k ≤ n ≤ 10^5`\n- `1 ≤ latency[i] ≤ 10^9`",
+  "outputFormat": "Print the `n - k + 1` medians on a single line, separated by spaces.",
+  "samples": [
+    {"input": "8 3\n12 40 7 33 25 18 90 61\n", "output": "12 33 25 25 25 61\n", "explanation": "The six windows of size `3` sort to `7 12 40`, `7 33 40`, `7 25 33`, `18 25 33`, `18 25 90` and `18 61 90`. With odd `k`, each median is the middle value."},
+    {"input": "6 4\n5 9 2 9 6 1\n", "output": "5 6 2\n", "explanation": "The first window `[5, 9, 2, 9]` sorts to `2 5 9 9`. With `k = 4` the lower median is the value at position `⌈4 / 2⌉ = 2`, which is `5`. The other windows sort to `2 6 9 9` and `1 2 6 9`, giving `6` and `2`."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09"},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

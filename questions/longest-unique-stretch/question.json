@@ -1,0 +1,32 @@
+{
+  "id": "longest-unique-stretch",
+  "title": "Longest Unique Stretch",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "skills": ["Sliding Window", "Strings", "Hash Tables"],
+  "summary": "Find the longest part of a status stream in which no character repeats.",
+  "statement": "A router reports its state as a stream of one-character status codes, and a network engineer wants to know how long it can go without repeating itself. A **unique stretch** is a contiguous part of the stream in which no character appears more than once.\n\nGiven the stream as a string `s`, find the length of the longest unique stretch and the index where it starts. Indices start at `0`. If several unique stretches share the maximum length, report the one that starts earliest.",
+  "functionDescription": "Complete the **longestUniqueStretch** function in the editor below.\n\n**longestUniqueStretch** has the following parameter:\n\n- `string s`: the status stream\n\n**Returns**\n\n- `int[2]`: the length of the longest unique stretch, followed by the index where it starts",
+  "inputFormat": "A single line containing the string `s`.",
+  "constraints": "- `1 ≤ |s| ≤ 10^5`\n- Every character of `s` is a printable ASCII character other than a space (character codes `33` to `126`), so letters, digits and symbols such as `!`, `#` and `~` can all appear.",
+  "outputFormat": "Print two space-separated integers: the length of the longest unique stretch and the index where it starts.",
+  "samples": [
+    {"input": "ab#ca#b!\n", "output": "5 3\n", "explanation": "The stretch `ca#b!` starts at index `3` and has no repeated character. Every stretch of length `6` repeats at least one of `a`, `b` or `#`."},
+    {"input": "1213121\n", "output": "3 1\n", "explanation": "`213` (starting at index `1`) and `312` (starting at index `3`) both have length `3` with no repeats, and every stretch of length `4` repeats `1`. The earlier one starts at index `1`."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09", "weight": 2},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2},
+    {"file": "12", "weight": 2}
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "anagram-groups",
+  "title": "Anagram Groups",
+  "difficulty": "Easy",
+  "maxScore": 30,
+  "skills": ["Strings", "Hash Tables"],
+  "summary": "Group words that are rearrangements of each other, then count the groups and find the largest.",
+  "statement": "A word-puzzle app collects words from players for its daily letter scramble. Before publishing, the editors want to see how the submissions cluster. Two words belong to the same **anagram group** if one can be rearranged into the other, that is, both use exactly the same letters the same number of times.\n\nGiven a list of `n` lowercase words, find the number of anagram groups and the size of the largest group.\n\nEvery word in the list belongs to exactly one group, and a repeated word counts once for each time it appears: the list `bat`, `tab`, `bat` forms a single group of size `3`.",
+  "functionDescription": "Complete the **anagramGroups** function in the editor below.\n\n**anagramGroups** has the following parameter:\n\n- `string words[n]`: the submitted words\n\n**Returns**\n\n- `int[2]`: the number of anagram groups, followed by the size of the largest group",
+  "inputFormat": "The first line contains an integer, `n`, the number of words.\n\nEach of the next `n` lines contains a single word, `words[i]`.",
+  "constraints": "- `1 ≤ n ≤ 10^5`\n- `1 ≤ |words[i]| ≤ 100`\n- The total length of all words is at most `10^6`.\n- Each `words[i]` contains only lowercase English letters, `a` to `z`.",
+  "outputFormat": "Print two space-separated integers: the number of anagram groups and the size of the largest group.",
+  "samples": [
+    {"input": "7\nstone\nnotes\npots\nonset\ntops\ntones\ncat\n", "output": "3 4\n", "explanation": "`stone`, `notes`, `onset` and `tones` each use the letters `e`, `n`, `o`, `s` and `t` once, so they form one group of size `4`. `pots` and `tops` form a second group, and `cat` is alone in a third. There are `3` groups, and the largest has `4` words."},
+    {"input": "5\nab\nba\nab\naab\nb\n", "output": "3 3\n", "explanation": "The repeated word `ab` counts twice, so the group `ab`, `ba`, `ab` has size `3`. `aab` has an extra `a`, so it is not an anagram of `ab` and forms its own group, as does `b`."}
+  ],
+  "tests": [
+    {"file": "00", "sample": true},
+    {"file": "01", "sample": true},
+    {"file": "02"},
+    {"file": "03"},
+    {"file": "04"},
+    {"file": "05"},
+    {"file": "06"},
+    {"file": "07"},
+    {"file": "08"},
+    {"file": "09", "weight": 2},
+    {"file": "10", "weight": 2},
+    {"file": "11", "weight": 2}
+  ]
+}

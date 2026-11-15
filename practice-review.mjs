@@ -81,7 +81,7 @@ export function bounds(state, stats) {
   }
   verification.evidence = [
     `Ran the tests ${stats.testRuns} time${stats.testRuns === 1 ? '' : 's'}${stats.mainRuns ? ` and the program ${stats.mainRuns} time${stats.mainRuns === 1 ? '' : 's'}` : ''}.`,
-    stats.aiPastes ? `${stats.aiPastesVerified} of ${stats.aiPastes} pastes of AI code were followed by a run before the next prompt.` : 'No AI-generated code was pasted into the editor.',
+    stats.aiPastes ? `${stats.aiPastesVerified} of ${stats.aiPastes} AI code changes (pasted, or applied by the agent) were followed by a test run before the next prompt.` : 'No AI-generated code was pasted or applied.',
     stats.customTests ? 'Added and ran custom tests.' : 'Did not add tests of their own.'
   ];
   result.verification = verification;
@@ -95,7 +95,8 @@ export function bounds(state, stats) {
       `Sent ${stats.prompts} prompt${stats.prompts === 1 ? '' : 's'} (about ${stats.avgPromptChars} characters each); ${stats.specificPrompts} named specific files, functions or classes.`,
       stats.firstPromptMinute !== null ? `First prompt at minute ${stats.firstPromptMinute}, after opening ${stats.filesOpenedBeforeFirstPrompt} file${stats.filesOpenedBeforeFirstPrompt === 1 ? '' : 's'}.` : '',
       stats.pastedInstructions ? `Pasted the problem statement into the AI ${stats.pastedInstructions} time${stats.pastedInstructions === 1 ? '' : 's'} instead of forming a plan first.` : '',
-      stats.aiPastes ? `Pasted AI code ${stats.aiPastes} time${stats.aiPastes === 1 ? '' : 's'} (${stats.aiPastedChars.toLocaleString()} characters).` : ''
+      stats.agentEdits ? `Approved ${stats.agentEdits} file edit${stats.agentEdits === 1 ? '' : 's'} by the AI agent.` : '',
+      stats.aiPastes - (stats.agentEdits || 0) > 0 ? `Pasted AI code ${stats.aiPastes - (stats.agentEdits || 0)} time${stats.aiPastes - (stats.agentEdits || 0) === 1 ? '' : 's'} (${stats.aiPastedChars.toLocaleString()} characters).` : ''
     ].filter(Boolean)};
   }
 

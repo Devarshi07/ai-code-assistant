@@ -206,6 +206,23 @@ The next request was to make the tool work like Hello Interview's AI Coding prac
 - The Python per-test timeout relies on SIGALRM, so it works only inside Docker.
 - Local-model feedback can still be imprecise, which is why its scores are bounded by evidence.
 
+## 14. Python real-world tasks and the HackerRank-style rebuild
+
+**Python tasks and a better repo IDE.** SWE-bench Multilingual has no Python, so the task library also loads SWE-bench Verified (500 Python tasks with estimated fix times). The real-world repo workspace was rebuilt with a filterable file tree for large repositories, and a chat bug where answers overlapped was fixed (a CSS class collision).
+
+**The rebuild.** The next request was to make the tool work like HackerRank's AI-assisted coding: the same layout, assistant capabilities and interview practice, with HackerRank-style questions and long codebases as well. HackerRank's name, logo and colours were not copied; the layouts, workflows and labels follow its public product material, and all content is original. The app is now organised as **Coding questions**, **Code repos** and **Mock interviews**.
+
+- **Coding questions.** 24 original single-file problems, written in parallel by sub-agents against `questions/AUTHORING.md`, each with HackerRank-style templates in Python, JavaScript, Java, C++ and Go, sample and hidden tests, seeded generators and reference solutions checked against independent brute forces. A Docker judge (`judge.mjs`) compiles once per run and reports per-test verdicts. The workspace uses the vendored Monaco editor (0.57.0, MIT) with Run Code, Submit Code, custom input, submissions, settings, and an Ask-only assistant with Guided or Full help.
+- **Code repos.** One workspace (`dist/ade.js`) replaces both earlier IDEs: question and agent sessions on the left, the assistant in the centre, and Editor, Diff, Terminal and Tests on the right. The assistant (`assistant.mjs`) has Ask, Plan and Agent modes over Ollama tool calling, approval cards with diff previews, @ context and / commands, saved sessions, checkpoints that undo the agent's edits, a context meter, and fill-in-the-middle inline suggestions. Guided problems, real-world tasks, incidents, GitHub imports and take-homes all open here. Agent edits count as AI code changes in the guided review.
+- **Mock interviews.** `mock.mjs` replaces the 45-minute interviewer. A coding interview pairs a staged AI interviewer (text, or browser voice) with a code editor; an AI-fluency interview puts the interviewer beside the agent in a guided repo. Reports score four or three areas from 1 to 5 within evidence bounds, give an overall recommendation, and open a 15-minute follow-up chat.
+
+**Findings while testing with qwen3:8b.** The model sometimes announced an edit ("Let's make this change.") and ended its turn, so the agent loop now detects such replies and asks it to carry the step out, at most twice per message. It also proposed a no-op edit once; those are now rejected before an approval card appears. A question agent found that writing program output straight to the bind-mounted folder made line-by-line output slow on Docker Desktop, so the judge writes to tmpfs and moves results afterwards. Test files saved on Windows had CRLF endings; inputs are normalised to LF.
+
+**Verified in this session**
+- `npm test`: 30 tests pass. All 24 coding questions validate in all five languages.
+- Through the API: the agent read, edited, ran the tests in Docker, fixed a failure, re-ran to green and summarised; restoring the checkpoint returned the file to its original state.
+- In the browser: Run Code and Submit Code (13/13, 30/30) on a question; the assistant answering about the current code; a guided JavaScript repo with the agent's edit approved, tests run in the browser for the agent, a declined edit, the Diff view and checkpoints; a coding mock interview through to a "Hire" report; an AI-fluency interview through to its report. Desktop, light and dark, and phone layouts were checked.
+
 ## Reference links
 
 - [Repository](https://github.com/Devarshi07/ai-code-assistant)
