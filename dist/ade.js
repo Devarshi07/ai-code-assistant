@@ -136,7 +136,7 @@ function createAde(root, {kind, id, data, monaco, mock, key}) {
     refs.tree = el('div', {class: 'file-tree', role: 'tree'});
     refs.treeCount = el('div', {class: 'tree-count muted small'});
     refs.explorer = el('aside', {class: 'ade-explorer', 'aria-label': 'Files'},
-      el('div', {class: 'pane-header'}, el('span', {text: 'Files'}), el('span', {class: 'grow'}),
+      el('div', {class: 'pane-header'}, el('span', {text: 'Explorer'}), el('span', {class: 'grow'}),
         el('button', {class: 'icon-button', title: 'New file', 'aria-label': 'New file', onclick: newFile}, icon('plus')),
         el('button', {class: 'icon-button', title: 'Refresh', 'aria-label': 'Refresh files', onclick: () => refreshFiles()}, icon('refresh'))),
       el('div', {class: 'tree-tools'}, refs.treeFilter), refs.treeCount, refs.tree,
@@ -426,7 +426,7 @@ function createAde(root, {kind, id, data, monaco, mock, key}) {
     badge.textContent = String(changes.length);
     refs.changeList.replaceChildren(...(changes.length ? changes.map(c => el('button', {class: `change-row${c.path === diffPath ? ' active' : ''}`, title: c.path, onclick: () => openDiff(c.path)},
       el('span', {class: `change-mark ${c.status}`, text: c.status === 'added' ? 'A' : c.status === 'deleted' ? 'D' : 'M'}), el('span', {class: 'change-name', text: c.path.split('/').pop()}), el('span', {class: 'change-dir muted small', text: c.path.includes('/') ? c.path.slice(0, c.path.lastIndexOf('/')) : ''})))
-      : [el('p', {class: 'muted small pad', text: 'No changes yet. Edits you or the agent make show up here.'})]));
+      : [el('p', {class: 'muted small pad', text: 'No changed files yet. Edits you or the agent make show up here.'})]));
     if (rightTab === 'diff' && !diffPath && changes[0]) openDiff(changes[0].path);
     if (!filter) renderTree();
   }

@@ -1,0 +1,95 @@
+[
+  {
+    "id": "conc-unsynchronized-counter",
+    "topic": "Concurrency",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "Two threads share `count`. What does this Java program print?\n\n```java\npublic class Counter {\n    static int count = 0;\n\n    public static void main(String[] args) throws InterruptedException {\n        Runnable work = () -> { for (int i = 0; i < 1_000_000; i++) count++; };\n        Thread a = new Thread(work), b = new Thread(work);\n        a.start(); b.start();\n        a.join(); b.join();\n        System.out.println(count);\n    }\n}\n```",
+    "options": [
+      "Always 2000000",
+      "Always 1000000",
+      "A value that can be less than 2000000 and may differ from run to run",
+      "It throws a ConcurrentModificationException"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "`count++` is a read-modify-write: load `count`, add 1, store it back. If both threads load the same value before either one stores, one increment is lost. How many are lost depends on timing, so the result changes between runs. On a multi-core machine, five runs printed values between about 1.06 million and 1.92 million.\n\n`join()` makes the final read safe, but it doesn't protect the increments. Use an `AtomicInteger`, a `LongAdder` or a `synchronized` block. `ConcurrentModificationException` comes from changing a collection while you iterate over it, not from plain fields."
+  },
+  {
+    "id": "conc-lock-ordering-deadlock",
+    "topic": "Concurrency",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "Thread 1 runs `lock(A); lock(B); …; unlock(B); unlock(A)` and thread 2 runs `lock(B); lock(A); …; unlock(A); unlock(B)`. Every so often, both threads hang forever. What is the simplest reliable fix?",
+    "options": [
+      "Make both threads acquire the locks in the same order, for example always A before B",
+      "Replace A and B with reentrant locks",
+      "Add a short sleep between the two lock calls",
+      "Give thread 1 a higher scheduling priority than thread 2"
+    ],
+    "answer": [
+      0
+    ],
+    "explanation": "This is a deadlock. Thread 1 holds A and waits for B, while thread 2 holds B and waits for A: a circular wait. If every thread acquires locks in one global order, that cycle can't form.\n\nReentrancy only lets the **same** thread acquire a lock it already holds again. A sleep changes the timing, which may make the deadlock rarer (or more common) but never impossible. Priorities don't make anyone release a lock."
+  },
+  {
+    "id": "conc-condition-variable-rules",
+    "topic": "Concurrency",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "Several producer and consumer threads share a bounded buffer that is protected by a mutex and condition variables (for example `pthread_cond_t`, Java's `Condition`, or Python's `threading.Condition`). Which statements are correct? Select all that apply.",
+    "options": [
+      "A consumer should check \"buffer is empty\" in a while loop around wait(), not in an if.",
+      "wait() releases the mutex while the thread sleeps and reacquires it before returning.",
+      "A signal sent while no thread is waiting is saved, and it wakes the next thread that calls wait().",
+      "The buffer's state must be read and changed only while holding the mutex.",
+      "signal()/notify() wakes the longest-waiting thread, so that thread is guaranteed to find the condition true."
+    ],
+    "answer": [
+      0,
+      1,
+      3
+    ],
+    "explanation": "By the time a woken consumer runs, another consumer may already have taken the item, and implementations are allowed to wake threads spuriously, so the condition has to be rechecked in a loop. `wait()` releases the mutex and goes to sleep in one atomic step, which is what lets a producer get in and add an item, and the thread holds the mutex again when `wait()` returns. Every read and write of the shared state must happen under the mutex: if a consumer checks the buffer without it, a producer can add an item and signal between that check and the consumer's `wait()`, and the wake-up is lost.\n\nCondition variables have no memory: a signal with no waiter is simply lost. That's why you always check the shared state instead of relying on having been signalled. A semaphore, by contrast, does keep a count. No wake-up order is promised, and even the thread that is woken isn't guaranteed to run next or to find the condition still true."
+  },
+  {
+    "id": "conc-check-then-act-map",
+    "topic": "Concurrency",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "Many threads call `getOrCreate` at the same time. What is wrong with it, if anything?\n\n```java\nConcurrentHashMap<String, Session> sessions = new ConcurrentHashMap<>();\n\nSession getOrCreate(String user) {\n    if (!sessions.containsKey(user)) {\n        sessions.put(user, new Session(user));\n    }\n    return sessions.get(user);\n}\n```",
+    "options": [
+      "Nothing: ConcurrentHashMap is thread-safe, so this method is too",
+      "Two threads can both see the key missing and both put, so callers can end up holding different Session objects for the same user; use sessions.computeIfAbsent(user, Session::new)",
+      "Concurrent puts can corrupt the map's internal structure; every call must be wrapped in synchronized (sessions)",
+      "containsKey throws ConcurrentModificationException if another thread calls put at the same time"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "Each individual call on a `ConcurrentHashMap` is atomic, but check-then-act is two calls, and another thread can run in between them. Both threads can see the key missing, and each creates a `Session`. The second `put` overwrites the first, so one caller may keep a session that's no longer in the map, and anything stored in it is lost.\n\n`computeIfAbsent` (or `putIfAbsent`) does the check and the insert as a single atomic operation. The map's internal structure is never corrupted by concurrent use, and `ConcurrentHashMap` never throws `ConcurrentModificationException`."
+  },
+  {
+    "id": "conc-visibility-stop-flag",
+    "topic": "Concurrency",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "Thread A runs `worker.run()`. A second later, thread B calls `worker.stop()`. What does the Java Memory Model guarantee?\n\n```java\nclass Worker implements Runnable {\n    private boolean running = true;\n\n    public void run() {\n        long spins = 0;\n        while (running) {\n            spins++;\n        }\n        System.out.println(\"stopped after \" + spins);\n    }\n\n    public void stop() { running = false; }\n}\n```",
+    "options": [
+      "Thread A stops promptly, because writes to a boolean are atomic",
+      "Thread A stops within one scheduler time slice, because CPU caches are coherent",
+      "Nothing: thread A may never see the write and can loop forever; declaring running volatile (or using an AtomicBoolean) guarantees it sees the update",
+      "stop() throws IllegalMonitorStateException because it isn't called inside a synchronized block"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "Without a happens-before relationship between B's write and A's reads, the JIT is allowed to read `running` once and keep it in a register, which turns the loop into `while (true)`. This really happens on HotSpot once the loop has been compiled: on JDK 21, this class was still spinning 5 seconds after `stop()`.\n\nAtomicity only means a reader never sees a half-written value. It says nothing about when, or whether, another thread sees the new one. Hardware cache coherence doesn't help when the compiled code never reads memory again. A write to a `volatile` field happens-before every later read of that field, so with `volatile` thread A sees `false` and exits. `IllegalMonitorStateException` is for `wait`/`notify` called without holding the monitor."
+  }
+]

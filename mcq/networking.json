@@ -1,0 +1,98 @@
+[
+  {
+    "id": "net-voice-call-transport",
+    "topic": "Networking",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "You're building a live voice-call feature. Audio is sent in 20 ms packets. A late packet is useless, and losing an occasional one only causes a brief glitch. Which transport fits best?",
+    "options": [
+      "TCP, because it guarantees that every packet arrives",
+      "UDP, with the application handling ordering and loss itself (for example RTP with a jitter buffer)",
+      "TCP with Nagle's algorithm enabled, to batch the small packets efficiently",
+      "Either one: the transport has no effect on latency"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "TCP delivers a reliable, in-order byte stream. When one packet is lost, all the data behind it waits for the retransmission (head-of-line blocking), so the audio stalls instead of glitching briefly, and by the time a retransmitted packet arrives it's usually too late to play.\n\nUDP lets the application skip lost packets. Protocols like RTP add sequence numbers and timestamps, so a jitter buffer can reorder packets and smooth out playback. Nagle's algorithm deliberately holds back small writes, which is exactly wrong when latency matters."
+  },
+  {
+    "id": "net-http-403-vs-401",
+    "topic": "Networking",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "A user who is logged in with a valid session requests `/admin/reports`, which only administrators may see. The user is not an administrator. Which HTTP status code is most appropriate?",
+    "options": [
+      "400 Bad Request",
+      "401 Unauthorized",
+      "403 Forbidden",
+      "405 Method Not Allowed"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "403 means the server understood the request and knows who is asking, but refuses it, and logging in again won't change that. Despite its name, 401 means *unauthenticated*: no valid credentials came with the request, and the response should include a `WWW-Authenticate` header that tells the client how to authenticate.\n\n405 is about the HTTP method, such as a `DELETE` sent to a route that only allows `GET`, and 400 is for malformed requests. (Some APIs deliberately return 404 to hide that a resource exists, but of these options, 403 is the right one.)"
+  },
+  {
+    "id": "net-tcp-guarantees",
+    "topic": "Networking",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "Which statements about TCP are true? Select all that apply.",
+    "options": [
+      "It delivers bytes to the receiving application in the order they were sent.",
+      "It preserves message boundaries: each send() call arrives as exactly one recv() on the other side.",
+      "A connection is set up with a three-way handshake (SYN, SYN-ACK, ACK).",
+      "Flow control (the advertised receive window) keeps a fast sender from overflowing a slow receiver's buffer.",
+      "It guarantees delivery even if the network path stays down for a long time."
+    ],
+    "answer": [
+      0,
+      2,
+      3
+    ],
+    "explanation": "TCP is an ordered, reliable byte stream, with a handshake and per-connection flow control.\n\nIt's a byte stream, not a message protocol. Two `send()` calls can arrive in a single `recv()`, and one `send()` can be split across several, so applications have to frame their own messages, for example with length prefixes or delimiters. \"Reliable\" means TCP retransmits until the data is acknowledged. If the path stays down, the retransmissions eventually time out and the connection is reset. TCP reports the failure; it can't guarantee delivery."
+  },
+  {
+    "id": "net-cidr-22-membership",
+    "topic": "Networking",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "Which of these addresses are inside the subnet `192.168.4.0/22`? Select all that apply.",
+    "options": [
+      "192.168.4.1",
+      "192.168.3.255",
+      "192.168.6.130",
+      "192.168.7.254",
+      "192.168.8.1"
+    ],
+    "answer": [
+      0,
+      2,
+      3
+    ],
+    "explanation": "A /22 fixes the first 22 bits as the network part and leaves 10 host bits, or 1,024 addresses. That's the first two octets plus the top 6 bits of the third, so the third octet covers 4 consecutive values starting at a multiple of 4: 4, 5, 6 and 7. The range is 192.168.4.0 to 192.168.7.255.\n\n192.168.3.255 is the last address before the range, and 192.168.8.1 belongs to the next /22."
+  },
+  {
+    "id": "net-time-wait-port-exhaustion",
+    "topic": "Networking",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "A load-test client running on Linux opens a new TCP connection to the same server IP and port for every request. It sends the request, reads the response, and then the **client** closes the connection. After a few seconds at about 10,000 requests per second, new connections start failing on the client with `EADDRNOTAVAIL` (\"Cannot assign requested address\"). What is the most likely cause?",
+    "options": [
+      "The server's listen backlog is full, so it is rejecting new SYNs",
+      "The client process has hit its limit on open file descriptors",
+      "Closed sockets on the client sit in TIME_WAIT, and with one fixed destination they use up the client's ephemeral port range",
+      "Nagle's algorithm is holding back the SYN packets until enough data has accumulated"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "The side that closes first goes into TIME_WAIT, which lasts 60 seconds on Linux, and the (client IP, client port, server IP, server port) tuple can't be reused until it ends. With one fixed destination, only the client port can vary. Linux's default ephemeral range, 32768–60999, gives about 28,000 ports, and at 10,000 new connections per second they're all used up within about 3 seconds.\n\nFixes: reuse connections (HTTP keep-alive or a connection pool), widen the ephemeral port range, spread connections over several source IPs or destination ports, or enable `net.ipv4.tcp_tw_reuse` for outgoing connections.\n\nA full backlog shows up as timeouts or refused connections, not `EADDRNOTAVAIL`. Running out of file descriptors gives `EMFILE` (\"Too many open files\"). Nagle's algorithm only delays small data segments."
+  }
+]

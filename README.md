@@ -8,7 +8,8 @@ The layouts and workflows follow the conventions of current AI-assisted intervie
 | --- | --- |
 | **Coding questions** | 24 single-file problems (Easy, Medium, Hard) in Python, JavaScript, Java, C++ and Go. A starter template reads stdin and prints to stdout; you complete the function. **Run Code** runs the sample tests or your custom input, **Submit Code** runs every test case including hidden ones and scores you. An AI assistant beside the editor sees the statement and your code. |
 | **Code repos** | A workspace with a file tree, Monaco editor, Diff, Terminal and Tests, plus an AI assistant with **Ask**, **Plan** and **Agent** modes. The agent reads and searches files, edits them, runs commands and runs the tests, and each change waits for your approval. Choose a guided three-phase problem (13, timed, with a debrief and a graded review), a real issue from SWE-bench (800 tasks in 10 languages), a short incident, any public GitHub repository, or a take-home task in your own editor. |
-| **Mock interviews** | A **coding interview** with an AI interviewer (text or voice) and a code editor, scored on problem solving, code quality, communication and language proficiency. Or an **AI-fluency interview**: you solve a guided repo with the agent while the interviewer asks how you frame, judge and steer it. Both end with an overall recommendation and a 15-minute follow-up conversation about the feedback. |
+| **Practice tests** | Full timed assessments that behave like real online tests: a landing page and onboarding, **Test home**, a question list, **Run Code / Run Tests / Save & Proceed**, a countdown that never pauses, multiple-choice and written-answer questions, integrity checks (tab tracking, Secure mode, Proctored) and **Submit Test**. Ready-made tests, a sample test and a custom-test builder; a report shows what would have been scored. |
+| **Mock interviews** | A **coding interview** with an AI interviewer (text or voice) and a code editor; **technical screen**, **system design** (with a notes pane), **behavioural** and **AI fluency** conversation interviews; and an **AI-assisted repo interview** where you solve a guided repo with the agent while the interviewer watches. Each ends with scores, an overall recommendation and a 15-minute follow-up conversation about the feedback. |
 
 For the development history and earlier decisions, see [PROJECT_SUMMARY.md](PROJECT_SUMMARY.md).
 
@@ -64,8 +65,8 @@ Any installed Ollama chat model appears in the assistant's model picker. The app
 
 - **Library:** filter by status, difficulty and skill, or search. Each question shows its difficulty, maximum score (30, 50 or 80) and skills.
 - **Workspace:** the problem statement (function description, input format, constraints, output format, samples with explanations) and your submissions on the left; the editor in the middle; the AI assistant on the right (toggle it from the top bar). Panes are resizable.
-- **Editor:** Monaco, with a language picker, autosaved drafts per language, reset to template, upload a file, and settings for theme, font size, tab width, word wrap, autocomplete, AI inline suggestions and the minimap. **Ctrl+Enter** runs, **Ctrl+Shift+Enter** submits.
-- **Results:** a compiler message and verdict per test case (*Success*, *Wrong Answer*, *Runtime Error*, *Terminated due to timeout*, *Compilation error*), with input, your output, expected output and debug output (stderr). Hidden test cases show only their verdict. Time limits are 10 s for Python and JavaScript, 4 s for Java and Go, and 2 s for C++.
+- **Editor:** Monaco, with a language picker and an **ⓘ** panel (version, time limit and memory limit per language), autosaved drafts per language, reset to template and upload a file. The gear icon sets the **editor mode (Normal, Vim or Emacs)**, theme, tab spaces, font size, word wrap, autocomplete, AI inline suggestions and the minimap, and a status bar shows the cursor position, spaces, autocomplete and mode. **Ctrl+Enter** runs, **Ctrl+Shift+Enter** submits, **Ctrl+Space** opens autocomplete.
+- **Results:** a **Test Results** panel with a **Test Cases** tab (all cases, each with its compiler message and verdict: *Success*, *Wrong Answer*, *Runtime Error*, *Terminated due to timeout*, *Compilation error*; plus Input, Your Output, Expected Output and Debug Output) and a **Custom** tab where Run Code runs your own input. *Raw format* shows spaces and line ends. Hidden test cases keep their input and expected output private but show your output and debug output. Time limits are 10 s for Python and JavaScript, 4 s for Java and Go, and 2 s for C++.
 - **Score:** the maximum score times the share of weighted test cases passed. Submissions are listed with their score, language and time, and you can reopen their code.
 - **AI assistant:** an Ask-mode chat that sees the statement, your current code and your latest run. *Full help* may write code; *Guided help* gives hints, explanations and short snippets only. Code blocks have **Insert** (at the cursor) and **Copy**.
 
@@ -116,18 +117,51 @@ Submit (or run out of time), answer three debrief questions, and get a report on
 
 16 runtime presets cover JavaScript, TypeScript, Python, Java, C, C++, C#, Go, Rust, Ruby, PHP, Swift, R, Elixir, Perl and Bash (see `runtimes.mjs`). Presets provide toolchains, not every project's dependencies: test containers have no network, so projects that need packages need a prepared image.
 
+## Practice tests
+
+Practice tests simulate a complete online assessment, so a real one feels familiar.
+
+1. **Landing page:** the test duration, the number of questions, the instructions and a table of question indexes and types, with **Continue** and **Try Sample Test**.
+2. **Onboarding:** the honor code and the AI notice, a Docker check for coding questions and, for proctored tests, **Allow Webcam Access** and **Check for Multiple Monitors**. **Start Test** starts a countdown that never pauses.
+3. **The test:** **Test home** lists every question with its status and **Solve** / **Modify**; a collapsible side list shows question names. Coding questions use the coding workspace with **Run Code**, **Run Tests** and **Save & Proceed**. Multiple-choice questions show single or multiple correct answers with **Clear Selection**; written answers have a small formatting toolbar. Everything autosaves.
+4. **Time:** a nudge appears with less than 5 minutes left. When the countdown reaches zero the test ends by itself.
+5. **Submit Test:** an incomplete-submission check lists questions that won't be evaluated, then a final confirmation.
+6. **The report:** total and per-question scores, which code was evaluated and why, a multiple-choice review with explanations, rubric feedback and a model answer for written answers, an integrity log, and the number of messages to the AI assistant.
+
+Scoring follows the usual assessment rules:
+- **Coding:** the share of weighted test cases passed. Code counts from your last **Save & Proceed**, failing that your last **Run Tests**, failing that your last **Run Code**. Code you typed but never ran or saved is not evaluated.
+- **Multiple choice:** single-answer questions are all or nothing. Multiple-answer questions give partial credit for each correct option, but choosing more options than there are correct answers scores zero.
+- **Written answers:** graded by a local model against a 3–6 point rubric; without a model they are left ungraded with the model answer shown.
+
+| Setting | Options |
+| --- | --- |
+| Integrity | **Standard:** tab switches (with time away) and pastes from outside the test are recorded. **Secure mode:** full screen is enforced with a prompt to return, switching tabs shows a warning, and pasting from outside the test into the code editor is blocked. **Proctored:** Secure mode plus a webcam preview (nothing is recorded or sent) and a single-monitor check. |
+| AI assistant | **None**; **Guarded** (the default where AI is allowed: Ask mode, hints and explanations, no full solutions); **Unguarded** (full help plus inline suggestions). The conversation is part of the report. |
+
+Ready-made tests: a sample test, a coding screen, a full software-engineer assessment, an AI-assisted coding assessment, a back-end assessment, a proctored coding assessment and a fundamentals quiz. The custom builder lets you choose the number of Easy, Medium and Hard coding questions, multiple-choice questions and topics, written answers, the duration, the AI level and the integrity level.
+
+### The question bank
+
+80 multiple-choice questions across 16 topics (data structures, algorithms, complexity, databases, operating systems, networking, concurrency, security, object-oriented design, system design, testing, Git, web, Python, JavaScript and Java), a quarter of them with several correct answers, and 12 written-answer questions. Every "what does this print?" answer was checked by running the code. They live in `mcq/`; see [mcq/AUTHORING.md](mcq/AUTHORING.md), and check them with `node scripts/validate-mcq.mjs`.
+
 ## Mock interviews
 
-**Coding interview** (30, 45 or 60 minutes). Choose a language, a difficulty or a specific question. The interviewer introduces the problem, answers clarifying questions, asks for your approach and its complexity, then lets you code. It follows the stage of the interview (introduction, approach, coding, testing and follow-ups, wrap-up), sees your current code, runs and submissions, gives hints when you ask, checks in after a long silence, and asks follow-ups after you submit. The reference solution is in its instructions for judging hints and is never meant to be shown to you.
+**Coding interview** (30, 45 or 60 minutes; 60 by default). Choose a language, a difficulty or a specific question. The interviewer introduces the problem, answers clarifying questions, asks for your approach and its complexity, then lets you code. It follows the stage of the interview (introduction, approach, coding, testing and follow-ups, wrap-up), sees your current code, runs and submissions, gives hints when you ask, checks in after a long silence, and asks follow-ups after you submit. The reference solution is in its instructions for judging hints and is never meant to be shown to you.
 
-**AI-fluency interview.** A guided repo opens in the workspace with an Interviewer panel. It asks how you plan to use the AI, why you prompted it the way you did, and how you checked its work. Phase changes are reported to it.
+**Technical screen, system design, behavioural and AI fluency** (20–60 minutes). Conversation interviews by text or voice. The technical screen and behavioural interview take a role (software, front-end, back-end, full-stack, mobile, data, ML or DevOps engineer) and a level. System design picks a problem, such as a URL shortener or a ride-hailing dispatch service, and adds a notes pane the interviewer reads. It moves through requirements, high-level design, deep dives and wrap-up. AI fluency covers how language models and AI tools work, how you prompt them and verify their output, and their limits and risks.
+
+**AI-assisted repo interview.** A guided repo opens in the workspace with an Interviewer panel. It asks how you plan to use the AI, why you prompted it the way you did, and how you checked its work. Phase changes are reported to it.
 
 **Feedback.** Ending the interview (or running out of time) runs your final code against every test case, then the reviewer model scores each area from 1 to 5 within bounds set by the recorded evidence:
 
 | Interview | Areas | Evidence used for the bounds |
 | --- | --- | --- |
 | Coding | Problem-solving skills, code quality, technical communication, language proficiency | Final tests passed, runs and submissions, hints, compile and runtime errors, words written to the interviewer, clarifying questions, whether you discussed complexity |
-| AI fluency | Framing, judging, steering | Prompts and how specific they were, Plan mode use, pasted task text, AI changes verified by a test run, declined AI actions, restored checkpoints, phases passed |
+| Technical screen | Technical knowledge, depth, problem-solving approach, technical communication | Number and length of answers |
+| System design | Requirements and scoping, high-level design, deep dives and trade-offs, communication | Number and length of answers, words of design notes |
+| Behavioural | Ownership and impact, collaboration, learning and self-awareness, structured communication | Number and length of answers, concrete examples |
+| AI fluency | AI concepts, applying AI to engineering work, judgement and verification, communication | Number and length of answers, concrete examples |
+| AI-assisted repo | Framing, judging, steering | Prompts and how specific they were, Plan mode use, pasted task text, AI changes verified by a test run, declined AI actions, restored checkpoints, phases passed |
 
 The average maps to an overall recommendation: **Strong Hire** (4.5 and above), **Hire** (3.75), **Lean Hire** (3), **Lean No Hire** (2.25) or **No Hire**. Without a reviewer model the bounds alone produce the scores. For 15 minutes after the report you can ask the interviewer about it.
 
@@ -139,7 +173,7 @@ The average maps to an overall recommendation: **Strong Hire** (4.5 and above), 
 - **Coding questions** compile once and run every test case in one disposable container per run: no network, a read-only root filesystem, read-only code and test mounts, dropped capabilities, 768 MB memory, one CPU, 128 processes, a 20 MB output cap per test and a per-test time limit. Output goes to tmpfs during the timed run. Go keeps a build cache in the `dg-judge-gocache` volume.
 - **Repo commands and tests** run in Docker with networking disabled, dropped capabilities, no-new-privileges and CPU, memory, process and time limits. The repository is mounted read-only and copied into the container, so commands can't change your files; only file edits (yours or the agent's, after approval) do.
 - **JavaScript** for guided repos and take-homes runs in a Web Worker whose script is served with `default-src 'none'`, which blocks network requests. **Python** guided repos run in `python:3.12-slim` with structured per-test results (`harness/pyrunner.py`).
-- Data lives under `.sessions/`: guided and repo sessions (with their agent conversations in `assistant/`), `coding/` for question drafts, submissions and assistant chats, and `mock/` for interviews. The task catalog is cached in `.task-cache/`. Nothing is deleted automatically; sessions, Docker images and model weights can use a lot of disk over time.
+- Data lives under `.sessions/`: guided and repo sessions (with their agent conversations in `assistant/`), `coding/` for question drafts, submissions and assistant chats, `mock/` for interviews, and `tests/` for practice tests (with any AI conversations from those tests). The task catalog is cached in `.task-cache/`. Nothing is deleted automatically; sessions, Docker images and model weights can use a lot of disk over time.
 - The file tree indexes up to 20,000 files, 24 directory levels and 150 KB per text file. Dotfiles, symlinks, dependency folders and binary files are excluded. The agent edits files up to 400 KB.
 - Docker isolation is suitable for personal practice. It is not a production multi-tenant security boundary.
 
@@ -150,6 +184,7 @@ The average maps to an overall recommendation: **Strong Hire** (4.5 and above), 
 npm test
 npm run validate                       # guided problems and take-home tasks, both languages
 node scripts/validate-questions.mjs    # every coding question in all five languages (Docker)
+node scripts/validate-mcq.mjs          # the multiple-choice and written-answer bank
 
 # Live checks against a running app (npm start in another terminal)
 node scripts/smoke.mjs                 # repo API, path checks, Docker test runs, terminal
@@ -160,7 +195,7 @@ node scripts/practice-smoke.mjs javascript
 node scripts/assisted-smoke.mjs        # coding question run, agent with approvals and restore, mock interview report
 ```
 
-`npm test` runs 30 checks, covering the in-browser runner, problems and questions, session lifecycles, evidence and review bounds, interview scoring bounds and stages, context-window trimming, agent auto-continuation, diffs, workspace change tracking, checkpoint restore and path restrictions. Live scripts create sessions under `.sessions/`, may download Docker images and use installed models. They don't test the microphone or the browser layout.
+`npm test` runs 35 checks, covering the in-browser runner, problems and questions, session lifecycles, evidence and review bounds, interview scoring bounds and stages, context-window trimming, agent auto-continuation, diffs, workspace change tracking, checkpoint restore, path restrictions, multiple-choice scoring and the question bank, building every ready-made practice test, and the end-of-test evaluation rule. Live scripts create sessions under `.sessions/`, may download Docker images and use installed models. They don't test the microphone or the browser layout.
 
 ## Architecture and source map
 
@@ -178,6 +213,8 @@ Browser (dist/) ──HTTP + NDJSON streams──> Node.js server (server.mjs)
 | `assistant.mjs` | Ask, Plan and Agent modes, tools and approvals, checkpoints, saved sessions, context fitting, inline completions |
 | `workspace-api.mjs` | One interface over guided and repo workspaces: files, changes, diffs, terminal and tests |
 | `mock.mjs` | Mock interviews: interviewer prompts and streaming, runs and submissions, evidence bounds and reports |
+| `tests-engine.mjs`, `mcq.mjs` | Practice tests: templates, attempts, answers, integrity events, end-of-test evaluation and the report; the multiple-choice and written-answer bank and its scoring |
+| `dist/tests.js` | Practice tests lobby and custom builder, landing page and onboarding, the test room, and the report |
 | `problems.mjs`, `practice.mjs`, `practice-routes.mjs`, `practice-review.mjs` | Guided problems: content, session state, routes and the evidence-bounded review |
 | `open-ended.mjs` | Take-home tasks |
 | `sandbox.mjs`, `harness/pyrunner.py` | Python sandbox for guided repos |
@@ -193,6 +230,8 @@ Browser (dist/) ──HTTP + NDJSON streams──> Node.js server (server.mjs)
 | `dist/monaco.js`, `dist/vendor/monaco/` | Monaco loader, themes, settings and inline suggestions; the vendored editor (MIT) |
 | `dist/style.css`, `dist/app.css`, `dist/figma.css` | Base styles; layouts for the new screens; the design layer loaded last (Inter, neutral greys with a blue accent, compact controls, floating panels, dark menus), in the spirit of design-tool editors such as Figma |
 | `dist/vendor/inter/` | The Inter variable font (SIL Open Font License 1.1), served locally |
+| `dist/vendor/monaco-vim/`, `dist/vendor/monaco-emacs/` | Vim and Emacs key bindings for the editor (both MIT), loaded on first use |
+| `questions/`, `mcq/` | Coding questions; multiple-choice and written-answer questions |
 | `dist/open-ended.js`, `dist/report.js`, `dist/markdown.js`, `dist/ui.js` | Take-home pages, report parts, safe markdown, DOM helpers |
 | `dist/runner-core.js`, `dist/runner-worker.js` | In-browser JavaScript test runner |
 | `tests/`, `scripts/` | Automated checks, validators and live smoke scripts |
@@ -217,6 +256,6 @@ A local, single-user practice tool. Feedback comes from local models and recorde
 
 ## Licensing and attribution
 
-The Monaco editor in `dist/vendor/monaco` is MIT-licensed (see its `LICENSE` and `ThirdPartyNotices.txt`). The Inter typeface in `dist/vendor/inter` is licensed under the SIL Open Font License 1.1 (see its `LICENSE`). SWE-bench Verified and SWE-bench Multilingual are provided under their upstream dataset licenses, and cloned repositories keep their own licenses. Model weights and container images keep their upstream terms.
+The Monaco editor in `dist/vendor/monaco` is MIT-licensed (see its `LICENSE` and `ThirdPartyNotices.txt`). The Inter typeface in `dist/vendor/inter` is licensed under the SIL Open Font License 1.1 (see its `LICENSE`). The Vim and Emacs key bindings in `dist/vendor/monaco-vim` and `dist/vendor/monaco-emacs` are MIT-licensed (see their `LICENSE` files). SWE-bench Verified and SWE-bench Multilingual are provided under their upstream dataset licenses, and cloned repositories keep their own licenses. Model weights and container images keep their upstream terms.
 
 This project doesn't yet include its own `LICENSE` file. Choose one before presenting the code as reusable under a specific license.

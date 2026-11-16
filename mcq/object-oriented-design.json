@@ -1,0 +1,101 @@
+[
+  {
+    "id": "ood-srp-invoice",
+    "topic": "Object-Oriented Design",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "Finance changes the tax rules, the DBA team changes the schema, and marketing wants a new PDF layout. Every one of those requests means editing this class:\n\n```java\nclass Invoice {\n    BigDecimal total() { /* tax and discount rules */ }\n    void saveTo(Connection db) { /* SQL */ }\n    byte[] renderPdf() { /* layout */ }\n    void emailTo(Customer customer, SmtpClient smtp) { /* sending */ }\n}\n```\n\nWhich principle does this design violate most directly?",
+    "options": [
+      "Liskov Substitution Principle",
+      "Single Responsibility Principle",
+      "Interface Segregation Principle",
+      "Law of Demeter"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "The Single Responsibility Principle says a class should have one reason to change, meaning it answers to one group of stakeholders. Here tax rules, persistence, presentation and delivery all live in `Invoice`, so unrelated changes collide in the same file and the same tests. Split it into, for example, `Invoice` (data and totals), `InvoiceRepository`, `InvoicePdfRenderer` and `InvoiceMailer`.\n\nInterface Segregation is about clients being forced to depend on methods they don't use. A class like this often leads there too, but the problem described is the many reasons to change."
+  },
+  {
+    "id": "ood-stack-extends-list",
+    "topic": "Object-Oriented Design",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "What is the main design problem with this class?\n\n```java\nclass Stack<T> extends ArrayList<T> {\n    void push(T item) { add(item); }\n    T pop() { return remove(size() - 1); }\n}\n```",
+    "options": [
+      "It won't compile, because `ArrayList` is declared `final`",
+      "Inheritance is slower than composition at runtime, because every call goes through virtual dispatch",
+      "Callers also get `add(0, x)`, `remove(int)` and the rest of `ArrayList`, so they can break LIFO order",
+      "`pop()` must be `synchronized`, because `ArrayList` isn't thread-safe"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "Inheritance makes `Stack` *be* an `ArrayList`, so the list's entire public API leaks into the stack's API, and any caller can insert or remove in the middle. With composition (`private final List<T> items = new ArrayList<>();`) the class controls its own interface and can change its storage later.\n\n`ArrayList` isn't final, and thread safety is a separate concern that applies equally to both designs. `java.util.Stack` extends `Vector` and has exactly this flaw; `ArrayDeque` is the usual replacement."
+  },
+  {
+    "id": "ood-strategy-shipping",
+    "topic": "Object-Oriented Design",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "`ShippingService.cost(order)` contains a growing `switch (order.carrier())`: one carrier charges a flat rate, another charges by weight, and a third uses a zone table. The customer picks the carrier at checkout, and the business adds a new carrier every few months. Which refactoring fits best?",
+    "options": [
+      "Singleton: a single global `ShippingService` so every carrier shares the same rate tables",
+      "Template Method: an abstract `ShippingService` whose `cost` method calls abstract steps, with one subclass per carrier",
+      "Observer: notify every carrier of the order and use the first price that comes back",
+      "Strategy: a `ShippingRate` interface with one implementation per carrier, looked up by the order's carrier at runtime",
+      "Decorator: wrap the base price in one decorator per carrier"
+    ],
+    "answer": [
+      3
+    ],
+    "explanation": "Each carrier is an interchangeable algorithm for the same calculation, chosen per order at runtime: that is Strategy. Adding a carrier becomes a new class plus a registry entry instead of an edit to the `switch` (open/closed), and each rule can be tested on its own.\n\nTemplate Method varies steps through inheritance, so the carrier would be fixed when a `ShippingService` is constructed: you'd need a different service subclass for each order, and everything else the service does gets tied into that hierarchy. Decorators layer behavior on top of each other, but carriers replace each other rather than combine."
+  },
+  {
+    "id": "ood-dependency-inversion-select",
+    "topic": "Object-Oriented Design",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "```java\nclass OrderService {\n    private final MySqlOrderRepository repo =\n        new MySqlOrderRepository(\"jdbc:mysql://prod-db/orders\");\n\n    void place(Order order) { repo.insert(order); }\n}\n```\n\nWhich changes move this code toward the Dependency Inversion Principle? Select all that apply.",
+    "options": [
+      "Define an `OrderRepository` interface with the operations `OrderService` needs, such as `save(Order)`",
+      "Make `MySqlOrderRepository` a singleton that `OrderService` obtains through `MySqlOrderRepository.getInstance()`",
+      "Pass an `OrderRepository` into the `OrderService` constructor instead of creating one inside the class",
+      "Have `OrderService` extend `MySqlOrderRepository` so it can call `insert` directly",
+      "Make `MySqlOrderRepository` implement `OrderRepository`",
+      "Move the JDBC URL into a `static final` constant in `OrderService`"
+    ],
+    "answer": [
+      0,
+      2,
+      4
+    ],
+    "explanation": "DIP says high-level policy (`OrderService`) and low-level detail (MySQL access) should both depend on an abstraction, and that abstraction belongs to the high-level side. Defining `OrderRepository`, having the MySQL class implement it, and injecting it through the constructor achieves that, and lets tests pass an in-memory fake.\n\nA singleton still hard-wires the concrete MySQL class (and adds global state), inheriting from it couples the two even more tightly, and moving the URL into a constant only tidies up the same concrete dependency."
+  },
+  {
+    "id": "ood-lsp-contract-select",
+    "topic": "Object-Oriented Design",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "multiple",
+    "question": "An interface documents this contract:\n\n```java\n/**\n * save(name, data): accepts any non-empty name and any byte array, including an empty one.\n * After save returns, load(name) returns the same bytes.\n * load(name) throws NotFoundException if nothing was saved under that name.\n */\ninterface FileStore {\n    void save(String name, byte[] data);\n    byte[] load(String name);\n}\n```\n\nWhich implementations violate the Liskov Substitution Principle? Select all that apply.",
+    "options": [
+      "`QuotaFileStore.save` throws `IllegalArgumentException` for data larger than 5 MB",
+      "`CachingFileStore` adds a public `evictAll()` method that `FileStore` doesn't declare",
+      "`GzipFileStore` compresses data before storing it and decompresses it in `load`",
+      "`ReplicatedFileStore.load` can return the previous version for a few seconds after `save` returns",
+      "`ReadOnlyFileStore.save` throws `UnsupportedOperationException`",
+      "`LenientFileStore.save` also accepts an empty name"
+    ],
+    "answer": [
+      0,
+      3,
+      4
+    ],
+    "explanation": "A subtype may not demand more or promise less than the contract it implements.\n\n- Rejecting large data **strengthens a precondition**: callers that were allowed to save 10 MB now fail.\n- Returning stale data after `save` **weakens a postcondition**.\n- Throwing from `save` breaks the contract outright; code written against `FileStore` can't use the object.\n\nAdding methods is fine, because existing callers never see them. Internal compression changes no observable behavior. Accepting empty names *weakens* a precondition, which LSP allows: every call that was valid before still works."
+  }
+]

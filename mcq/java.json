@@ -1,0 +1,97 @@
+[
+  {
+    "id": "java-string-identity",
+    "topic": "Java",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "What does this code print?\n\n```java\nString a = \"hi\";\nString b = \"hi\";\nString c = new String(\"hi\");\nSystem.out.println((a == b) + \" \" + (a == c) + \" \" + a.equals(c));\n```",
+    "options": [
+      "`true true true`",
+      "`true false true`",
+      "`false false true`",
+      "`true false false`"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "`==` on objects compares references. String literals are interned, so `a` and `b` refer to the same pooled object. `new String(\"hi\")` always allocates a new object, so `a == c` is `false`, while `equals` compares the characters and returns `true`.\n\nCompare strings with `equals`; whether `==` happens to work depends on how each string was created."
+  },
+  {
+    "id": "java-reference-passed-by-value",
+    "topic": "Java",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "What does this code print?\n\n```java\nstatic void touch(StringBuilder sb) {\n    sb.append(\"!\");\n    sb = new StringBuilder(\"new\");\n    sb.append(\"?\");\n}\n\npublic static void main(String[] args) {\n    StringBuilder s = new StringBuilder(\"old\");\n    touch(s);\n    System.out.println(s);\n}\n```",
+    "options": [
+      "`old`",
+      "`new?`",
+      "`old!`",
+      "`old!?`"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "Java passes every argument by value; for objects, the value is a reference. `touch` receives a copy of the reference, so `sb.append(\"!\")` changes the caller's object. Reassigning `sb` only changes the method's local copy, so `\"new?\"` is built on a different object the caller never sees.\n\n`new?` would require pass-by-reference, which Java doesn't have."
+  },
+  {
+    "id": "java-try-with-resources-order",
+    "topic": "Java",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "What does this code print?\n\n```java\nrecord Res(String name) implements AutoCloseable {\n    Res {\n        System.out.print(\"open \" + name + \", \");\n    }\n\n    public void close() {\n        System.out.print(\"close \" + name + \", \");\n    }\n}\n\n// inside main:\ntry (var a = new Res(\"A\"); var b = new Res(\"B\")) {\n    System.out.print(\"body, \");\n    throw new IllegalStateException();\n} catch (IllegalStateException e) {\n    System.out.print(\"catch, \");\n} finally {\n    System.out.println(\"finally\");\n}\n```",
+    "options": [
+      "`open A, open B, body, close B, close A, catch, finally`",
+      "`open A, open B, body, close A, close B, catch, finally`",
+      "`open A, open B, body, catch, close B, close A, finally`",
+      "`open A, open B, body, catch, finally, close B, close A`"
+    ],
+    "answer": [
+      0
+    ],
+    "explanation": "Resources are closed in the reverse order they were opened (B, then A), and they are closed **before** the `catch` and `finally` blocks of the same `try` statement run. So the exception leaves the body, both resources close, `catch` handles the exception, and `finally` runs last.\n\nRunning `catch` first is the common mistake. The resource variables aren't in scope in `catch` or `finally`, and the language guarantees they are already closed there."
+  },
+  {
+    "id": "java-collections-throw-select",
+    "topic": "Java",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "Which of these snippets throw an exception at runtime? Select all that apply.",
+    "options": [
+      "`List.of(1, 2).add(3);`",
+      "`Arrays.asList(1, 2).set(0, 5);`",
+      "`Arrays.asList(1, 2).add(3);`",
+      "`new ArrayList<>(List.of(1, 2)).add(3);`",
+      "`List.of(1, null);`",
+      "`var view = Collections.unmodifiableList(backing); backing.add(3);` where `backing` is an `ArrayList`"
+    ],
+    "answer": [
+      0,
+      2,
+      4
+    ],
+    "explanation": "- `List.of` returns an unmodifiable list: `add` throws `UnsupportedOperationException`, and `null` elements are rejected with a `NullPointerException`.\n- `Arrays.asList` is a fixed-size view over an array: `set` works, but `add` throws `UnsupportedOperationException` because the size can't change.\n- Copying into a new `ArrayList` gives an ordinary mutable list.\n- `Collections.unmodifiableList` only blocks changes made *through the view*. Changing `backing` directly is allowed, and the view then shows the new element."
+  },
+  {
+    "id": "java-boxed-map-keys",
+    "topic": "Java",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "What does this code print?\n\n```java\nMap<Long, String> names = new HashMap<>();\nnames.put(1L, \"one\");\nint id = 1;\nSystem.out.println(names.get(1L) + \" \" + names.get(id) + \" \"\n    + names.containsKey((long) id) + \" \" + Long.valueOf(1).equals(1));\n```",
+    "options": [
+      "`one one true true`",
+      "`one null true true`",
+      "`one null true false`",
+      "`one one true false`",
+      "It doesn't compile, because `names.get(id)` needs a `Long` argument"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "`Map.get` and `containsKey` take an `Object`, so `names.get(id)` compiles: `id` is boxed to an `Integer`. A boxed number's `equals` is only `true` for the same wrapper class, so the `Integer` key never matches the `Long` key and `get` returns `null`.\n\n`(long) id` boxes to a `Long`, so `containsKey` finds the key. `Long.valueOf(1).equals(1)` compares a `Long` with an `Integer` and is `false` for the same reason.\n\nThis is a common real bug with `Map<Long, ...>` lookups that use `int` ids; the compiler accepts it silently."
+  }
+]

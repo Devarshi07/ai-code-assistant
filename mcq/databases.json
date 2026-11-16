@@ -1,0 +1,95 @@
+[
+  {
+    "id": "db-left-join-row-count",
+    "topic": "Databases",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "`customers`:\n\n| id | name |\n|----|------|\n| 1  | Ann  |\n| 2  | Bob  |\n| 3  | Cy   |\n\n`orders`:\n\n| id | customer_id |\n|----|-------------|\n| 10 | 1           |\n| 11 | 1           |\n| 12 | 2           |\n\nHow many rows does this query return?\n\n```sql\nSELECT c.name, o.id\nFROM customers c\nLEFT JOIN orders o ON o.customer_id = c.id;\n```",
+    "options": [
+      "2",
+      "3",
+      "4",
+      "9"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "A LEFT JOIN returns every matching pair, plus each left-side row that matched nothing, padded with NULLs. Ann matches two orders (2 rows), Bob matches one (1 row), and Cy matches none but still appears once with `o.id` = NULL, for 4 rows in total.\n\nAn INNER JOIN would return 3, because it drops Cy. 9 is the cross join (3 × 3), which is what you'd get with no join condition at all."
+  },
+  {
+    "id": "db-normalization-update-anomaly",
+    "topic": "Databases",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "An `orders` table has the columns `(order_id, customer_id, customer_email, order_date, total)`, with `order_id` as the primary key. When a customer changes their email, support updates it on one of their orders, and the customer's other orders still show the old address. What is the standard schema fix?",
+    "options": [
+      "Add an index on customer_email",
+      "Move customer_email into a customers table keyed by customer_id, and keep only customer_id in orders",
+      "Make (order_id, customer_email) the primary key",
+      "Add a UNIQUE constraint on (customer_id, customer_email)"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "`customer_email` depends on the customer, not on the order: `order_id → customer_id → customer_email` is a transitive dependency, which breaks third normal form. The same fact is stored on every order, every copy has to be updated together, and missing one gives this **update anomaly**. Storing the email once in `customers` makes the inconsistency impossible, and queries can still get it with a join.\n\nAn index speeds up lookups but keeps the duplicates. The new primary key and the UNIQUE constraint both still allow one customer to have different emails on different rows."
+  },
+  {
+    "id": "db-composite-index-prefix",
+    "topic": "Databases",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "The table `people` has a B-tree index on `(last_name, first_name)`. For which `WHERE` clauses can the database find the matching rows by jumping to **one contiguous range** of this index? Select all that apply.",
+    "options": [
+      "WHERE last_name = 'Smith'",
+      "WHERE first_name = 'Ann'",
+      "WHERE last_name = 'Smith' AND first_name >= 'M'",
+      "WHERE LOWER(last_name) = 'smith'",
+      "WHERE first_name = 'Ann' AND last_name = 'Smith'"
+    ],
+    "answer": [
+      0,
+      2,
+      4
+    ],
+    "explanation": "The index is sorted by `last_name`, and by `first_name` within each `last_name`. Fixing the leading column (`last_name = 'Smith'`), optionally with a further condition on `first_name`, selects one contiguous slice. The order you write the predicates in doesn't matter: the optimizer matches columns, not text.\n\nRows with `first_name = 'Ann'` are spread across every `last_name`, so on its own that predicate needs a full index scan, or a skip scan, which visits many separate ranges. Wrapping the column in `LOWER()` hides it from the index, unless you create an expression index on `LOWER(last_name)`."
+  },
+  {
+    "id": "db-plan-low-selectivity-scan",
+    "topic": "Databases",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "`events` has 10 million rows and a B-tree index on `status`. About 95% of the rows have `status = 'done'`. For `SELECT * FROM events WHERE status = 'done'`, `EXPLAIN` shows a sequential (full table) scan instead of using the index, and the table statistics are up to date. Why?",
+    "options": [
+      "The index must be corrupted, and it should be rebuilt",
+      "Fetching nearly every row through the index means millions of random page reads; one sequential pass over the table is cheaper",
+      "B-tree indexes can't be used for equality conditions on text columns",
+      "SELECT * always prevents index use; listing the columns explicitly would make the planner use the index"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "An index pays off when it narrows the search to a small fraction of the rows. Here it would return 9.5 million row pointers, and fetching each row through a pointer is a random read, which costs far more than streaming through the table's pages in order. The cost-based planner estimates both plans from the statistics and correctly picks the scan. It would use the same index for a rare value such as `status = 'failed'`.\n\nListing columns only helps if the index contains all of them, which allows an index-only scan. There's no general rule against `SELECT *`."
+  },
+  {
+    "id": "db-write-skew-snapshot-isolation",
+    "topic": "Databases",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "A hospital rule says at least one doctor must always be on call. Alice and Bob are both on call. At the same moment, each of them starts a transaction under PostgreSQL's `REPEATABLE READ` (snapshot isolation), and each runs:\n\n```sql\nSELECT count(*) FROM doctors WHERE on_call;   -- returns 2\n-- the application sees 2 >= 2, so it is safe to go off call:\nUPDATE doctors SET on_call = false WHERE name = :me;\nCOMMIT;\n```\n\nAlice's transaction updates her own row and Bob's updates his. What happens?",
+    "options": [
+      "The second COMMIT fails with a serialization error, because both transactions wrote to the doctors table",
+      "Both commit and nobody is left on call: this is write skew, which SERIALIZABLE isolation, or locking the rows that were read with SELECT … FOR UPDATE, would prevent",
+      "The second UPDATE blocks until the first transaction commits, then re-runs the count and skips the update",
+      "Both commit, but the database detects that the checked condition no longer holds and rolls back one of the updates"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "Each transaction reads from its own snapshot, in which both doctors are on call, and each writes a **different** row. Snapshot isolation only rejects concurrent writes to the *same* row, so both transactions commit and the rule they both checked is broken. This anomaly is called **write skew**.\n\nUnder `SERIALIZABLE`, PostgreSQL's Serializable Snapshot Isolation tracks read/write dependencies and aborts one of the two transactions with a serialization failure. Alternatively, read the rows with `SELECT id FROM doctors WHERE on_call FOR UPDATE` and count them in the application. (PostgreSQL doesn't allow `FOR UPDATE` together with `count(*)`.) The second transaction then waits for the first one's row locks, and under `REPEATABLE READ` it fails with \"could not serialize access due to concurrent update\" once the first commits."
+  }
+]

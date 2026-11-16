@@ -1,0 +1,96 @@
+[
+  {
+    "id": "git-undo-pushed-commit",
+    "topic": "Git",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "A commit that broke the build was pushed to `main` an hour ago, and teammates have pulled it since. What is the safest way to undo it?",
+    "options": [
+      "`git reset --hard <sha>~1`, then `git push --force`",
+      "`git commit --amend` to rewrite the bad commit, then `git push --force`",
+      "`git revert <sha>`, then push the new commit",
+      "`git checkout <sha>~1`, then `git push`"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "`git revert` creates a new commit that applies the inverse of the bad one, so history only moves forward and everyone can pull it normally.\n\nResetting or amending and then force-pushing rewrites commits other people already have: their next pull diverges, and work can be lost or the bad commit reintroduced. Checking out an old commit only moves your own `HEAD` (detached) and changes nothing on the remote."
+  },
+  {
+    "id": "git-conflict-markers",
+    "topic": "Git",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "You're on `feature` and run `git merge main`. A file now contains:\n\n```text\n<<<<<<< HEAD\ntimeout = 30\n=======\ntimeout = 60\n>>>>>>> main\n```\n\nWhich statement is correct?",
+    "options": [
+      "`timeout = 30` comes from `main`, because `HEAD` refers to the branch being merged in",
+      "`timeout = 30` is the version on `feature`; edit the file to the content you want, remove the markers, `git add` it, then `git commit` to finish the merge",
+      "Git has already chosen `timeout = 30`; the markers are only a note, so you can commit the file as it is",
+      "Run `git merge --continue` right away, and Git will keep both lines"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "During a merge, `HEAD` is the branch you're on (`feature`), and the section after `=======` comes from the branch named after `>>>>>>>` (`main`). Git leaves the file conflicted until you write the final content yourself (one side, the other, or a combination), remove the markers and stage the file; `git commit` or `git merge --continue` then creates the merge commit.\n\n`git merge --continue` refuses to run while files are still unmerged, and committing the markers would ship them in the file. Note that during a *rebase* the sides flip: `HEAD` is the branch you are rebasing onto."
+  },
+  {
+    "id": "git-reset-soft",
+    "topic": "Git",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "You want to undo your last commit, which you haven't pushed, so that its changes are back in the staging area exactly as they were just before you ran `git commit`. Which command does that?",
+    "options": [
+      "`git reset HEAD~1`",
+      "`git reset --hard HEAD~1`",
+      "`git reset --soft HEAD~1`",
+      "`git revert HEAD`",
+      "`git restore --staged .`"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "`--soft` moves the branch pointer back one commit and leaves both the index and the working tree untouched, so the commit's changes are staged again.\n\nPlain `git reset HEAD~1` uses `--mixed`, which also resets the index: the changes remain in your files but are no longer staged. `--hard` discards them. `git revert HEAD` keeps the commit and adds another one that undoes it, and `git restore --staged .` only unstages changes; it doesn't touch any commit."
+  },
+  {
+    "id": "git-rebase-vs-merge-select",
+    "topic": "Git",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "`main` has gained new commits since you created your feature branch. On the feature branch you run `git rebase main` instead of `git merge main`. Which statements are true? Select all that apply.",
+    "options": [
+      "The feature branch's commits are recreated with new hashes",
+      "The result is linear history without a merge commit",
+      "It is safe to do on a branch teammates have already pulled, without telling them",
+      "Conflicts may need resolving once per replayed commit, rather than once in total",
+      "The commits on `main` are rewritten too"
+    ],
+    "answer": [
+      0,
+      1,
+      3
+    ],
+    "explanation": "Rebasing replays each feature commit on top of `main`'s tip. Each replayed commit has a new parent, so it gets a new hash, and the history becomes a straight line. A conflict can stop the replay at every commit that touches the conflicting lines, whereas a merge resolves everything once in the merge commit. `main` is only read, never changed.\n\nBecause the feature commits are replaced, anyone who pulled the old ones now has diverged history. Rebase shared branches only by agreement, and push with `--force-with-lease`."
+  },
+  {
+    "id": "git-remerge-after-revert",
+    "topic": "Git",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "Branch `feat` was merged into `main` with merge commit `M`. A bug turned up, so someone ran `git revert -m 1 M` on `main`. Later you add a fix commit to `feat` and run `git merge feat` on `main` again. What does `main` contain afterwards?",
+    "options": [
+      "Only the fix: the original feature changes stay reverted, because those commits are already part of `main`'s history; reverting the revert commit brings them back",
+      "All of `feat`'s changes, the original feature plus the fix, because a merge applies the whole branch again",
+      "Nothing new: Git reports `Already up to date` because `feat` was merged before",
+      "Git reports a conflict in every file the revert touched, and you pick the versions by hand"
+    ],
+    "answer": [
+      0
+    ],
+    "explanation": "A merge brings in only the changes from commits that aren't already reachable from `main`. The original feature commits are reachable through `M`, so Git treats them as merged, and the revert commit that undid their changes is in `main` as well. Only the new fix commit is new, so only the fix arrives, often leaving code that depends on the still-reverted feature.\n\nThe remedy is to revert the revert (`git revert <revert-sha>`) before or after merging again. `Already up to date` would only happen if `feat` had no new commits."
+  }
+]

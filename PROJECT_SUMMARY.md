@@ -225,6 +225,19 @@ The next request was to make the tool work like Hello Interview's AI Coding prac
 - Through the API: the agent read, edited, ran the tests in Docker, fixed a failure, re-ran to green and summarised; restoring the checkpoint returned the file to its original state.
 - In the browser: Run Code and Submit Code (13/13, 30/30) on a question; the assistant answering about the current code; a guided JavaScript repo with the agent's edit approved, tests run in the browser for the agent, a declined edit, the Diff view and checkpoints; a coding mock interview through to a "Hire" report; an AI-fluency interview through to its report. Desktop, light and dark, and phone layouts were checked.
 
+## 15. Practice tests: the assessment experience
+
+The user asked for everything from HackerRank that matters for practice, so that real tests feel familiar. A research pass over HackerRank's candidate help centre and release notes (the new test site became the only one in July 2026) produced an inventory of the candidate experience. The most important items were built:
+
+- **Practice tests** (`tests-engine.mjs`, `dist/tests.js`). There is a landing page (duration, number of questions, question-type table, Try Sample Test) and onboarding (honor code, AI notice, permission checks). During the test: Test home with Solve / Modify, a side list of question names, a countdown that never pauses with a five-minute nudge, and Submit Test with an incomplete-submission check and a final confirmation. Seven ready-made tests, including a sample test, plus a custom builder.
+- **The end-of-test evaluation rule.** The last Save & Proceed counts, failing that the last Run Tests, failing that the last Run Code. Typed code that was never run or saved is not evaluated. This replaced the first version, which auto-submitted drafts.
+- **Multiple choice and written answers** (`mcq.mjs`, `mcq/`). 80 multiple-choice questions in 16 topics and 12 written answers were written by two sub-agents against `mcq/AUTHORING.md`, with code answers checked by running them. Multiple-answer questions give partial credit, and choosing too many options scores zero. Written answers are graded against a rubric by the local reviewer.
+- **Integrity levels.** Standard (tab and paste tracking), Secure mode (enforced full screen, tab-switch warnings, pastes from outside blocked in the code editor; copies made inside the test still paste) and Proctored (adds a webcam preview and a single-monitor check). **AI levels**: none, guarded (hints only) and unguarded (with inline suggestions). The assistant refuses to work in a test that doesn't allow it.
+- **The coding workspace** now matches the new test site. A Test Results panel with a Test Cases tab and a Custom tab, Raw format, and hidden cases that show your output. In tests the buttons are Run Code, Run Tests and Save & Proceed. There's an ⓘ execution-environment panel, a status bar, and Normal / Vim / Emacs editor modes (monaco-vim and monaco-emacs, vendored).
+- **More mock interviews.** Technical screen, system design (with a notes pane), behavioural and a conversational AI-fluency interview, each scored on four areas within bounds set by how much the candidate said. The earlier repo-based interview is now called the AI-assisted repo interview.
+
+SQL questions were started (a MySQL 8 runner and a reference question), but the user said they weren't needed, so they were removed again. Live testing showed the system-design interviewer echoing the candidate's clarifying questions back, so it is now told to answer them first with concrete numbers. `npm test`: 35 tests pass.
+
 ## Reference links
 
 - [Repository](https://github.com/Devarshi07/ai-code-assistant)

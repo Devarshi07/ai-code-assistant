@@ -13,6 +13,7 @@ import { codingRoutes } from './coding.mjs';
 import { workspaceApi, recordRepoEvidence } from './workspace-api.mjs';
 import { assistantRoutes } from './assistant.mjs';
 import { mockRoutes } from './mock.mjs';
+import { testRoutes } from './tests-engine.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SESSIONS = path.join(ROOT, '.sessions');
@@ -118,7 +119,8 @@ const coding = codingRoutes({SESSIONS, run, job});
 const workspace = workspaceApi({SESSIONS, run, listFiles: root => files(root), repoSession: session, runRepo, job});
 const assistant = assistantRoutes({SESSIONS, OLLAMA, models: () => practice.models(), workspace});
 const mock = mockRoutes({SESSIONS, OLLAMA, ollama, job, models: () => practice.models(), coding, workspace});
-const routeGroups = [practice, openEnded, coding, workspace, assistant, mock];
+const tests = testRoutes({SESSIONS, job, coding, models: () => practice.models(), OLLAMA});
+const routeGroups = [practice, openEnded, coding, workspace, assistant, mock, tests];
 const STREAMS = {'/api/practice/chat': (req, res, data) => practice.chat(req, res, data), '/api/assistant/send': (req, res, data) => assistant.stream(req, res, data, 'send'), '/api/assistant/resume': (req, res, data) => assistant.stream(req, res, data, 'resume'), '/api/mock/message': (req, res, data) => mock.stream(req, res, data)};
 async function api(req, url) {
   if (req.method === 'GET') {

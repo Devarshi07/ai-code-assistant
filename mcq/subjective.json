@@ -1,0 +1,183 @@
+[
+  {
+    "id": "sub-composition-over-inheritance",
+    "topic": "Object-Oriented Design",
+    "difficulty": "Easy",
+    "points": 10,
+    "question": "Explain what \"favor composition over inheritance\" means. Give a concrete example where inheritance causes a problem, and show how composition fixes it.",
+    "rubric": [
+      "Defines inheritance as an is-a relationship that reuses and exposes the parent's implementation, and composition as holding another object and delegating to it (has-a)",
+      "Gives a concrete example where inheritance goes wrong, such as a subclass inheriting methods that break its invariants, a fragile base class, or an explosion of subclasses for every combination of features",
+      "Shows the composition version: the class wraps a collaborator, exposes only its own interface and delegates to it",
+      "Names a benefit such as swapping behavior at runtime, substituting fakes in tests, or not depending on the parent's internals",
+      "Notes that inheritance still fits a genuine is-a relationship where every subtype honors the base type's contract"
+    ],
+    "sampleAnswer": "Inheritance reuses code by making a class a subtype of another, so it inherits the parent's whole public API and depends on its implementation details. Composition reuses code by holding a collaborator and delegating to it. Example: `class Stack<T> extends ArrayList<T>` gets `push` and `pop`, but callers can also call `add(0, x)` or `remove(i)` and break LIFO order, and a change in how the parent's methods call each other can silently break an override (the fragile base class problem). With composition, `Stack` keeps a `private final List<T> items` and exposes only `push`, `pop`, `peek` and `size`, delegating to the list. The stack's API is now exactly what it promises, the storage can change to an `ArrayDeque` without affecting callers, and the collaborator can be swapped at runtime or faked in tests. Inheritance still fits true is-a relationships where every subclass honors the parent's contract."
+  },
+  {
+    "id": "sub-database-index-basics",
+    "topic": "Databases",
+    "difficulty": "Easy",
+    "points": 10,
+    "question": "What is a database index, and how does it make a query faster? Describe what an index costs, and give one case where an index on the filtered column would *not* help.",
+    "rubric": [
+      "Explains an index as a separate sorted structure, typically a B-tree, that maps column values to the locations of matching rows",
+      "Explains the speedup: a lookup or range scan in about O(log n) steps instead of scanning the whole table",
+      "Names the costs: extra storage, and slower inserts, updates and deletes because every index on the table must be maintained",
+      "Gives a valid case where the index doesn't help, such as a filter matching a large share of rows, a function applied to the column, a leading-wildcard `LIKE`, or a composite index whose leading column isn't filtered",
+      "Mentions checking whether the index is used with `EXPLAIN` or the query plan"
+    ],
+    "sampleAnswer": "An index is a separate data structure, usually a B-tree, that keeps a column's values sorted with pointers to the matching rows. To answer `WHERE email = 'a@x.com'` the database walks the tree in O(log n) steps instead of scanning every row, and the sorted order also helps range queries and `ORDER BY`. The costs: the index takes disk space and memory, and every insert, delete and update of the indexed column must maintain the index too, so a write-heavy table with many indexes gets slower. An index won't help when the filter matches a large share of the rows, say `status = 'active'` for 90% of them, because reading the table sequentially is cheaper than thousands of random lookups. It also goes unused when the query wraps the column in a function, like `WHERE LOWER(email) = ...`, unless you index that expression. I'd confirm either way with `EXPLAIN`."
+  },
+  {
+    "id": "sub-catalog-cache-stampede",
+    "topic": "System Design",
+    "difficulty": "Medium",
+    "points": 20,
+    "question": "A read-heavy product catalog API backed by PostgreSQL is getting slow. Explain how you would add a cache: where it sits, which caching pattern you use, how entries are invalidated when products change, and how you prevent a stampede of database queries when a popular entry expires.",
+    "rubric": [
+      "Chooses a placement, such as a shared cache like Redis between the API servers and the database (optionally plus HTTP/CDN caching), and justifies it",
+      "Describes cache-aside or read-through: read the cache, and on a miss load from the database and store the entry",
+      "Covers invalidation: delete or update the key when a product changes, keep a TTL as a safety net, and acknowledge a short window of staleness",
+      "Explains the stampede problem and at least one mitigation: a per-key lock or request coalescing, serving the stale value while one request refreshes, or TTL jitter / early refresh",
+      "Mentions measuring the effect (hit rate, latency, database load) or sizing and eviction policy"
+    ],
+    "sampleAnswer": "I'd put a shared Redis cache between the API servers and PostgreSQL so all instances share hits, and add `Cache-Control` headers so a CDN and browsers can cache public product pages too. Reads use cache-aside: look up `product:{id}`; on a miss, query PostgreSQL, store the JSON with a TTL of, say, ten minutes, and return it. When a product changes, the write path commits to the database and then deletes the key, so the next read loads fresh data; the TTL bounds staleness if a delete is ever lost. To avoid a stampede when a hot key expires, only one request should rebuild it: it takes a short per-key lock (`SET lock:product:42 NX PX 2000`) while other requests briefly serve a stale copy or wait and retry. Adding random jitter to TTLs stops many keys from expiring at the same moment. I'd watch hit rate, p99 latency and database queries per second, and cap memory with LRU eviction."
+  },
+  {
+    "id": "sub-payment-idempotency",
+    "topic": "System Design",
+    "difficulty": "Hard",
+    "points": 30,
+    "question": "A mobile client calls `POST /payments` to charge a customer. On a flaky network the request sometimes times out after the server has already charged the card, and the client retries. Design the API and the server logic so the customer is charged exactly once, even with retries and concurrent duplicate requests.",
+    "rubric": [
+      "The client generates an idempotency key (for example a UUID per payment attempt), sends it in a header, and reuses it on every retry",
+      "The server records the key with a unique constraint and claims it atomically before charging, so concurrent duplicates can't both proceed",
+      "A retry with a completed key gets the stored response instead of a new charge; a duplicate that arrives while the first is in progress gets a 409 or waits",
+      "Passes an idempotency key to the payment provider too, and handles a crash between charging and saving the result, for example by reconciling with the provider using the key",
+      "Scopes keys to the user, rejects reuse with a different request body, and expires keys after a retention period"
+    ],
+    "sampleAnswer": "The client creates an idempotency key (a UUID) when the user taps Pay and sends it as `Idempotency-Key` on the first request and every retry. The server has a `payment_requests` table with a unique index on `(user_id, key)`, a hash of the request body, a status and the saved response. Each request first inserts a row with status `processing`. If the insert conflicts, the row already exists: if the body hash differs, return `422`; if it's `completed`, return the stored response; if it's still `processing`, return `409` so the client retries later. The unique index makes concurrent duplicates safe, since only one insert can win. The winner calls the provider with the same key as the provider's idempotency key, so repeating that call, for example after our own call to the provider times out, returns the original charge instead of creating a second one. Then it saves the response and marks the row `completed`. If the server crashes mid-way, the row stays `processing`; a periodic job reconciles such rows by looking up the charge at the provider under that key. Keys expire after 24 hours."
+  },
+  {
+    "id": "sub-notification-channels",
+    "topic": "Object-Oriented Design",
+    "difficulty": "Medium",
+    "points": 20,
+    "question": "Design the classes for a notification feature. The app sends messages by email, SMS and push; each user chooses which channels they want for each notification type (for example, \"order shipped\" by SMS and push only); and new channels such as Slack will be added later. Describe the main interfaces and classes, how a notification gets sent, and which design patterns you're using.",
+    "rubric": [
+      "Defines a channel abstraction (for example `NotificationChannel.send(recipient, message)`) with one implementation per channel, so adding a channel doesn't change existing code",
+      "Keeps user preferences per user and notification type in their own component (a repository or service), separate from sending",
+      "Describes a coordinator that looks up preferences and dispatches to the chosen channels, with the channels supplied through a registry or map injected into it",
+      "Separates message content from transport, for example templates per notification type and channel",
+      "Names suitable patterns (Strategy for channels; Observer or domain events for triggering; a registry or factory) and addresses failures or async delivery, such as a queue with retries per channel"
+    ],
+    "sampleAnswer": "I'd define `interface NotificationChannel { ChannelType type(); void send(User user, RenderedMessage message); }` with `EmailChannel`, `SmsChannel` and `PushChannel` implementations that wrap their providers. Adding Slack means one new class registered in the channel map: the Strategy pattern, and open/closed. `PreferenceRepository.channelsFor(userId, NotificationType)` returns the user's chosen channels, falling back to defaults per type. `TemplateRenderer` turns a `Notification` (a type plus data such as the order ID) into channel-specific content, since an SMS needs a short text and an email needs a subject and an HTML body. `NotificationService.notify(notification)` loads the preferences, renders the message for each chosen channel and dispatches it through a `Map<ChannelType, NotificationChannel>` injected via the constructor, so tests can pass fakes. Domain code doesn't call it directly: it publishes events such as `OrderShipped`, and a listener turns them into notifications (Observer). Each send goes onto a queue with retries per channel, so a failing SMS provider doesn't hold up email."
+  },
+  {
+    "id": "sub-transfer-deadlock",
+    "topic": "Concurrency",
+    "difficulty": "Medium",
+    "points": 20,
+    "question": "A banking service transfers money by locking the source account, then locking the destination account, then moving the funds. Under load, some transfers hang forever. Explain what is happening, which conditions make it possible, and two practical ways to fix it.",
+    "rubric": [
+      "Identifies a deadlock: a transfer from A to B holds A and waits for B while a concurrent transfer from B to A holds B and waits for A",
+      "Lists the four necessary conditions (mutual exclusion, hold and wait, no preemption, circular wait) and notes that removing any one prevents deadlock",
+      "Proposes a global lock ordering, such as always locking the account with the lower ID first, which rules out circular wait",
+      "Proposes a second valid fix: `tryLock` with a timeout plus release and retry with backoff, acquiring both locks as one step, or doing the transfer in one database transaction that relies on deadlock detection and retries",
+      "Mentions how to confirm the diagnosis, such as a thread dump or the database's deadlock log"
+    ],
+    "sampleAnswer": "This is a deadlock. Transfer 1 moves money from A to B and locks A; at the same moment transfer 2 moves money from B to A and locks B. Each now waits for the lock the other holds, and neither will ever release its own. A thread dump would show the two threads blocked on each other's locks. Deadlock needs all four Coffman conditions: mutual exclusion (one holder per lock), hold and wait (holding A while requesting B), no preemption (a lock can't be taken away), and circular wait (A waits for B, which waits for A). Remove any one and it can't happen. Fix 1: impose a global lock order, always locking the account with the smaller ID first regardless of the transfer's direction, so a cycle is impossible. Fix 2: use `tryLock` with a timeout; if the second lock isn't acquired, release the first, back off for a random interval and retry. If balances live in a database, do the transfer in one transaction that updates rows in ID order, and retry when the database reports a deadlock."
+  },
+  {
+    "id": "sub-bounded-blocking-queue",
+    "topic": "Concurrency",
+    "difficulty": "Hard",
+    "points": 30,
+    "question": "Describe how you would implement a thread-safe bounded blocking queue with `put(item)`, which blocks while the queue is full, and `take()`, which blocks while it is empty, using a mutex and condition variables (or Java's `synchronized` with `wait`/`notify`). Explain why each wait must be inside a loop, and what can go wrong with a single `notify()`.",
+    "rubric": [
+      "Protects the buffer and its count with one lock that every operation holds while reading or changing state",
+      "Uses two conditions: `put` waits on not-full and signals not-empty after adding; `take` waits on not-empty and signals not-full after removing",
+      "Explains that waiting releases the lock atomically and reacquires it before returning, so no signal is missed",
+      "Explains the loop: spurious wakeups, and another thread may change the state between the signal and the woken thread getting the lock back",
+      "Explains the single-`notify` problem with one shared wait set (a producer can wake another producer while consumers keep sleeping, so the system stalls) and the fix: separate conditions or `notifyAll`",
+      "Mentions practical details such as unlocking in `finally`, interruption and timeouts, or using `ArrayBlockingQueue` in production"
+    ],
+    "sampleAnswer": "I'd use a fixed-size array as a ring buffer with `head`, `tail` and `count`, guarded by one `ReentrantLock` with two conditions, `notFull` and `notEmpty`. `put` locks, runs `while (count == capacity) notFull.await();`, stores the item, advances `tail`, increments `count`, calls `notEmpty.signal()` and unlocks in `finally`. `take` mirrors it: `while (count == 0) notEmpty.await();`, removes the item, then `notFull.signal()`. `await` releases the lock atomically while waiting and reacquires it before returning, so no signal slips through. The loop matters because a woken thread isn't guaranteed the condition still holds: wakeups can be spurious, and another consumer may take the item between the signal and this thread getting the lock back. With an `if`, it would then read from an empty buffer. With `synchronized`, producers and consumers share a single wait set, so `notify()` can wake the wrong kind of thread: a producer wakes another producer while the queue is full, the consumers keep sleeping, and everything stalls. Use `notifyAll()` there, or separate conditions. In production I'd use `ArrayBlockingQueue`."
+  },
+  {
+    "id": "sub-flaky-ci-suite",
+    "topic": "Testing",
+    "difficulty": "Medium",
+    "points": 20,
+    "question": "You inherit a CI pipeline where about 5% of runs fail on tests that pass when re-run. Describe how you would find the flaky tests, the root causes you would look for, and how you would keep new flaky tests from creeping in.",
+    "rubric": [
+      "Finds flaky tests systematically: test reports aggregated across CI runs, reruns of the same commit, and running suspect tests many times in a loop or in random order",
+      "Names common root causes: fixed sleeps and async races, shared state or dependence on test order, the real clock, time zones or unseeded randomness, real external services, resource limits on CI",
+      "Matches fixes to causes: wait on conditions instead of sleeping, isolate data per test, inject clocks and seeds, fake external services",
+      "Quarantines flaky tests with an owner and a deadline instead of retrying them automatically forever, because blind retries hide real bugs",
+      "Prevents regressions, for example by running new or changed tests repeatedly before merge and tracking the flake rate"
+    ],
+    "sampleAnswer": "First I'd collect data: have CI publish JUnit-style reports and aggregate them, so I can see which tests failed on commits where a rerun passed. Then I'd reproduce each suspect by running it a few hundred times in a loop, in random order with the rest of the suite, and with CPU limits to mimic a busy runner. The usual causes are fixed sleeps racing with async work; tests sharing database rows, files or global state, so order matters; dependence on the real clock, time zone or unseeded randomness; and calls to real external services. Fixes follow the cause: poll for a condition with a timeout, give each test its own data or a rolled-back transaction, inject a fake clock and fixed seeds, and replace third-party calls with fakes. While a test is being fixed I'd quarantine it, so it still runs but doesn't block merges, with an owner and a deadline, rather than adding automatic retries that hide real race conditions. To prevent new ones, CI runs new or changed tests many times before merge and tracks the flake rate."
+  },
+  {
+    "id": "sub-third-party-api-tests",
+    "topic": "Testing",
+    "difficulty": "Medium",
+    "points": 20,
+    "question": "Your service calls a third-party payment provider's REST API. Describe how you would test this integration at different levels: what you would cover with unit tests, what with integration or contract tests, and what you would deliberately *not* mock.",
+    "rubric": [
+      "Puts the provider behind the service's own adapter interface (for example `PaymentGateway`) so business logic can be unit-tested with a fake or stub",
+      "Unit-tests business logic for success, declines, timeouts and errors through the fake, without HTTP",
+      "Tests the adapter against an HTTP-level stub (such as WireMock or recorded responses) to check request format, response parsing, error mapping, timeouts and retries",
+      "Runs a small number of tests against the provider's sandbox, possibly on a schedule rather than every commit, to catch API changes",
+      "Avoids mocking the provider's SDK or HTTP client inside business-logic tests, and explains that mocks of code you don't own encode your assumptions and keep passing when the real API changes"
+    ],
+    "sampleAnswer": "I'd hide the provider behind my own `PaymentGateway` interface, with methods like `charge(amount, token, idempotencyKey)` returning my own result types. Business logic such as checkout and refunds is unit-tested with an in-memory fake gateway that can be told to succeed, decline, time out or fail, so those tests are fast and cover every branch without HTTP. The real adapter is tested against an HTTP stub server such as WireMock, loaded with responses taken from the provider's documentation or recorded from its sandbox. That checks we send the right headers, body and idempotency key, map error codes correctly, and honor timeouts and retries. A few integration tests run against the provider's sandbox nightly rather than on every commit, to catch API changes and credential problems. I wouldn't mock the provider's SDK classes in business-logic tests: mocks of code I don't own encode my assumptions about it, so they keep passing when the real API behaves differently. The adapter is the only code that knows the provider exists."
+  },
+  {
+    "id": "sub-csrf-defenses",
+    "topic": "Web",
+    "difficulty": "Medium",
+    "points": 20,
+    "question": "Explain what a cross-site request forgery (CSRF) attack is, using a concrete example, and describe two defenses against it. Why doesn't CORS protect against CSRF?",
+    "rubric": [
+      "Explains CSRF: a malicious site makes the victim's browser send a state-changing request to a site where the victim is logged in, and the browser attaches that site's cookies automatically",
+      "Gives a concrete example, such as a hidden auto-submitting form that posts to a bank's transfer endpoint",
+      "Describes anti-CSRF tokens (synchronizer token or double-submit cookie) that the attacker's page can't read",
+      "Describes `SameSite` cookies and/or checking the `Origin` header, and not changing state on GET requests",
+      "Explains that CORS only controls whether a page can read a cross-origin response; a simple form POST is sent without a preflight, so the side effect still happens"
+    ],
+    "sampleAnswer": "In CSRF, an attacker's page makes your browser send a request to a site where you're already logged in, and the browser attaches that site's cookies automatically. For example, `evil.example` contains a hidden form with `action=\"https://bank.example/transfer\"`, `method=\"POST\"` and fields `to=attacker&amount=500`, submitted by script on page load. If the bank authenticates only by session cookie, the transfer looks legitimate. Defense 1: anti-CSRF tokens. The server embeds a random, session-bound token in each form or expects it in a header, and rejects state-changing requests without it; the attacker's page can't read the token because of the same-origin policy. Defense 2: set the session cookie with `SameSite=Lax` or `Strict`, so the browser doesn't attach it to cross-site POSTs, and check the `Origin` header on state-changing requests. Never change state on GET, since Lax still sends cookies on top-level GET navigations. CORS doesn't help because it only decides whether the attacker's script may read the response. A form POST is a simple request with no preflight, so it reaches the server and the transfer happens anyway."
+  },
+  {
+    "id": "sub-seat-double-booking",
+    "topic": "Databases",
+    "difficulty": "Hard",
+    "points": 30,
+    "question": "A booking service runs this logic inside a transaction at PostgreSQL's default `READ COMMITTED` isolation level:\n\n```sql\nSELECT count(*) FROM bookings WHERE seat_id = 42;   -- returns 0\nINSERT INTO bookings (seat_id, user_id) VALUES (42, :user_id);\n```\n\nOccasionally two users end up booked into the same seat. Explain exactly why, and compare at least two ways to prevent it.",
+    "rubric": [
+      "Explains the race: both transactions run the `SELECT` before either commits its `INSERT`, both see 0, and both insert; READ COMMITTED doesn't prevent this, and there is no existing row for `FOR UPDATE` to lock",
+      "Proposes a unique constraint on the seat (for example `UNIQUE (event_id, seat_id)`), so the second insert fails and the app reports the seat as taken, and notes it holds for every code path",
+      "Proposes pessimistic locking of a row that always exists, such as `SELECT ... FROM seats WHERE id = 42 FOR UPDATE`, so concurrent bookings of that seat run one at a time",
+      "Mentions `SERIALIZABLE` isolation (or optimistic version checks), which aborts one of the conflicting transactions and requires the application to retry",
+      "Compares trade-offs such as contention and waiting, deadlock risk, the need for retry logic, and where the rule is enforced"
+    ],
+    "sampleAnswer": "Under READ COMMITTED each statement sees only data committed before it started. Transaction 1 runs the `SELECT` and sees 0; before it commits, transaction 2 runs the same `SELECT` and also sees 0, because T1's insert isn't committed yet. Both insert and both commit. It's a check-then-act race, and adding `FOR UPDATE` to the `SELECT` wouldn't help, because there's no booking row yet to lock. Fix 1: add `UNIQUE (seat_id)` to bookings (or `(event_id, seat_id)`). The second insert waits for the first transaction to commit, then fails with a unique violation that the app reports as \"seat already taken\". The database enforces it for every code path at almost no cost. Fix 2: lock a row that always exists, `SELECT * FROM seats WHERE id = 42 FOR UPDATE`, then check and insert. Concurrent bookings of that seat queue up, which is fine at low contention but adds waiting, and locking several seats needs a consistent order to avoid deadlocks. Fix 3: run at `SERIALIZABLE`; PostgreSQL aborts one transaction with a serialization failure, so the app must retry. I'd rely on the unique constraint."
+  },
+  {
+    "id": "sub-orders-pagination",
+    "topic": "Web",
+    "difficulty": "Hard",
+    "points": 30,
+    "question": "A REST endpoint `GET /orders` must let clients page through up to 50 million orders, newest first, while new orders keep arriving. Compare offset pagination (`?page=3&size=50`) with cursor (keyset) pagination, and describe the request and response design you would choose.",
+    "rubric": [
+      "Explains that offset pagination gets slower on deep pages, because the database still reads and discards all the skipped rows",
+      "Explains that offsets shift when rows are inserted or deleted during paging, so clients see duplicates or miss items",
+      "Describes keyset pagination on a unique, stable sort key such as `(created_at, id)`, querying `WHERE (created_at, id) < (:ts, :id) ORDER BY created_at DESC, id DESC LIMIT n` with a matching index",
+      "Designs the API: an opaque cursor (for example base64 of the last sort key) returned as `next_cursor` or in a `Link` header, a `limit` with a maximum, and no exact total count",
+      "Notes the trade-offs: no jumping to an arbitrary page number, cursors tied to a sort order and filters, and handling of invalid cursors"
+    ],
+    "sampleAnswer": "Offset pagination runs `ORDER BY created_at DESC LIMIT 50 OFFSET 100000`. The database still walks past the 100,000 skipped rows, so deep pages get slower and slower. Offsets also shift under writes: if three orders arrive while a client reads page 1, page 2 starts three rows earlier and repeats items, and deletions make it skip items. Keyset pagination remembers where the last page ended. With an index on `(created_at DESC, id DESC)`, the next page is `WHERE (created_at, id) < (:ts, :id) ORDER BY created_at DESC, id DESC LIMIT 50`, an index seek that costs the same at any depth. Including `id` makes the key unique so ties aren't lost, and new orders don't disturb later pages because they sort before the cursor. The API is `GET /orders?limit=50&cursor=...`, returning `{\"data\": [...], \"next_cursor\": \"...\"}`; the cursor is an opaque base64 encoding of the last `(created_at, id)` plus the filters, and `null` on the last page. I'd cap `limit` at 200, return `400` for a malformed cursor, and skip exact totals. The cost: clients can't jump to page 37."
+  }
+]

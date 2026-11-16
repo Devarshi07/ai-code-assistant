@@ -123,6 +123,17 @@ export function assistantRoutes({SESSIONS, OLLAMA, models, workspace}) {
   async function scope(data) {
     if (data.scope === 'question') {
       const question = await getQuestion(String(data.question || ''));
+      if (data.test) {
+        // Inside a practice test the assistant exists only if the test allows AI.
+        if (!ID.test(String(data.test))) throw new Error('Unknown test.');
+        let test;
+        try { test = JSON.parse(await fs.readFile(path.join(SESSIONS, 'tests', `${data.test}.json`), 'utf8')); } catch { throw new Error('Test not found.'); }
+        if (!test.settings?.ai || test.settings.ai === 'none') throw new Error('The AI assistant is not allowed in this test.');
+        if (!test.questions.some(q => q.type === 'coding' && q.ref === question.id)) throw new Error('That question is not part of this test.');
+        if (test.status !== 'active' && test.status !== 'ended') throw new Error('Start the test first.');
+        // A guarded assistant gives hints and explanations, never full solutions.
+        return {scope: 'question', question, dir: path.join(SESSIONS, 'tests', test.id, 'assistant', question.id), title: question.title, readonly: test.status !== 'active', help: test.settings.ai === 'unguarded' ? 'full' : 'guided'};
+      }
       return {scope: 'question', question, dir: path.join(SESSIONS, 'coding', 'assistant', question.id), title: question.title};
     }
     const ws = await workspace.open(data.kind, data.id);
@@ -179,7 +190,7 @@ export function assistantRoutes({SESSIONS, OLLAMA, models, workspace}) {
       const label = JUDGE_LANGUAGES[language].label;
       return [
         `You are the AI assistant beside the code editor in a coding assessment practice question. The candidate is solving "${q.title}" (${q.difficulty}) in ${label}.`,
-        HELP_RULES[data.help === 'full' ? 'full' : 'guided'],
+        HELP_RULES[(ctx.help || data.help) === 'full' ? 'full' : 'guided'],
         'Rules:',
         '- Your replies appear in a narrow side panel. Be concise and use fenced code blocks with a language tag.',
         '- Keep the template\'s function signature. The stdin and stdout handling around the function is already correct.',
@@ -224,7 +235,7 @@ export function assistantRoutes({SESSIONS, OLLAMA, models, workspace}) {
         } else if (mention.type === 'problem') {
           const text = ctx.scope === 'question' ? statementMarkdown(ctx.question) : ctx.ws.kind === 'practice' ? '' : ctx.ws.problemText();
           if (text) blocks.push(`--- Problem statement ---\n${clip(text, 9000)}`);
-          labels.push({type: 'problem', label: 'Problem statement'});
+          labels.push({type: 'problem', label: 'problemStatement'});
         } else if (mention.type === 'diff' && ctx.scope === 'ws') {
           blocks.push(`--- Current changes ---\n${clip(await changesText(ctx.ws), 16000)}`);
           labels.push({type: 'diff', label: 'Changes'});
@@ -511,6 +522,7 @@ export function assistantRoutes({SESSIONS, OLLAMA, models, workspace}) {
     const key = `${ctx.dir}:${chat.id}`;
     if (running.has(key)) throw new Error('The assistant is still working in this session. Stop it first.');
     if (ctx.scope === 'ws' && ctx.ws.kind === 'practice' && !ctx.ws.active) throw new Error('This practice session has ended.');
+    if (ctx.readonly) throw new Error('This test has ended.');
     const model = await pickModel(data.model);
     let question = '';
     let startedAt = Date.now();

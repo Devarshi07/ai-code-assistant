@@ -1,0 +1,5 @@
+/*!
+ * monaco-emacs
+ * Version - 0.3.0
+ * Author - Brijesh Bittu <brijesh@bitwiser.in> (http://bitwiser.in/)
+ */

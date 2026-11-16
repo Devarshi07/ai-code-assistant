@@ -1,0 +1,95 @@
+[
+  {
+    "id": "ds-hash-set-usernames",
+    "topic": "Data Structures",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "A sign-up service must check whether a username is already taken, add new usernames, and remove usernames when accounts are deleted. It never needs the usernames in sorted order. Which structure gives the best **average** time for all three operations?",
+    "options": [
+      "Sorted array with binary search",
+      "Hash set",
+      "Balanced binary search tree",
+      "Singly linked list"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "A hash set does lookup, insert and delete in O(1) on average. A balanced BST takes O(log n) for each; it's the right choice only when you also need ordering, such as sorted iteration or range queries. A sorted array finds a name in O(log n), but every insert or delete shifts elements, which is O(n). A linked list needs O(n) just to search."
+  },
+  {
+    "id": "ds-linked-list-front-insert",
+    "topic": "Data Structures",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "Which operation is O(1) on a singly linked list that keeps only a `head` pointer, but O(n) on a dynamic array (such as a Python `list` or a Java `ArrayList`) holding n elements?",
+    "options": [
+      "Reading the element at index i",
+      "Inserting a new element at the front",
+      "Appending a new element at the end",
+      "Binary search for a value in sorted data"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "Inserting at the front of a linked list just creates a node that points at the old head. A dynamic array has to shift all n elements one slot to the right.\n\nAppending at the end is the opposite case: amortized O(1) for a dynamic array, but O(n) for a list with no tail pointer, because you have to walk to the last node. Index access is O(1) for an array and O(n) for a list, and binary search depends on O(1) random access, so it doesn't fit a linked list at all."
+  },
+  {
+    "id": "ds-min-heap-properties",
+    "topic": "Data Structures",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "A min-heap of n **distinct** integers is stored in an array in the usual way: the children of index `i` are at `2i + 1` and `2i + 2`. Which statements are true? Select all that apply.",
+    "options": [
+      "The smallest element is at index 0.",
+      "The array is sorted in ascending order.",
+      "The largest element is in a leaf position.",
+      "Checking whether an arbitrary value is in the heap takes O(log n).",
+      "A heap can be built from n unsorted elements in O(n) time."
+    ],
+    "answer": [
+      0,
+      2,
+      4
+    ],
+    "explanation": "The heap property only says each parent is smaller than its children. So the root (index 0) is the minimum, but siblings and cousins can be in any order: `[1, 5, 2]` is a valid min-heap and it isn't sorted.\n\nEvery internal node has at least one child, and that child is larger, so the largest key can't be an internal node. It has to be a leaf. Searching for an arbitrary value can't rely on the ordering to skip subtrees, so in the worst case you check every element: O(n). Building a heap bottom-up (sift down from the last parent back to the root) takes O(n), not O(n log n), because most nodes sit near the bottom and only move a short distance."
+  },
+  {
+    "id": "ds-lru-cache-structures",
+    "topic": "Data Structures",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "You are implementing an LRU cache with a fixed capacity. `get(key)` and `put(key, value)` must both run in O(1), and when the cache is full, `put` evicts the least recently used key. Which combination of structures achieves this?",
+    "options": [
+      "A hash map from key to value, plus a min-heap of (last-access time, key) pairs",
+      "A hash map from each key to its node in a doubly linked list kept in recency order",
+      "A hash map from each key to its node in a singly linked list kept in recency order",
+      "A balanced binary search tree keyed by last-access time"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "Every access moves an entry to the most-recent end of the order, and an eviction removes the entry at the least-recent end. When the hash map points straight at a doubly linked list node, you can unlink that node from the middle of the list and re-insert it at the head in O(1), because the node knows its predecessor.\n\nA singly linked list node doesn't know its predecessor, so unlinking it means walking from the head: O(n). A heap or a BST keyed by access time keeps the right order, but each update costs O(log n)."
+  },
+  {
+    "id": "ds-linear-probing-naive-delete",
+    "topic": "Data Structures",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "A hash table with 8 slots uses open addressing with linear probing. Lookup and insert both start at a key's home slot and step forward one slot at a time:\n\n- lookup stops when it finds the key or reaches an empty slot;\n- insert writes into the first empty slot it reaches, unless it finds the key first, in which case it updates that entry's value.\n\nKeys A, B and C all have home slot 3 and were inserted in that order, so A is in slot 3, B in slot 4 and C in slot 5. Delete is implemented by simply setting the key's slot back to empty.\n\nAfter `delete(B)`, the program calls `insert(C, newValue)`. What is the result?",
+    "options": [
+      "C's value is updated in place in slot 5.",
+      "A second entry for C is written to slot 4, and the old entry in slot 5 stays behind.",
+      "C is written to slot 6, the first free slot after the cluster.",
+      "C is moved from slot 5 to slot 4, closing the gap left by B."
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "`insert(C)` probes slot 3 (A, not C) and then slot 4, which is now empty. Following its rule, it writes C there and never reaches slot 5. The table now holds two entries for C, and a later `delete(C)` removes only one of them. Lookups go wrong too: before the insert, `lookup(C)` would have stopped at slot 4 and reported C as missing.\n\nEmptying a slot breaks the probe chain for every key placed after it in the cluster. Open-addressing tables avoid this in one of two ways. They can mark deleted slots with a **tombstone**, which lookups skip over and inserts can reuse once they have confirmed the key isn't further along. Or, on delete, they can shift the later entries of the cluster back."
+  }
+]

@@ -27,7 +27,7 @@ export function monacoLanguage(name = '') {
 
 export const settings = {
   get() {
-    return {theme: 'auto', fontSize: 14, tabSize: 4, autocomplete: true, inlineSuggestions: true, minimap: false, wordWrap: 'off', ...store.get('dg-editor-settings', {})};
+    return {theme: 'auto', fontSize: 14, tabSize: 4, autocomplete: true, inlineSuggestions: true, minimap: false, wordWrap: 'off', keymap: 'normal', ...store.get('dg-editor-settings', {})};
   },
   set(patch) {
     const next = {...settings.get(), ...patch};
@@ -136,6 +136,43 @@ export function editorOptions(overrides = {}) {
 
 // Applies saved settings to a live editor.
 export function applySettings(editor, s = settings.get()) {
-  editor.updateOptions({fontSize: s.fontSize, minimap: {enabled: s.minimap}, wordWrap: s.wordWrap, quickSuggestions: s.autocomplete, suggestOnTriggerCharacters: s.autocomplete, wordBasedSuggestions: s.autocomplete ? 'currentDocument' : 'off'});
+  editor.updateOptions({fontSize: s.fontSize, lineHeight: Math.round(s.fontSize * 1.6), minimap: {enabled: s.minimap}, wordWrap: s.wordWrap, quickSuggestions: s.autocomplete, suggestOnTriggerCharacters: s.autocomplete, wordBasedSuggestions: s.autocomplete ? 'currentDocument' : 'off'});
   editor.getModel()?.updateOptions({tabSize: s.tabSize});
 }
+
+// Vim and Emacs key bindings (monaco-vim and monaco-emacs, MIT), loaded on first use.
+// Their UMD builds take the global monaco object when the AMD loader is hidden.
+const KEYMAP_SCRIPTS = {vim: '/vendor/monaco-vim/monaco-vim.umd.js', emacs: '/vendor/monaco-emacs/monaco-emacs.js'};
+const keymapLoads = {};
+function loadGlobalScript(src) {
+  return new Promise((resolve, reject) => {
+    const amd = window.define?.amd;
+    if (window.define) window.define.amd = undefined;
+    const script = document.createElement('script');
+    script.src = src;
+    const restore = () => { if (window.define) window.define.amd = amd; };
+    script.onload = () => { restore(); resolve(); };
+    script.onerror = () => { restore(); reject(new Error('The editor key bindings failed to load.')); };
+    document.head.append(script);
+  });
+}
+
+// Turns on the chosen key bindings; returns a function that turns them off.
+export async function applyKeymap(editor, mode, statusNode) {
+  if (statusNode) statusNode.textContent = '';
+  if (mode === 'vim') {
+    if (!window.MonacoVim) await (keymapLoads.vim ||= loadGlobalScript(KEYMAP_SCRIPTS.vim));
+    const vim = window.MonacoVim.initVimMode(editor, statusNode);
+    return () => { vim.dispose(); if (statusNode) statusNode.textContent = ''; };
+  }
+  if (mode === 'emacs') {
+    if (!window.MonacoEmacs) await (keymapLoads.emacs ||= loadGlobalScript(KEYMAP_SCRIPTS.emacs));
+    const emacs = new window.MonacoEmacs.EmacsExtension(editor);
+    emacs.onDidChangeKey(keys => { if (statusNode) statusNode.textContent = keys; });
+    emacs.start();
+    return () => { emacs.dispose(); if (statusNode) statusNode.textContent = ''; };
+  }
+  return () => {};
+}
+
+export const KEYMAP_LABEL = {normal: 'Normal', vim: 'Vim', emacs: 'Emacs'};

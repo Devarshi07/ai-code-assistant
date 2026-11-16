@@ -1,0 +1,96 @@
+[
+  {
+    "id": "os-thread-shared-state",
+    "topic": "Operating Systems",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "multiple",
+    "question": "Which of these do threads of the same process share? Select all that apply.",
+    "options": [
+      "Heap memory",
+      "Global (static) variables",
+      "Open file descriptors",
+      "The call stack",
+      "The register set, including the program counter"
+    ],
+    "answer": [
+      0,
+      1,
+      2
+    ],
+    "explanation": "Threads run in a single address space, so the heap, global data, the code and the process's open files are common to all of them. That makes communication between threads cheap, and it's also what makes data races possible.\n\nEach thread has its own stack and its own saved registers (program counter, stack pointer), because each one runs its own sequence of calls. Another thread can still reach your stack through a pointer, since the address space is shared, but each thread is given its own stack region."
+  },
+  {
+    "id": "os-page-fault-swapped-page",
+    "topic": "Operating Systems",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "A process reads from an address on a page that is validly mapped in its address space but has been swapped out to disk. What normally happens?",
+    "options": [
+      "The CPU raises a page fault; the OS loads the page into a free frame (evicting another page if needed), updates the page table and re-runs the faulting instruction",
+      "The process receives a segmentation fault and is terminated",
+      "The read returns zero, and the page is loaded in the background for later accesses",
+      "The OS restarts the process from the beginning with more physical memory"
+    ],
+    "answer": [
+      0
+    ],
+    "explanation": "A page fault isn't an error in itself: it's how demand paging works. The OS handles the trap, reads the page back from swap, marks the page-table entry present and resumes the process at the same instruction, which now succeeds. All the process notices is the delay.\n\nA segmentation fault is for accesses the mapping doesn't allow, such as an unmapped address or a write to a read-only page."
+  },
+  {
+    "id": "os-fork-in-loop",
+    "topic": "Operating Systems",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "Run on Linux, how many times is `hi` printed in total, counting every process?\n\n```python\nimport os\n\nfor _ in range(3):\n    os.fork()\nprint(\"hi\")\n```",
+    "options": [
+      "3",
+      "4",
+      "6",
+      "8"
+    ],
+    "answer": [
+      3
+    ],
+    "explanation": "`fork()` returns in both the parent and the child, and both carry on with the loop. Each iteration doubles the number of processes, so after 3 iterations there are 2³ = 8 of them, and each prints once.\n\n4 is what you'd get if only the original process kept forking (itself plus 3 children). But the children fork too: the first iteration creates 1 new process, the second 2 and the third 4, so there are 1 + 1 + 2 + 4 = 8 processes in the end."
+  },
+  {
+    "id": "os-round-robin-tiny-quantum",
+    "topic": "Operating Systems",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "A busy machine uses round-robin scheduling. To make interactive programs feel more responsive, an engineer cuts the time quantum from 100 ms to 0.1 ms. What is the main cost of this change?",
+    "options": [
+      "Long-running CPU-bound jobs can now starve and never finish",
+      "The scheduler effectively turns into first-come, first-served",
+      "Much more CPU time goes to context switches (and to refilling caches and TLBs) instead of useful work, so throughput drops",
+      "High-priority processes now get blocked behind low-priority ones that hold locks (priority inversion)"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "Every expired quantum costs a context switch: saving and restoring registers, running the scheduler, and often refilling caches and the TLB for the next process. As the quantum shrinks toward the cost of a switch, a large share of the CPU goes to overhead.\n\nRound-robin can't starve anyone, because every ready process gets a turn in each cycle. It's a very **long** quantum that makes it degrade toward FCFS. Priority inversion is a locking problem in priority schedulers and has nothing to do with the quantum length."
+  },
+  {
+    "id": "os-fifo-belady-anomaly",
+    "topic": "Operating Systems",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "A process makes this sequence of page references:\n\n```\n1 2 3 4 1 2 5 1 2 3 4 5\n```\n\nUsing **FIFO** page replacement, with all frames initially empty, how many page faults occur with 3 frames, and how many with 4 frames?",
+    "options": [
+      "3 frames: 9, 4 frames: 10",
+      "3 frames: 9, 4 frames: 8",
+      "3 frames: 10, 4 frames: 8",
+      "3 frames: 12, 4 frames: 10",
+      "3 frames: 9, 4 frames: 9"
+    ],
+    "answer": [
+      0
+    ],
+    "explanation": "**3 frames:** 1, 2 and 3 fault, and 4 faults and evicts 1. Then 1 evicts 2, 2 evicts 3 and 5 evicts 4. 1 and 2 hit. 3 evicts 1, 4 evicts 2, and 5 hits. That's 9 faults.\n\n**4 frames:** 1–4 fault, and 1 and 2 hit. 5 evicts 1, then 1, 2, 3 and 4 each fault and evict the oldest page, and 5 faults too. That's 10.\n\nAdding a frame made things worse. This is **Belady's anomaly**. FIFO can show it because the pages held with 4 frames aren't always a superset of the pages held with 3. LRU and the optimal algorithm are stack algorithms and never show it. LRU gives 10 and 8 on this string, which is where the \"10, 8\" option comes from."
+  }
+]

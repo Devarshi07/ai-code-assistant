@@ -6,12 +6,13 @@ import os from 'node:os';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 
+// version and memory (MB) are shown in the editor's execution-environment panel.
 export const JUDGE_LANGUAGES = {
-  python: {label: 'Python 3', image: 'python:3.12-slim', file: 'solution.py', run: 'python3 -X utf8 /code/solution.py', limit: 10},
-  javascript: {label: 'JavaScript (Node.js)', image: 'node:22-alpine', file: 'solution.js', run: 'node --stack-size=65500 /code/solution.js', limit: 10},
-  java: {label: 'Java 21', image: 'eclipse-temurin:21-jdk-alpine', file: 'Solution.java', compile: 'javac -encoding UTF-8 -d /tmp/build /code/Solution.java', run: 'java -Xss64m -Xmx512m -XX:+UseSerialGC -cp /tmp/build Solution', limit: 4},
-  cpp: {label: 'C++20', image: 'gcc:14', file: 'solution.cpp', compile: 'g++ -O2 -std=c++20 -pipe -o /tmp/build/solution /code/solution.cpp', run: '/tmp/build/solution', limit: 2},
-  go: {label: 'Go', image: 'golang:1.24-alpine', file: 'solution.go', compile: 'cp /code/solution.go /tmp/build/main.go && cd /tmp/build && go build -o /tmp/build/solution main.go', run: '/tmp/build/solution', limit: 4}
+  python: {label: 'Python 3', version: 'Python 3.12', image: 'python:3.12-slim', file: 'solution.py', run: 'python3 -X utf8 /code/solution.py', limit: 10, memory: 768, notes: 'Standard library only.'},
+  javascript: {label: 'JavaScript (Node.js)', version: 'Node.js 22', image: 'node:22-alpine', file: 'solution.js', run: 'node --stack-size=65500 /code/solution.js', limit: 10, memory: 768, notes: 'CommonJS, standard library only.'},
+  java: {label: 'Java 21', version: 'Java 21 (Eclipse Temurin), javac', image: 'eclipse-temurin:21-jdk-alpine', file: 'Solution.java', compile: 'javac -encoding UTF-8 -d /tmp/build /code/Solution.java', run: 'java -Xss64m -Xmx512m -XX:+UseSerialGC -cp /tmp/build Solution', limit: 4, memory: 512, notes: 'The public class must be named Solution.'},
+  cpp: {label: 'C++20', version: 'g++ 14, -std=c++20 -O2', image: 'gcc:14', file: 'solution.cpp', compile: 'g++ -O2 -std=c++20 -pipe -o /tmp/build/solution /code/solution.cpp', run: '/tmp/build/solution', limit: 2, memory: 768, notes: 'bits/stdc++.h is available.'},
+  go: {label: 'Go', version: 'Go 1.24', image: 'golang:1.24-alpine', file: 'solution.go', compile: 'cp /code/solution.go /tmp/build/main.go && cd /tmp/build && go build -o /tmp/build/solution main.go', run: '/tmp/build/solution', limit: 4, memory: 768, notes: 'Standard library only.'}
 };
 
 export const VERDICTS = {

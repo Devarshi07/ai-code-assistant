@@ -1,0 +1,97 @@
+[
+  {
+    "id": "py-mutable-default-arg",
+    "topic": "Python",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "What does this code print?\n\n```python\ndef tag(name, seen=[]):\n    seen.append(name)\n    return len(seen)\n\nprint(tag(\"a\"), tag(\"b\"), tag(\"c\", []), tag(\"d\"))\n```",
+    "options": [
+      "`1 1 1 1`",
+      "`1 2 3 4`",
+      "`1 2 1 1`",
+      "`1 2 1 3`"
+    ],
+    "answer": [
+      3
+    ],
+    "explanation": "The default `[]` is evaluated **once**, when `def` runs, so every call that omits `seen` shares the same list. `tag(\"a\")` and `tag(\"b\")` grow it to length 2, `tag(\"c\", [])` uses a fresh list (length 1), and `tag(\"d\")` goes back to the shared list (length 3).\n\n`1 1 1 1` assumes a new list per call. The usual fix is `seen=None` with `if seen is None: seen = []` inside the function."
+  },
+  {
+    "id": "py-type-hints-runtime",
+    "topic": "Python",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "What happens when this runs under Python 3.12?\n\n```python\ndef double(n: int) -> int:\n    return n * 2\n\nprint(double(\"ab\"), double([0]))\n```",
+    "options": [
+      "It raises `TypeError` on the first call, because `\"ab\"` is not an `int`",
+      "It refuses to start, because Python checks the annotations against the calls before running",
+      "It prints `abab [0, 0]`",
+      "It prints `abab`, then raises `TypeError` for the list argument"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "Annotations are metadata: Python stores them in `double.__annotations__` but doesn't enforce them at runtime. `\"ab\" * 2` is `\"abab\"` and `[0] * 2` is `[0, 0]`, so both calls succeed.\n\nA static type checker such as mypy or Pyright would flag both calls before the code runs; enforcing types at runtime takes explicit checks or a library such as pydantic."
+  },
+  {
+    "id": "py-generator-partial-consume",
+    "topic": "Python",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "What does this code print?\n\n```python\nsquares = (n * n for n in range(5))\nprint(4 in squares)\nprint(list(squares))\n```",
+    "options": [
+      "`True`, then `[9, 16]`",
+      "`True`, then `[0, 1, 4, 9, 16]`",
+      "`True`, then `[]`",
+      "`True`, then `[4, 9, 16]`",
+      "`False`, then `[0, 1, 4, 9, 16]`"
+    ],
+    "answer": [
+      0
+    ],
+    "explanation": "A generator is a one-shot iterator. `4 in squares` pulls values until it finds a match (0, 1, then 4) and stops there. `list(squares)` resumes from that point and gets only 9 and 16.\n\n`[]` would be right if `in` always used up the whole generator, and the full list would need a fresh generator, or a list comprehension instead of a generator expression."
+  },
+  {
+    "id": "py-equality-select-all",
+    "topic": "Python",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "Which of these expressions evaluate to `True` in Python 3.12? Select all that apply.",
+    "options": [
+      "`[] is []`",
+      "`(1, [2]) == (1, [2])`",
+      "`0.1 + 0.2 == 0.3`",
+      "`{1: \"a\"} == {1.0: \"a\"}`",
+      "`{1, 2, 3} == {3, 2, 1}`",
+      "`None == 0`"
+    ],
+    "answer": [
+      1,
+      3,
+      4
+    ],
+    "explanation": "`==` compares values; `is` compares identity.\n\n- Each `[]` creates a new list, so `[] is []` is `False`.\n- Tuples compare element by element and the lists inside compare by value, so `(1, [2]) == (1, [2])` is `True`.\n- `1 == 1.0` and `hash(1) == hash(1.0)`, so both dicts have the same single key and are equal.\n- Sets ignore order, so the two sets are equal.\n- `0.1 + 0.2` is `0.30000000000000004` because of binary floating point; compare floats with `math.isclose`.\n- `None` is equal only to `None`."
+  },
+  {
+    "id": "py-class-attr-augmented-assign",
+    "topic": "Python",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "What does this code print?\n\n```python\nclass Counter:\n    total = 0\n    items = []\n\n    def add(self, x):\n        self.total += x\n        self.items += [x]\n\na, b = Counter(), Counter()\na.add(1)\nb.add(2)\nprint(Counter.total, a.total, Counter.items, b.items is Counter.items)\n```",
+    "options": [
+      "`3 3 [1, 2] True`",
+      "`0 1 [] False`",
+      "`0 1 [1, 2] True`",
+      "`0 1 [1, 2] False`"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "`self.total += x` reads the class attribute (0), computes a new int and **assigns** it to `self.total`, which creates an instance attribute. `Counter.total` stays 0 and `a.total` is 1.\n\n`self.items += [x]` calls `list.__iadd__`, which extends the single class-level list in place and then assigns that same list object to `self.items`. Both additions therefore land in `Counter.items`, and `b.items` is that very object.\n\n`0 1 [1, 2] False` assumes the assignment makes a copy; it only binds an instance name to the existing list. Mutable class attributes are shared by all instances, which is why per-instance lists belong in `__init__`."
+  }
+]

@@ -1,0 +1,94 @@
+[
+  {
+    "id": "cx-doubling-loop",
+    "topic": "Complexity",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "What is the time complexity of `steps(n)` as a function of n?\n\n```python\ndef steps(n):\n    count = 0\n    i = 1\n    while i < n:\n        i *= 2\n        count += 1\n    return count\n```",
+    "options": [
+      "O(1)",
+      "O(log n)",
+      "O(n)",
+      "O(n log n)"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "`i` takes the values 1, 2, 4, 8, … and the loop stops once `i` reaches n, which takes about log₂ n iterations. Doubling or halving the loop variable is the signature of logarithmic time. A loop that added a constant to `i` on each pass would be O(n)."
+  },
+  {
+    "id": "cx-list-membership-in-loop",
+    "topic": "Complexity",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "`a` and `b` are Python lists, each with n elements. What is the time complexity of `common(a, b)`?\n\n```python\ndef common(a, b):\n    return [x for x in a if x in b]\n```",
+    "options": [
+      "O(n), because x in b is a constant-time check",
+      "O(n log n), because x in b uses binary search",
+      "O(n²), because x in b scans the list; converting b to a set first makes it O(n) on average",
+      "O(n²), and it can't be improved without sorting both lists first"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "`in` on a list compares against the elements one by one, so each check is O(n), and doing n of them is O(n²). Building `s = set(b)` once costs O(n), and each `x in s` is then O(1) on average, for O(n) in total.\n\nSorting both lists and merging them, in O(n log n), would also beat O(n²), but it isn't required, so the last option is wrong. Python can't binary-search a list for you either: it has no way of knowing the list is sorted."
+  },
+  {
+    "id": "cx-big-o-statements",
+    "topic": "Complexity",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "Which statements are true? Select all that apply.",
+    "options": [
+      "n log n is O(n²).",
+      "2^(2n) is O(2^n).",
+      "log(n³) is O(log n).",
+      "n! is O(2^n).",
+      "If algorithm A is O(n) and algorithm B is O(n²), A is faster than B for every input size."
+    ],
+    "answer": [
+      0,
+      2
+    ],
+    "explanation": "Big-O is an upper bound, so anything that grows no faster than n² is O(n²), and that includes n log n. log(n³) = 3 log n, which differs from log n only by a constant factor.\n\n2^(2n) = 4^n, and the ratio 4^n / 2^n = 2^n grows without bound, so no constant factor covers it. n! eventually outgrows c^n for any constant c. And Big-O ignores constant factors and small inputs: an O(n) algorithm with a large constant can be slower than an O(n²) one for small n. That's why fast sorts often switch to insertion sort for small subarrays."
+  },
+  {
+    "id": "cx-sliding-window-amortized",
+    "topic": "Complexity",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "What is the time complexity of this function for a string of length n? Assume set operations are O(1).\n\n```python\ndef longest_unique(s):\n    seen = set()\n    left = best = 0\n    for right, ch in enumerate(s):\n        while ch in seen:\n            seen.remove(s[left])\n            left += 1\n        seen.add(ch)\n        best = max(best, right - left + 1)\n    return best\n```",
+    "options": [
+      "O(n)",
+      "O(n log n)",
+      "O(n²)",
+      "O(n²) in the worst case, O(n) on average"
+    ],
+    "answer": [
+      0
+    ],
+    "explanation": "The nested `while` makes this look quadratic, but `left` only ever increases and never passes `right`. Every character is added to the set once and removed at most once, so across the whole run the inner loop body executes at most n times **in total**, not n times per character. The total work is O(n) + O(n) = O(n), and that's the worst case, not just the average.\n\nCounting how many times each element enters and leaves the window is the standard way to analyze two-pointer and sliding-window code."
+  },
+  {
+    "id": "cx-binary-search-with-slicing",
+    "topic": "Complexity",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "`a` is a sorted Python list of length n. What is the worst-case time complexity of `contains(a, x)`?\n\n```python\ndef contains(a, x):\n    if not a:\n        return False\n    mid = len(a) // 2\n    if a[mid] == x:\n        return True\n    if a[mid] < x:\n        return contains(a[mid + 1:], x)\n    return contains(a[:mid], x)\n```",
+    "options": [
+      "O(log n)",
+      "O(n)",
+      "O(n log n)",
+      "O(log² n)"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "There are only O(log n) calls, but each slice **copies** half of the current list: `a[mid + 1:]` builds a new list of about n/2 elements. The copies add up to n/2 + n/4 + n/8 + … < n, so the total is O(n). The live slices also take O(n) extra memory.\n\nPassing `lo` and `hi` indexes instead of slicing brings the cost back to O(log n). O(n log n) would be the answer if every level copied all n elements, but each level copies half as much as the one before."
+  }
+]

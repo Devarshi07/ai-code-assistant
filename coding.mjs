@@ -73,7 +73,10 @@ export async function readTests(q, {samplesOnly = false} = {}) {
 
 export function publicQuestion(q) {
   const {tests, ...rest} = q;
-  return {...rest, testCount: tests.length, sampleCount: tests.filter(t => t.sample).length, languages: CODE_LANGUAGES.map(id => ({id, label: JUDGE_LANGUAGES[id].label, limit: JUDGE_LANGUAGES[id].limit}))};
+  return {...rest, testCount: tests.length, sampleCount: tests.filter(t => t.sample).length, languages: CODE_LANGUAGES.map(id => {
+    const {label, limit, version, memory, notes} = JUDGE_LANGUAGES[id];
+    return {id, label, limit, version, memory, notes};
+  })};
 }
 
 export function codingRoutes({SESSIONS, run, job}) {

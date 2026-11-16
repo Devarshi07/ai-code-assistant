@@ -282,8 +282,9 @@ dialog pre { font-size: 12px; }
 .cq-left, .cq-center, .cq-ai, .ade-rail, .ade-drawer, .ade-center, .ade-right, .room-left, .room-right {
   border: 0 !important; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; background: var(--surface);
 }
-.cq-main { grid-template-columns: var(--cq-left) var(--gap) minmax(0, 1fr) 0 0; }
-.cq-main.ai-open { grid-template-columns: var(--cq-left) var(--gap) minmax(0, 1fr) var(--gap) var(--cq-ai); }
+/* Side columns shrink before the editor does: it keeps at least 320px. */
+.cq-main { grid-template-columns: minmax(240px, var(--cq-left)) var(--gap) minmax(320px, 1fr) 0 0; }
+.cq-main.ai-open { grid-template-columns: minmax(240px, var(--cq-left)) var(--gap) minmax(320px, 1fr) var(--gap) minmax(260px, var(--cq-ai)); }
 .ade-main { grid-template-columns: 52px var(--gap) 0 0 minmax(320px, 1fr) var(--gap) var(--ade-right); }
 .ade-main.drawer-open { grid-template-columns: 52px var(--gap) var(--ade-drawer) var(--gap) minmax(320px, 1fr) var(--gap) var(--ade-right); }
 .ade-main > .ade-rail { grid-column: 1; }
@@ -431,4 +432,23 @@ dialog pre { font-size: 12px; }
   .cq-left, .cq-center, .cq-ai, .ade-rail, .ade-drawer, .ade-center, .ade-right, .room-left, .room-right { border-radius: 0; box-shadow: none; }
   .cq-main, .cq-main.ai-open, .room-main, .room-main.editor-open { gap: 1px; background: var(--border); }
   .tab-strip { width: 100%; }
+}
+
+/* Four home cards, a tests thumbnail, four interview-type cards, the talk room. */
+.track-grid { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.track-card:nth-child(4) { --tint: var(--warning); --tint-soft: var(--warning-soft); }
+.thumb-tests .frame { grid-template-columns: .45fr 1.5fr; grid-template-rows: auto 1fr; }
+.thumb-tests .frame > i.lines { grid-row: 1 / span 2; }
+.thumb-tests .frame > i.tint { height: 18px; }
+.mock-grid.four { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.mock-card.compact { padding: 16px; gap: 10px; }
+.mock-card.compact .field-grid { grid-template-columns: 1fr; }
+.talk-main { display: grid; grid-template-columns: minmax(0, 860px); justify-content: center; flex: 1; min-height: 0; gap: var(--gap); }
+.talk-main.with-notes { grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr); justify-content: stretch; }
+.talk-left, .talk-notes { min-height: 0; display: flex; flex-direction: column; border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); overflow: hidden; }
+.talk-notes .editor-bar { gap: 8px; }
+.design-notes { flex: 1; border: 0; border-radius: 0; background: var(--editor-bg); font: 13px/1.6 var(--mono); resize: none; padding: 14px 16px; }
+.design-notes:focus { box-shadow: none; }
+@media (max-width: 900px) {
+  .talk-main.with-notes { grid-template-columns: 1fr; grid-template-rows: 60vh 50vh; overflow: auto; }
 }

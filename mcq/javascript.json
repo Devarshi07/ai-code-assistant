@@ -1,0 +1,97 @@
+[
+  {
+    "id": "js-spread-shallow-copy",
+    "topic": "JavaScript",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "What does this code print?\n\n```js\nconst original = { name: \"a\", tags: [\"x\"] };\nconst copy = { ...original };\ncopy.name = \"b\";\ncopy.tags.push(\"y\");\nconsole.log(original.name, original.tags.length);\n```",
+    "options": [
+      "`a 1`",
+      "`b 2`",
+      "A `TypeError`, because `copy` is declared with `const`",
+      "`a 2`"
+    ],
+    "answer": [
+      3
+    ],
+    "explanation": "Object spread makes a **shallow** copy. `copy` gets its own `name` property, but `copy.tags` and `original.tags` refer to the same array. Reassigning `copy.name` leaves `original.name` as `\"a\"`, while `push` mutates the shared array, so its length is 2.\n\n`const` only stops the variable from being reassigned; the object it refers to can still change. For a deep copy, use `structuredClone(original)`."
+  },
+  {
+    "id": "js-var-let-loop-timers",
+    "topic": "JavaScript",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "What does this code print?\n\n```js\nconst out = [];\nfor (var i = 0; i < 3; i++) setTimeout(() => out.push(i));\nfor (let j = 0; j < 3; j++) setTimeout(() => out.push(j));\nsetTimeout(() => console.log(out.join(\" \")));\n```",
+    "options": [
+      "`0 1 2 0 1 2`",
+      "`3 3 3 0 1 2`",
+      "`3 3 3 3 3 3`",
+      "`2 2 2 0 1 2`"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "The timer callbacks run after both loops finish, in the order they were scheduled. `var` is function-scoped, so the first three callbacks share one `i`, which is 3 by the time they run. `let` creates a fresh binding for each iteration, so the next three see 0, 1 and 2. The logging timer was scheduled last, so it runs after all six pushes.\n\n`2 2 2` is a common slip: the loop only exits after `i++` makes `i` equal to 3."
+  },
+  {
+    "id": "js-loose-equality-select",
+    "topic": "JavaScript",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "Which of these expressions evaluate to `true`? Select all that apply.",
+    "options": [
+      "`null == undefined`",
+      "`null == 0`",
+      "`NaN === NaN`",
+      "`\"10\" == 10`",
+      "`[] == []`",
+      "`0 === -0`"
+    ],
+    "answer": [
+      0,
+      3,
+      5
+    ],
+    "explanation": "- `==` has a special rule: `null` and `undefined` equal each other and nothing else, so `null == 0` is `false` even though `null` becomes 0 in arithmetic.\n- With a string and a number, `==` converts the string to a number, so `\"10\" == 10`.\n- `NaN` isn't equal to anything, itself included; use `Number.isNaN`.\n- Two array literals are two different objects, and objects compare by reference.\n- `0 === -0` is `true`; only `Object.is(0, -0)` tells them apart."
+  },
+  {
+    "id": "js-generator-next-value",
+    "topic": "JavaScript",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "What does this code print?\n\n```js\nfunction* ids() {\n  let n = 0;\n  while (true) {\n    const reset = yield n++;\n    if (reset) n = 0;\n  }\n}\n\nconst g = ids();\nconsole.log(g.next().value, g.next().value, g.next(true).value, g.next().value);\n```",
+    "options": [
+      "`0 1 0 1`",
+      "`0 1 2 3`",
+      "`0 1 2 0`",
+      "`1 2 0 1`"
+    ],
+    "answer": [
+      0
+    ],
+    "explanation": "The argument to `next(value)` becomes the result of the `yield` expression where the generator is currently paused.\n\n1. The first `next()` runs to the first `yield`, producing 0 (`n` is now 1).\n2. The second resumes with `reset = undefined` and yields 1.\n3. The third resumes that paused `yield` with `reset = true`, so `n` is set to 0 before the loop yields again: 0.\n4. The fourth yields 1.\n\n`0 1 2 0` assumes the value is delivered to the *next* `yield` instead of the one that is paused. `1 2 0 1` treats `n++` as a pre-increment."
+  },
+  {
+    "id": "js-event-loop-order",
+    "topic": "JavaScript",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "In Node.js 22, in what order are the letters logged?\n\n```js\nconsole.log(\"A\");\nsetTimeout(() => console.log(\"B\"), 0);\nPromise.resolve().then(() => console.log(\"C\"));\n(async () => {\n  console.log(\"D\");\n  await null;\n  console.log(\"E\");\n})();\nqueueMicrotask(() => console.log(\"F\"));\nconsole.log(\"G\");\n```",
+    "options": [
+      "`A G D C F E B`",
+      "`A D G B C E F`",
+      "`A D G C F E B`",
+      "`A D G C E F B`",
+      "`A D E G C F B`"
+    ],
+    "answer": [
+      3
+    ],
+    "explanation": "Synchronous code runs first: `A`, then the async function's body up to its first `await` (`D`), then `G`.\n\nNext the microtask queue drains in FIFO order: the `.then` callback (`C`) was queued first, the continuation after `await null` (`E`) second, and the `queueMicrotask` callback (`F`) third. Timer callbacks such as `B` run only once the microtask queue is empty, even with a 0 ms delay.\n\n`A D G C F E B` treats the `await` continuation as if it waited behind every other microtask, but it is queued at the moment the `await` runs. `A D E G ...` assumes `await null` doesn't pause; every `await` yields, even on a non-promise value."
+  }
+]

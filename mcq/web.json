@@ -1,0 +1,100 @@
+[
+  {
+    "id": "web-403-vs-401",
+    "topic": "Web",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "A request to `DELETE /invoices/17` carries a valid, unexpired access token, but the user's role isn't allowed to delete invoices. Which status code fits best?",
+    "options": [
+      "`400 Bad Request`",
+      "`401 Unauthorized`",
+      "`403 Forbidden`",
+      "`405 Method Not Allowed`",
+      "`409 Conflict`"
+    ],
+    "answer": [
+      2
+    ],
+    "explanation": "`403` means the server knows who the caller is and refuses anyway; authenticating again won't help. `401`, despite its name, means the request lacks valid credentials, and it should come with a `WWW-Authenticate` header that tells the client how to authenticate. `405` is for a method the resource doesn't support for anyone.\n\nSome APIs deliberately return `404` to hide that a resource exists, but that is a privacy choice, not the standard meaning."
+  },
+  {
+    "id": "web-idempotent-methods-select",
+    "topic": "Web",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "multiple",
+    "question": "Which HTTP methods are idempotent according to the HTTP specification? Select all that apply.",
+    "options": [
+      "`GET`",
+      "`POST`",
+      "`PUT`",
+      "`DELETE`",
+      "`PATCH`"
+    ],
+    "answer": [
+      0,
+      2,
+      3
+    ],
+    "explanation": "Idempotent means sending the same request several times has the same effect on the server as sending it once, which is why clients and proxies may safely retry such requests.\n\n`PUT` replaces the resource with the representation sent, and repeating a `DELETE` leaves the resource deleted; the status code can differ (say `404` the second time), which doesn't matter. `POST` usually creates something new each time. `PATCH` isn't idempotent by definition, because a patch can be relative, such as \"append this item\". `HEAD`, `OPTIONS` and `TRACE` are idempotent too."
+  },
+  {
+    "id": "web-cache-control-no-cache",
+    "topic": "Web",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "A response carries `Cache-Control: no-cache` and an `ETag` header. What may the browser do with it?",
+    "options": [
+      "Nothing: it must not store the response anywhere",
+      "Reuse it without contacting the server until the tab is closed",
+      "Store it in the browser cache, while shared caches such as CDNs must not store it",
+      "Store it, but check with the server before every reuse, for example with `If-None-Match`, and use the stored copy if the server answers `304`"
+    ],
+    "answer": [
+      3
+    ],
+    "explanation": "`no-cache` means \"don't reuse without revalidating\". The browser may keep the response and send a conditional request each time; a `304 Not Modified` lets it reuse the stored body without downloading it again.\n\nForbidding storage altogether is `no-store`, which is what sensitive responses need. Letting only the browser, but not shared caches, store a response is `private`."
+  },
+  {
+    "id": "web-cors-credentials-wildcard",
+    "topic": "Web",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "A single-page app at `https://app.example.com` runs:\n\n```js\nconst res = await fetch(\"https://api.example.com/me\", { credentials: \"include\" });\n```\n\nThe API responds `200` with `Access-Control-Allow-Origin: *` and no other CORS headers. What happens?",
+    "options": [
+      "It works, because `*` allows every origin, with or without credentials",
+      "The browser blocks the page from reading the response; for credentialed requests the server must return the exact origin `https://app.example.com` and `Access-Control-Allow-Credentials: true`",
+      "Nothing is blocked, because both hosts are under `example.com` and therefore count as the same origin",
+      "The request succeeds, but the browser strips the cookies from it because of the wildcard"
+    ],
+    "answer": [
+      1
+    ],
+    "explanation": "Two hosts are different origins even when they share a parent domain. For a request made with `credentials: \"include\"`, the CORS check fails if `Access-Control-Allow-Origin` is `*` or if `Access-Control-Allow-Credentials: true` is missing, so the `fetch` promise rejects with a `TypeError`.\n\nThe cookies are still sent, and the server may well have done the work; the page just can't read the answer, because CORS is enforced by the browser. The fix is to echo an allow-listed origin, send `Vary: Origin`, and allow credentials."
+  },
+  {
+    "id": "web-cookie-attributes-select",
+    "topic": "Web",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "multiple",
+    "question": "`https://bank.example` sets this cookie:\n\n```http\nSet-Cookie: sid=abc123; Path=/; Secure; HttpOnly; SameSite=Lax\n```\n\nWhich statements are true? Select all that apply.",
+    "options": [
+      "Scripts on `bank.example` can't read it through `document.cookie`",
+      "It is sent when a user on `https://news.example` clicks an ordinary link to `https://bank.example/account`",
+      "It is sent when a page on `https://evil.example` auto-submits a hidden `<form method=\"POST\">` to `https://bank.example/transfer`",
+      "It is sent with an `<img src=\"https://bank.example/avatar.png\">` embedded in a page on `https://evil.example`",
+      "The browser won't send it to `http://bank.example`",
+      "Because it is `HttpOnly`, an XSS bug on `bank.example` can no longer make authenticated requests as the user"
+    ],
+    "answer": [
+      0,
+      1,
+      4
+    ],
+    "explanation": "`HttpOnly` hides the cookie from JavaScript, and `Secure` restricts it to HTTPS. `SameSite=Lax` sends the cookie on cross-site **top-level navigations with safe methods**, such as following a link, but not on cross-site subresource requests (images, iframes, `fetch`) and not on a cross-site `POST`, which is what stops the classic CSRF form.\n\n`HttpOnly` doesn't make XSS harmless: injected script can still send same-origin requests, and the browser attaches the cookie to them. It only stops the script from reading and stealing the cookie's value."
+  }
+]

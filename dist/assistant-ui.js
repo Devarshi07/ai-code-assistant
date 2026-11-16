@@ -123,7 +123,7 @@ export function createAssistant(options) {
   async function renderSessionList(container) {
     const list = await listSessions().catch(() => []);
     container.replaceChildren(
-      el('button', {class: 'button small full', onclick: () => newSession()}, icon('plus'), 'New session'),
+      el('button', {class: 'button small full', onclick: () => newSession()}, icon('plus'), 'New chat'),
       list.length ? el('div', {class: 'session-list'}, list.map(s => el('button', {class: `session-row${s.id === chatId ? ' active' : ''}`, onclick: () => open(s.id)},
         el('span', {class: 'session-title', text: s.title}),
         el('span', {class: 'session-meta', text: `${MODE_INFO[s.mode]?.label || ''} · ${ago(s.updated)}${s.pending ? ' · approval needed' : ''}`})))) : el('p', {class: 'muted small', text: 'Your conversations with the assistant are saved here.'}));
@@ -367,7 +367,7 @@ export function createAssistant(options) {
     refs.input.selectionStart = refs.input.selectionEnd = s + text.length;
   }
   async function mentionOptions(q) {
-    const specials = [{type: 'problem', label: 'Problem statement', detail: 'The task description'}];
+    const specials = [{type: 'problem', label: 'problemStatement', detail: 'The problem statement'}];
     if (variant === 'ade') specials.push({type: 'diff', label: 'Changes', detail: 'Everything changed so far'});
     const terminal = hooks.terminalText?.(), tests = hooks.testsText?.(), selection = hooks.selection?.();
     if (terminal) specials.push({type: 'terminal', label: 'Terminal output', detail: 'The latest command output', text: terminal});
