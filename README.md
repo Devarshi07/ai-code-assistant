@@ -191,6 +191,8 @@ Browser (dist/) ──HTTP + NDJSON streams──> Node.js server (server.mjs)
 | `dist/assistant-ui.js`, `dist/diff.js` | The assistant chat (modes, approvals, @ and / menus, checkpoints); line diffs |
 | `dist/mock.js` | Mock interview lobby, room, interviewer panel and report |
 | `dist/monaco.js`, `dist/vendor/monaco/` | Monaco loader, themes, settings and inline suggestions; the vendored editor (MIT) |
+| `dist/style.css`, `dist/app.css`, `dist/figma.css` | Base styles; layouts for the new screens; the design layer loaded last (Inter, neutral greys with a blue accent, compact controls, floating panels, dark menus), in the spirit of design-tool editors such as Figma |
+| `dist/vendor/inter/` | The Inter variable font (SIL Open Font License 1.1), served locally |
 | `dist/open-ended.js`, `dist/report.js`, `dist/markdown.js`, `dist/ui.js` | Take-home pages, report parts, safe markdown, DOM helpers |
 | `dist/runner-core.js`, `dist/runner-worker.js` | In-browser JavaScript test runner |
 | `tests/`, `scripts/` | Automated checks, validators and live smoke scripts |
@@ -215,6 +217,6 @@ A local, single-user practice tool. Feedback comes from local models and recorde
 
 ## Licensing and attribution
 
-The Monaco editor in `dist/vendor/monaco` is MIT-licensed (see its `LICENSE` and `ThirdPartyNotices.txt`). SWE-bench Verified and SWE-bench Multilingual are provided under their upstream dataset licenses, and cloned repositories keep their own licenses. Model weights and container images keep their upstream terms.
+The Monaco editor in `dist/vendor/monaco` is MIT-licensed (see its `LICENSE` and `ThirdPartyNotices.txt`). The Inter typeface in `dist/vendor/inter` is licensed under the SIL Open Font License 1.1 (see its `LICENSE`). SWE-bench Verified and SWE-bench Multilingual are provided under their upstream dataset licenses, and cloned repositories keep their own licenses. Model weights and container images keep their upstream terms.
 
 This project doesn't yet include its own `LICENSE` file. Choose one before presenting the code as reusable under a specific license.

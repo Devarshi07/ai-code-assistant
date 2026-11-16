@@ -49,13 +49,16 @@ export function themeName(choice = settings.get().theme) {
 }
 
 function defineThemes(monaco) {
+  // Neutral greys with a blue cursor and selection, matching figma.css.
   monaco.editor.defineTheme('dg-light', {base: 'vs', inherit: true, rules: [], colors: {
-    'editor.background': '#ffffff', 'editorLineNumber.foreground': '#9aa7a5', 'editor.lineHighlightBackground': '#f3f7f6',
-    'editorGutter.background': '#ffffff', 'editor.selectionBackground': '#b9e3dc', 'editorCursor.foreground': '#0f8a7d'
+    'editor.background': '#ffffff', 'editorLineNumber.foreground': '#b0b0b6', 'editorLineNumber.activeForeground': '#4b4b52', 'editor.lineHighlightBackground': '#f7f7f8', 'editor.lineHighlightBorder': '#00000000',
+    'editorGutter.background': '#ffffff', 'editor.selectionBackground': '#cfe5fd', 'editor.inactiveSelectionBackground': '#e6f1fe', 'editorCursor.foreground': '#1f82ef',
+    'editorIndentGuide.background1': '#ececef', 'editorWidget.background': '#ffffff', 'editorWidget.border': '#e6e6e8', 'diffEditor.insertedTextBackground': '#14955a22', 'diffEditor.removedTextBackground': '#e0482d22'
   }});
   monaco.editor.defineTheme('dg-dark', {base: 'vs-dark', inherit: true, rules: [], colors: {
-    'editor.background': '#0f1716', 'editorLineNumber.foreground': '#566663', 'editor.lineHighlightBackground': '#16211f',
-    'editorGutter.background': '#0f1716', 'editor.selectionBackground': '#1f4a44', 'editorCursor.foreground': '#2bb5a5'
+    'editor.background': '#232326', 'editorLineNumber.foreground': '#66666e', 'editorLineNumber.activeForeground': '#c7c7cc', 'editor.lineHighlightBackground': '#2c2c30', 'editor.lineHighlightBorder': '#00000000',
+    'editorGutter.background': '#232326', 'editor.selectionBackground': '#24476e', 'editor.inactiveSelectionBackground': '#1d3550', 'editorCursor.foreground': '#3d95f5',
+    'editorIndentGuide.background1': '#34343a', 'editorWidget.background': '#2a2a2d', 'editorWidget.border': '#3a3a3e', 'diffEditor.insertedTextBackground': '#36c27f22', 'diffEditor.removedTextBackground': '#ff6a5022'
   }});
 }
 
@@ -123,7 +126,8 @@ export function editorOptions(overrides = {}) {
   const s = settings.get();
   return {
     automaticLayout: true, fontSize: s.fontSize, tabSize: s.tabSize, insertSpaces: true, minimap: {enabled: s.minimap}, wordWrap: s.wordWrap,
-    scrollBeyondLastLine: false, renderWhitespace: 'selection', fontFamily: '"Cascadia Code", "JetBrains Mono", Consolas, monospace',
+    scrollBeyondLastLine: false, renderWhitespace: 'selection', fontFamily: '"JetBrains Mono", "Cascadia Code", "SF Mono", Consolas, monospace', lineHeight: Math.round(s.fontSize * 1.6),
+    renderLineHighlight: 'all', roundedSelection: true, cursorBlinking: 'smooth', cursorSmoothCaretAnimation: 'on', guides: {indentation: true},
     quickSuggestions: s.autocomplete, suggestOnTriggerCharacters: s.autocomplete, wordBasedSuggestions: s.autocomplete ? 'currentDocument' : 'off',
     inlineSuggest: {enabled: true}, fixedOverflowWidgets: true, smoothScrolling: true, padding: {top: 10},
     ...overrides

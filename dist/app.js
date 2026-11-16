@@ -154,7 +154,14 @@ async function renderHome() {
     api('/api/coding/questions').catch(() => []), api('/api/problems').catch(() => []), api('/api/mock/list').catch(() => []), status ? Promise.resolve(status) : loadStatus().catch(() => null)]);
   const solved = questions.filter(q => q.status === 'solved').length;
   const reviewed = problems.filter(p => p.best).length;
+  // Each card opens with a small wireframe of the screen it leads to.
+  const thumbs = {
+    code: ['thumb-questions', [el('i', {class: 'lines'}), el('i', {class: 'code'})]],
+    repo: ['thumb-repos', [el('i', {class: 'lines'}), el('i', {class: 'bubble'}), el('i', {class: 'code'})]],
+    mic: ['thumb-mock', [el('i', {class: 'bubble'}), el('i', {class: 'lines'}), el('i', {class: 'bubble'}), el('i', {class: 'code'})]]
+  };
   const card = (href, iconName, title, text, meta, cta) => el('a', {class: 'track-card', href},
+    el('div', {class: `track-thumb ${thumbs[iconName][0]}`, 'aria-hidden': 'true'}, el('div', {class: 'frame'}, thumbs[iconName][1])),
     el('div', {class: 'track-icon'}, icon(iconName)),
     el('h2', {text: title}), el('p', {text}),
     el('div', {class: 'track-meta', text: meta}),

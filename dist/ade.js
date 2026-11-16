@@ -39,6 +39,8 @@ function createAde(root, {kind, id, data, monaco, mock, key}) {
   let files = data.files || [];
   let tabs = [], active = null, expanded = new Set(store.get(`dg-ade-expanded-${id}`, [])), filter = '';
   let rightTab = 'editor', leftTab = store.get('dg-ade-left', 'question'), mobilePane = 'assistant';
+  // The Interviewer panel only exists in AI-fluency interviews.
+  if (!['question', 'sessions', null].includes(leftTab)) leftTab = 'question';
   let changes = [], diffEditor = null, diffModels = null, diffPath = null, diffInline = store.get('dg-diff-inline', false);
   const terminal = {log: [], history: store.get(`dg-term-history-${id}`, []), cursor: -1, running: false};
   const tests = {running: false, last: null, output: '', text: ''};
@@ -735,8 +737,9 @@ function createAde(root, {kind, id, data, monaco, mock, key}) {
 
   // ---------- panels ----------
   function setLeft(name) {
+    if (name === 'interviewer' && !interviewer && !mock) name = 'question';
     leftTab = name;
-    store.set('dg-ade-left', name);
+    if (name !== 'interviewer') store.set('dg-ade-left', name);
     refs.main.classList.toggle('drawer-open', !!name);
     for (const button of refs.rail.querySelectorAll('.rail-button')) button.classList.toggle('active', button.dataset.left === name);
     renderDrawer();

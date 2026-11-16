@@ -218,6 +218,8 @@ The next request was to make the tool work like Hello Interview's AI Coding prac
 
 **Findings while testing with qwen3:8b.** The model sometimes announced an edit ("Let's make this change.") and ended its turn, so the agent loop now detects such replies and asks it to carry the step out, at most twice per message. It also proposed a no-op edit once; those are now rejected before an approval card appears. A question agent found that writing program output straight to the bind-mounted folder made line-by-line output slow on Docker Desktop, so the judge writes to tmpfs and moves results afterwards. Test files saved on Windows had CRLF endings; inputs are normalised to LF.
 
+**A Figma-style look.** The user then asked for the UI to look like Figma. `dist/figma.css` is a design layer loaded last: the Inter variable font (vendored, OFL), a compact 13px base, neutral greys with a single blue accent, workspace columns as rounded floating panels on a grey canvas with the splitters as gaps, pill tabs and segmented controls, dark menus, autocomplete and toasts, and wireframe thumbnails on the home cards. Monaco's themes match it. Figma's name, logo and exact colours are not used.
+
 **Verified in this session**
 - `npm test`: 30 tests pass. All 24 coding questions validate in all five languages.
 - Through the API: the agent read, edited, ran the tests in Docker, fixed a failure, re-ran to green and summarised; restoring the checkpoint returned the file to its original state.

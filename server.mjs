@@ -235,9 +235,9 @@ export const server = http.createServer(async (req, res) => {
       const result = await api(req, url); res.writeHead(200, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'}); res.end(JSON.stringify(result));
     } else {
       const name = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname.slice(1));
-      const type = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8', svg: 'image/svg+xml', ttf: 'font/ttf', json: 'application/json'}[name.split('.').pop()];
-      // Top-level app assets, plus the vendored Monaco editor under vendor/.
-      const allowed = /^[\w-]+\.(html|js|css|svg)$/.test(name) || (/^vendor\/[\w./-]+\.(js|css|ttf|json)$/.test(name) && !name.split('/').some(part => part === '..' || part === '.'));
+      const type = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8', svg: 'image/svg+xml', ttf: 'font/ttf', woff2: 'font/woff2', json: 'application/json'}[name.split('.').pop()];
+      // Top-level app assets, plus vendored files (the Monaco editor and the Inter font) under vendor/.
+      const allowed = /^[\w-]+\.(html|js|css|svg)$/.test(name) || (/^vendor\/[\w./-]+\.(js|css|ttf|woff2|json)$/.test(name) && !name.split('/').some(part => part === '..' || part === '.'));
       if (!allowed || !type) { res.writeHead(404); res.end('Not found'); return; }
       let content;
       try { content = await fs.readFile(path.join(ROOT, 'dist', ...name.split('/'))); } catch { res.writeHead(404); res.end('Not found'); return; }
