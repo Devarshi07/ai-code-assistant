@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs/promises';
 import { spawn } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { challenges } from './challenges.mjs';
 import { runtimes, detectRuntime } from './runtimes.mjs';
 import { loadTasks, chooseTask, publicTask } from './task-source.mjs';
@@ -14,6 +14,8 @@ import { workspaceApi, recordRepoEvidence } from './workspace-api.mjs';
 import { assistantRoutes } from './assistant.mjs';
 import { mockRoutes } from './mock.mjs';
 import { testRoutes } from './tests-engine.mjs';
+import { warmModels } from './ai-runtime.mjs';
+import { sandboxPool, RESET_WORK } from './warm-sandbox.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const SESSIONS = path.join(ROOT, '.sessions');
@@ -92,15 +94,28 @@ async function ollama(endpoint, data, timeout = 120000) {
 }
 // Runs a repo session's tests: the task's regression suite for SWE-bench tasks,
 // otherwise the chosen command in a disposable copy of the code.
+const pool = sandboxPool(run);
+const readyImages = new Map();
 async function runRepo(s, data, progress = () => {}) {
   const runtime = runtimes[data.runtime || s.meta.runtime || 'node'];
   if (!runtime) throw new Error('Choose a supported language.');
   const benchmark = s.meta.benchmark && data.benchmark !== false;
   const image = benchmark ? s.meta.image : String(data.image || s.meta.testImage || runtime.image);
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._/:@-]*$/.test(image)) throw new Error('Invalid runtime image.');
-  progress(`Preparing ${image}. The first download may be large…`);
-  const exists = await run('docker', ['image', 'inspect', image], {timeout: 10000});
-  if (exists.code !== 0) { const pull = await run('docker', ['pull', image], {timeout: 1800000}); if (pull.code !== 0) throw new Error('Runtime download failed. Start Docker Desktop and retry.\n' + pull.output); }
+  if (Date.now() - (readyImages.get(image) || 0) > 600000) {
+    progress(`Preparing ${image}. The first download may be large…`);
+    const exists = await run('docker', ['image', 'inspect', image], {timeout: 10000});
+    if (exists.code !== 0) { const pull = await run('docker', ['pull', image], {timeout: 1800000}); if (pull.code !== 0) throw new Error('Runtime download failed. Start Docker Desktop and retry.\n' + pull.output); }
+    readyImages.set(image, Date.now());
+  }
+  // Ordinary repos run their tests in the session's warm container, on a fresh copy of the code.
+  if (!benchmark) {
+    progress('Running in the workspace sandbox…');
+    const command = String(data.command || s.meta.testCommand || runtime.command).slice(0, 2000);
+    const result = {...await pool.exec({key: `repo:${s.meta.id}`, image, mounts: [{source: s.repo, target: '/candidate'}]}, `${RESET_WORK}; cp -R /candidate/. /work/ && cd /work && ${command}`, {timeout: 120000, env: {GOCACHE: '/tmp/go-cache', GOPATH: '/tmp/go'}}), benchmark};
+    await recordRepoEvidence(s.dir, {type: 'test', code: result.code, benchmark, timedOut: result.timedOut});
+    return result;
+  }
   const name = `debug-gym-${randomUUID()}`;
   const args = ['run', '--rm', '--name', name, '--network', 'none', '--memory', benchmark ? '4g' : '1g', '--cpus', '2', '--pids-limit', '256', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '--mount', `type=bind,source=${s.repo},target=/candidate,readonly`];
   if (benchmark) args.push('--mount', `type=bind,source=${path.join(s.dir, 'eval.sh')},target=/practice-eval.sh,readonly`, '--entrypoint', '/bin/bash', image, '-c', 'cp -a /candidate/. /testbed/ && bash /practice-eval.sh');
@@ -113,20 +128,41 @@ async function runRepo(s, data, progress = () => {}) {
   } finally { await run('docker', ['rm', '-f', name], {timeout: 10000}).catch(() => {}); }
 }
 
-const practice = practiceRoutes({SESSIONS, run, listFiles: root => files(root), job, ollama, OLLAMA});
+const practice = practiceRoutes({SESSIONS, run, listFiles: root => files(root), job, ollama, OLLAMA, pool});
 const openEnded = openRoutes({SESSIONS, run, job, ollama, models: () => practice.models()});
 const coding = codingRoutes({SESSIONS, run, job});
-const workspace = workspaceApi({SESSIONS, run, listFiles: root => files(root), repoSession: session, runRepo, job});
+const workspace = workspaceApi({SESSIONS, run, listFiles: root => files(root), repoSession: session, runRepo, job, pool});
 const assistant = assistantRoutes({SESSIONS, OLLAMA, models: () => practice.models(), workspace});
 const mock = mockRoutes({SESSIONS, OLLAMA, ollama, job, models: () => practice.models(), coding, workspace});
 const tests = testRoutes({SESSIONS, job, coding, models: () => practice.models(), OLLAMA});
 const routeGroups = [practice, openEnded, coding, workspace, assistant, mock, tests];
+// Changes when any page file in dist/ changes. A page's stylesheets load once
+// while its scripts load on demand, so an open tab that missed an update would
+// mix old CSS with new code; the page compares this and offers a reload.
+let assetCache = {version: null, at: 0};
+async function assetVersion() {
+  if (assetCache.version && Date.now() - assetCache.at < 2000) return assetCache.version;
+  const dir = path.join(ROOT, 'dist');
+  const names = (await fs.readdir(dir)).filter(name => /\.(js|css|html)$/.test(name)).sort();
+  const parts = await Promise.all(names.map(name => fs.stat(path.join(dir, name)).then(s => `${name}:${s.size}:${Math.round(s.mtimeMs)}`, () => name)));
+  assetCache = {version: createHash('sha1').update(parts.join('|')).digest('hex').slice(0, 12), at: Date.now()};
+  return assetCache.version;
+}
 const STREAMS = {'/api/practice/chat': (req, res, data) => practice.chat(req, res, data), '/api/assistant/send': (req, res, data) => assistant.stream(req, res, data, 'send'), '/api/assistant/resume': (req, res, data) => assistant.stream(req, res, data, 'resume'), '/api/mock/message': (req, res, data) => mock.stream(req, res, data)};
 async function api(req, url) {
   if (req.method === 'GET') {
     for (const routes of routeGroups) { const handled = await routes.handle(req, url, {}); if (handled !== undefined) return handled; }
   }
   if (req.method === 'GET' && url.pathname === '/api/runtimes') return runtimes;
+  if (req.method === 'GET' && url.pathname === '/api/version') return {version: await assetVersion()};
+  // Prep guides: the index, and one guide's markdown by an id from the index.
+  if (req.method === 'GET' && url.pathname === '/api/prep') return JSON.parse(await fs.readFile(path.join(ROOT, 'prep', 'index.json'), 'utf8'));
+  if (req.method === 'GET' && url.pathname === '/api/prep/guide') {
+    const index = JSON.parse(await fs.readFile(path.join(ROOT, 'prep', 'index.json'), 'utf8'));
+    const guide = index.find(g => g.id === url.searchParams.get('id'));
+    if (!guide || !/^[a-z0-9-]+$/.test(guide.id)) throw new Error('Unknown guide.');
+    return {...guide, markdown: await fs.readFile(path.join(ROOT, 'prep', `${guide.id}.md`), 'utf8')};
+  }
   if (req.method === 'GET' && url.pathname === '/api/job') { const state=jobs.get(url.searchParams.get('id')); if(!state)throw new Error('Job expired. Please retry.');return state; }
   if (req.method === 'GET' && url.pathname === '/api/tasks') { const tasks=await loadTasks(CACHE);return {count:tasks.length,languages:[...new Set(tasks.map(t=>t.language))],repositories:new Set(tasks.map(t=>t.repo)).size}; }
   if (req.method === 'GET' && url.pathname === '/api/challenges') return challenges.map(({files, ...item}) => item);
@@ -237,9 +273,10 @@ export const server = http.createServer(async (req, res) => {
       const result = await api(req, url); res.writeHead(200, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'}); res.end(JSON.stringify(result));
     } else {
       const name = url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname.slice(1));
-      const type = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8', svg: 'image/svg+xml', ttf: 'font/ttf', woff2: 'font/woff2', json: 'application/json'}[name.split('.').pop()];
-      // Top-level app assets, plus vendored files (the Monaco editor and the Inter font) under vendor/.
-      const allowed = /^[\w-]+\.(html|js|css|svg)$/.test(name) || (/^vendor\/[\w./-]+\.(js|css|ttf|woff2|json)$/.test(name) && !name.split('/').some(part => part === '..' || part === '.'));
+      const type = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8', svg: 'image/svg+xml', ttf: 'font/ttf', woff2: 'font/woff2', json: 'application/json', bin: 'application/octet-stream'}[name.split('.').pop()];
+      // Top-level app assets, plus vendored files under vendor/: the Monaco editor, the Inter font,
+      // and the face-detection model for proctored tests (model weights are .bin files).
+      const allowed = /^[\w-]+\.(html|js|css|svg)$/.test(name) || (/^vendor\/[\w./-]+\.(js|css|ttf|woff2|json|bin)$/.test(name) && !name.split('/').some(part => part === '..' || part === '.'));
       if (!allowed || !type) { res.writeHead(404); res.end('Not found'); return; }
       let content;
       try { content = await fs.readFile(path.join(ROOT, 'dist', ...name.split('/'))); } catch { res.writeHead(404); res.end('Not found'); return; }
@@ -256,4 +293,10 @@ export const server = http.createServer(async (req, res) => {
     res.writeHead(400, {'Content-Type': 'application/json'}); res.end(JSON.stringify({error: error.message}));
   }
 });
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) server.listen(PORT, '127.0.0.1', () => console.log(`Debug Gym ready at http://127.0.0.1:${PORT}`));
+// Loads the chat and inline-suggestion models right away, so the first AI reply doesn't wait for them.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  server.listen(PORT, '127.0.0.1', () => { console.log(`Debug Gym ready at http://127.0.0.1:${PORT}`); warmModels(OLLAMA, () => practice.models()); pool.cleanup(); });
+  // Warm sandbox containers go away with the app.
+  process.on('exit', () => pool.stopAll());
+  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => process.exit(0));
+}

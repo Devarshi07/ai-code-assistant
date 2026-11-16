@@ -1,0 +1,12 @@
+CREATE TABLE readings (
+  id INTEGER PRIMARY KEY,
+  device TEXT NOT NULL,
+  status TEXT,
+  recorded_at TEXT NOT NULL
+);
+INSERT INTO readings VALUES
+  (10, 'gate', 'online', '2025-06-02 11:00:00'),
+  (11, 'gate', 'online', '2025-06-02 12:00:00'),
+  (12, 'gate', 'degraded', '2025-06-02 12:00:00'),
+  (13, 'vent', NULL, '2025-06-02 12:30:00'),
+  (14, 'vent', NULL, '2025-06-02 12:40:00');

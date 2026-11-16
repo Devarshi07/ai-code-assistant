@@ -1,0 +1,11 @@
+{
+  "name": "armada",
+  "version": "1.4.0",
+  "private": true,
+  "description": "Naval-combat simulation library behind the bot-testing harness",
+  "type": "module",
+  "scripts": {
+    "demo": "node main.ts",
+    "test": "node --test \"tests/*.test.ts\""
+  }
+}

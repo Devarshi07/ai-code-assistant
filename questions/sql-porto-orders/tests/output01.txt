@@ -1,0 +1,4 @@
+order_id	customer_name	total
+7	Ines Santos	30
+9	Sofia Pereira	30
+8	Sofia Pereira	25

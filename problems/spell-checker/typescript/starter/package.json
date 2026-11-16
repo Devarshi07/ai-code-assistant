@@ -1,0 +1,11 @@
+{
+  "name": "marginalia-spellcheck",
+  "version": "1.4.0",
+  "private": true,
+  "description": "Spell-check service behind the Marginalia note editor.",
+  "type": "module",
+  "scripts": {
+    "demo": "node main.ts",
+    "test": "node --test \"tests/*.test.ts\""
+  }
+}

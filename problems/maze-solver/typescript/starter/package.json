@@ -1,0 +1,10 @@
+{
+  "name": "labyrinth-level-tools",
+  "private": true,
+  "type": "module",
+  "description": "Level checks for the Labyrinth puzzle game: parsing, route finding and previews.",
+  "scripts": {
+    "start": "node main.ts",
+    "test": "node --test \"tests/*.test.ts\""
+  }
+}

@@ -1,0 +1,47 @@
+# Campfire activity export, oldest event first.
+# friend <a> <b> | unfriend <a> <b> | block <blocker> <other> | unblock <blocker> <other> | deactivate <member>
+
+# 2023
+friend alice bob
+friend alice carol
+friend alice erin
+friend alice grace
+friend bob dave
+friend bob erin
+friend bob ivan
+friend carol erin
+friend carol frank
+friend carol judy
+friend dave ivan
+friend dave niaj
+friend erin grace
+friend erin judy
+friend frank heidi
+friend frank mallory
+friend grace judy
+friend grace olivia
+friend heidi niaj
+friend ivan mallory
+friend ivan sybil
+friend judy peggy
+friend mallory sybil
+friend niaj rupert
+friend olivia sybil
+friend olivia trent
+friend peggy rupert
+friend trent victor
+friend victor sybil
+
+# 2024-01: re-import from the mobile app (repeats some friendships)
+friend bob alice
+friend erin olivia
+friend sybil ivan
+
+# 2024-03
+unfriend bob alice
+block judy peggy
+block heidi frank
+unblock heidi frank
+block olivia mallory
+friend carol trent
+deactivate rupert

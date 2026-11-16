@@ -1,0 +1,150 @@
+{"method": "POST", "path": "/payments", "body": {"currency": "USD"}, "headers": {"Idempotency-Key": "key-5"}}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments", "body": {"amount": 44475, "currency": "USD"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 9026, "currency": "USD"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "POST", "path": "/payments", "body": {"amount": 12269, "currency": "EUR"}, "headers": {"Idempotency-Key": ""}}
+{"method": "POST", "path": "/payments", "body": {"amount": 27246, "currency": "EUR"}, "headers": {"Idempotency-Key": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"}}
+{"method": "POST", "path": "/payments/pay_x/refund"}
+{"method": "POST", "path": "/payments", "body": {"amount": 15161, "currency": "USD"}, "headers": {"Idempotency-Key": "key-8"}}
+{"method": "GET", "path": "/payments"}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments/pay_7/refund"}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments", "body": {"amount": 35284, "currency": "USD"}, "headers": {"Idempotency-Key": "key-5"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 14054, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-8"}}
+{"method": "POST", "path": "/payments", "body": {"amount": true, "currency": "EUR"}, "headers": {"Idempotency-Key": "key-8"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 14053, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-8"}}
+{"method": "GET", "path": "/payments/pay_3"}
+{"method": "POST", "path": "/payments/pay_5/refund"}
+{"method": "POST", "path": "/payments", "body": {"amount": 27245, "currency": "EUR"}, "headers": {"Idempotency-Key": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"}}
+{"method": "GET", "path": "/payments"}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments", "body": {"amount": 9027, "currency": "USD"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 15161, "currency": "USD"}, "headers": {"Idempotency-Key": "key-8"}}
+{"method": "GET", "path": "/payments/pay_10"}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments", "body": {"amount": 44298, "currency": "USD"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "POST", "path": "/payments", "body": {"amount": 14054, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-8"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 44298, "currency": "USD"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 44475, "currency": "USD"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 5, "currency": ["USD"]}, "headers": {"Idempotency-Key": "key-1"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 27246, "currency": "EUR"}, "headers": {"Idempotency-Key": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"}}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments", "body": {"amount": 25173, "currency": "EUR"}, "headers": {"Idempotency-Key": ""}}
+{"method": "POST", "path": "/payments", "body": {"amount": 12024, "currency": "GBP"}, "headers": {"Idempotency-Key": ""}}
+{"method": "POST", "path": "/payments", "body": {"amount": 14959, "currency": "USD"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 9088, "currency": "GBP"}, "headers": {"Idempotency-Key": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"}}
+{"method": "POST", "path": "/payments/pay_3/refund"}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "POST", "path": "/payments", "body": {"amount": 44475, "currency": "USD"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 9886, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-1"}}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments", "body": {"amount": 18073, "currency": "EUR"}, "headers": {"Idempotency-Key": "key-11"}}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments", "body": {"amount": 31069, "currency": "GBP"}, "headers": {"Idempotency-Key": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"}}
+{"method": "POST", "path": "/payments/pay_4/refund"}
+{"method": "POST", "path": "/payments/pay_x/refund"}
+{"method": "GET", "path": "/payments"}
+{"method": "GET", "path": "/payments"}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "GET", "path": "/payments/pay_3"}
+{"method": "POST", "path": "/payments", "body": {"amount": 9026, "currency": "USD"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 20101, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 33856, "currency": "GBP"}}
+{"method": "GET", "path": "/payments/pay_9"}
+{"method": "POST", "path": "/payments", "body": {"amount": 35285, "currency": "USD"}, "headers": {"Idempotency-Key": "key-5"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 35283, "currency": "USD"}, "headers": {"Idempotency-Key": "key-5"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 27699, "currency": "EUR"}, "headers": {"Idempotency-Key": "key-0"}}
+{"method": "GET", "path": "/payments/pay_9"}
+{"method": "GET", "path": "/payments/pay_1"}
+{"method": "POST", "path": "/payments", "body": {"amount": 9026, "currency": "USD"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments/pay_x/refund"}
+{"method": "POST", "path": "/payments", "body": {"amount": 27246, "currency": "EUR"}, "headers": {"Idempotency-Key": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 47621, "currency": "USD"}, "headers": {"Idempotency-Key": "key-3"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 32687, "currency": "USD"}, "headers": {"Idempotency-Key": "key-9"}}
+{"method": "POST", "path": "/payments/pay_x/refund"}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "POST", "path": "/payments", "body": {"amount": 17387, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-2"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 21149, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-10"}}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "POST", "path": "/payments", "body": {"amount": 45165, "currency": "EUR"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "POST", "path": "/payments", "body": {"amount": 8362, "currency": "EUR"}, "headers": {"Idempotency-Key": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 32686, "currency": "USD"}, "headers": {"Idempotency-Key": "key-9"}}
+{"method": "POST", "path": "/payments", "body": {"amount": true, "currency": "EUR"}, "headers": {"Idempotency-Key": "key-4"}}
+{"method": "POST", "path": "/payments/pay_x/refund"}
+{"method": "POST", "path": "/payments", "body": {"amount": 44511, "currency": "EUR"}, "headers": {"Idempotency-Key": "key-10"}}
+{"method": "GET", "path": "/payments"}
+{"method": "GET", "path": "/payments/pay_9"}
+{"method": "POST", "path": "/payments", "body": {"amount": 27699, "currency": "EUR"}, "headers": {"Idempotency-Key": "key-0"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 8362, "currency": "EUR"}, "headers": {"Idempotency-Key": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 771, "currency": "USD"}, "headers": {"Idempotency-Key": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"}}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "POST", "path": "/payments", "body": {"amount": 40818, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "POST", "path": "/payments", "body": {"amount": -5, "currency": "USD"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 44116, "currency": "USD"}, "headers": {"Idempotency-Key": "key-7"}}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "GET", "path": "/payments/pay_10"}
+{"method": "POST", "path": "/payments", "body": {"currency": "USD"}, "headers": {"Idempotency-Key": "key-8"}}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "POST", "path": "/payments", "body": {"amount": 31069, "currency": "GBP"}, "headers": {"Idempotency-Key": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 17387, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-2"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 9886, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-1"}}
+{"method": "GET", "path": "/payments/pay_5"}
+{"method": "POST", "path": "/payments/pay_7/refund"}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments/pay_x/refund"}
+{"method": "POST", "path": "/payments/pay_x/refund"}
+{"method": "POST", "path": "/payments", "body": {"amount": 34603, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-5"}}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments/pay_10/refund"}
+{"method": "POST", "path": "/payments", "body": {"amount": 21149, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-10"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 46950, "currency": "EUR"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 34912, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-10"}}
+{"method": "GET", "path": "/payments/pay_4"}
+{"method": "POST", "path": "/payments/pay_3/refund"}
+{"method": "POST", "path": "/payments", "body": {"amount": 18375, "currency": "EUR"}, "headers": {"Idempotency-Key": "key-1"}}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments", "body": {"amount": 8388, "currency": "EUR"}, "headers": {"Idempotency-Key": "key-8"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 27127, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-1"}}
+{"method": "POST", "path": "/payments/pay_9/refund"}
+{"method": "POST", "path": "/payments", "body": [100, "EUR"], "headers": {"Idempotency-Key": "key-11"}}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "POST", "path": "/payments", "body": {"amount": 100, "currency": "JPY"}, "headers": {"Idempotency-Key": "key-1"}}
+{"method": "POST", "path": "/payments/pay_x/refund"}
+{"method": "GET", "path": "/payments/pay_3"}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments", "body": {"amount": 18376, "currency": "EUR"}, "headers": {"Idempotency-Key": "key-1"}}
+{"method": "GET", "path": "/payments/pay_8"}
+{"method": "POST", "path": "/payments", "body": {"amount": 23803, "currency": "GBP"}, "headers": {"Idempotency-Key": ""}}
+{"method": "POST", "path": "/payments", "body": {"amount": 36636, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-9"}}
+{"method": "POST", "path": "/payments/pay_4/refund"}
+{"method": "POST", "path": "/payments", "body": {"amount": 45083, "currency": "USD"}, "headers": {"Idempotency-Key": "key-2"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 100, "currency": "eur"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 17612, "currency": "EUR"}, "headers": {"Idempotency-Key": "key-4"}}
+{"method": "GET", "path": "/payments/pay_7"}
+{"method": "POST", "path": "/payments/pay_x/refund"}
+{"method": "GET", "path": "/payments/pay_8"}
+{"method": "POST", "path": "/payments", "body": {"amount": 29886, "currency": "EUR"}, "headers": {"Idempotency-Key": "key-4"}}
+{"method": "POST", "path": "/payments/pay_10/refund"}
+{"method": "GET", "path": "/payments"}
+{"method": "GET", "path": "/payments/nope"}
+{"method": "GET", "path": "/payments"}
+{"method": "POST", "path": "/payments", "body": {"amount": 44298, "currency": "USD"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 100}, "headers": {"Idempotency-Key": "key-2"}}
+{"method": "POST", "path": "/payments/pay_x/refund"}
+{"method": "POST", "path": "/payments/pay_9/refund"}
+{"method": "POST", "path": "/payments", "body": {"amount": 44299, "currency": "USD"}, "headers": {"Idempotency-Key": "key-6"}}
+{"method": "POST", "path": "/payments/pay_5/refund"}
+{"method": "GET", "path": "/payments"}
+{"method": "GET", "path": "/payments/pay_2"}
+{"method": "GET", "path": "/payments/pay_6"}
+{"method": "POST", "path": "/payments", "body": {"amount": 36636, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-9"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 39040, "currency": "USD"}, "headers": {"Idempotency-Key": "key-10"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 31644, "currency": "GBP"}, "headers": {"Idempotency-Key": "key-3"}}

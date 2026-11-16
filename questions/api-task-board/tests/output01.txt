@@ -1,0 +1,6 @@
+1. POST /tasks -> 400 {"error":"invalid task"}
+2. POST /tasks -> 400 {"error":"invalid task"}
+3. POST /tasks -> 201 {"done":false,"id":1,"priority":5,"title":"Fix bug"}
+4. PATCH /tasks/1 -> 200 {"done":true,"id":1,"priority":5,"title":"Fix bug"}
+5. DELETE /tasks/1 -> 204 -
+6. GET /tasks/1 -> 404 {"error":"task not found"}

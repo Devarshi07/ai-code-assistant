@@ -1,0 +1,6 @@
+{"method": "POST", "path": "/books", "body": {"title": "Old Tale", "author": "Anon", "year": 1300}}
+{"method": "POST", "path": "/books", "body": {"title": "Emma", "author": "Jane Austen", "year": 1815, "tags": ["classic", "romance"]}}
+{"method": "POST", "path": "/books", "body": {"title": "Dune", "author": "Frank Herbert", "year": 1965, "tags": ["sci-fi", "classic"]}}
+{"method": "GET", "path": "/books?tag=classic&year_to=1900"}
+{"method": "GET", "path": "/books?page=0"}
+{"method": "GET", "path": "/books/9"}

@@ -1,0 +1,13 @@
+Li Wei
+--- api data ---
+{
+  "per_page": 10,
+  "resources": {
+    "orders": [
+      {"id": 1, "customer": "Li Wei", "amount": 7, "status": "paid"},
+      {"id": 2, "customer": "Li Wei", "amount": 3, "status": "paid"},
+      {"id": 3, "customer": "Ana Lima", "amount": 1000, "status": "paid"},
+      {"id": 4, "customer": "li wei", "amount": 500, "status": "paid"}
+    ]
+  }
+}

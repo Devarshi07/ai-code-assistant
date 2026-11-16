@@ -1,0 +1,13 @@
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 1300}}
+{"method": "POST", "path": "/books", "body": {"title": "", "author": "Y", "year": 2000}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "   ", "year": 2000}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": "2000"}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 2000, "tags": "sci-fi"}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 2000, "tags": [""]}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 2000, "tags": ["t", "t", "t", "t", "t", "t", "t", "t", "t", "t", "t"]}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": true}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y"}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 2000, "tags": [1]}}
+{"method": "POST", "path": "/books", "body": ["Dune"]}
+{"method": "POST", "path": "/books", "body": {"title": " Trimmed ", "author": " Ted Chiang ", "year": 2002, "tags": ["tttttttttttttttttttttttttttttt", "tttttttttttttttttttttttttttttt", "tttttttttttttttttttttttttttttt", "tttttttttttttttttttttttttttttt", "tttttttttttttttttttttttttttttt", "tttttttttttttttttttttttttttttt", "tttttttttttttttttttttttttttttt", "tttttttttttttttttttttttttttttt", "tttttttttttttttttttttttttttttt", "tttttttttttttttttttttttttttttt"]}}
+{"method": "GET", "path": "/books?author=Ted%20Chiang"}

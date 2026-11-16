@@ -4,10 +4,39 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 export const PROBLEMS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'problems');
+// Languages and framework stacks a guided problem can ship in. "runner" says
+// where tests run: in the browser, in the Python sandbox, or in a Docker image
+// with the framework installed (see stack-runner.mjs).
+const testsDir = name => name.startsWith('tests/');
+const pyTest = phase => `tests/test_phase${phase}.py`, pyCustom = name => /^tests\/test_.*\.py$/.test(name);
+const jsTest = phase => `tests/phase${phase}.test.js`, jsCustom = name => /^tests\/.*\.test\.js$/.test(name);
+const tsTest = phase => `tests/phase${phase}.test.ts`, tsCustom = name => /^tests\/.*\.test\.ts$/.test(name);
 export const LANGUAGES = {
-  python: {label: 'Python', main: 'main.py', ext: '.py', comment: '#', test: phase => `tests/test_phase${phase}.py`, custom: name => /^tests\/test_.*\.py$/.test(name)},
-  javascript: {label: 'JavaScript', main: 'main.js', ext: '.js', comment: '//', test: phase => `tests/phase${phase}.test.js`, custom: name => /^tests\/.*\.test\.js$/.test(name)}
+  python: {label: 'Python', family: 'python', runner: 'python', main: 'main.py', ext: '.py', comment: '#', test: pyTest, custom: pyCustom, canonical: testsDir,
+    customExample: 'tests/test_custom.py', testInfo: 'Tests use unittest and run in Python 3.12.'},
+  javascript: {label: 'JavaScript', family: 'javascript', runner: 'browser', main: 'main.js', ext: '.js', comment: '//', test: jsTest, custom: jsCustom, canonical: testsDir,
+    customExample: 'tests/custom.test.js', testInfo: 'Tests use node:test and node:assert and run in Node.js.'},
+  // Guided problems in more languages. They run in Docker like the API stacks.
+  typescript: {label: 'TypeScript', family: 'javascript', runner: 'docker', image: 'node-api', main: 'main.ts', ext: '.ts', comment: '//', test: tsTest, custom: tsCustom, canonical: testsDir,
+    customExample: 'tests/custom.test.ts', testInfo: 'Tests use node:test and node:assert/strict in Node.js 22, which runs TypeScript directly by stripping the types (there is no type check). Imports keep the .ts extension, types are imported with import type, and enums, namespaces and constructor parameter properties are not supported.'},
+  java: {label: 'Java', family: 'java', runner: 'docker', image: 'java-junit', main: 'src/Main.java', ext: '.java', comment: '//', test: phase => `tests/Phase${phase}Test.java`, custom: name => /^tests\/.+Test\.java$/.test(name), canonical: testsDir,
+    customExample: 'tests/CustomTest.java', testInfo: 'Tests are JUnit 5 on Java 21. Test classes live in tests/ and declare package tests. A run compiles everything in src/ and tests/ first (about 2 to 4 seconds).'},
+  go: {label: 'Go', family: 'go', runner: 'docker', image: 'go-test', main: 'main.go', ext: '.go', comment: '//', test: phase => `tests/phase${phase}_test.go`, custom: name => /^tests\/.+_test\.go$/.test(name), canonical: testsDir,
+    customExample: 'tests/custom_test.go', testInfo: 'Tests use the standard testing package (go test) in Go 1.24, with no third-party modules. The tests package in tests/ imports the code under test.'},
+  express: {label: 'Node.js · Express', family: 'javascript', runner: 'docker', api: true, image: 'node-api', main: 'demo.js', ext: '.js', comment: '//', test: jsTest, custom: jsCustom, canonical: testsDir,
+    customExample: 'tests/custom.test.js', testInfo: 'Tests use node:test and node:assert/strict in Node.js 22 with Express 4 installed. They start the app on a free port and send real HTTP requests.'},
+  django: {label: 'Python · Django REST', family: 'python', runner: 'docker', api: true, image: 'python-django', main: 'demo.py', ext: '.py', comment: '#', test: pyTest, custom: pyCustom, canonical: testsDir,
+    customExample: 'tests/test_custom.py', testInfo: 'Tests use unittest with the Django REST Framework test client (Django 5.2) on an in-memory SQLite database, in Python 3.12.'},
+  fastapi: {label: 'Python · FastAPI', family: 'python', runner: 'docker', api: true, image: 'python-fastapi', main: 'demo.py', ext: '.py', comment: '#', test: pyTest, custom: pyCustom, canonical: testsDir,
+    customExample: 'tests/test_custom.py', testInfo: "Tests use unittest with FastAPI's TestClient in Python 3.12."},
+  spring: {label: 'Java · Spring Boot', family: 'java', runner: 'docker', api: true, image: 'java-spring', main: null, ext: '.java', comment: '//',
+    test: phase => `src/test/java/com/debuggym/api/Phase${phase}Test.java`, custom: name => /^src\/test\/java\/.+Test\.java$/.test(name), canonical: name => name.startsWith('src/test/'),
+    customExample: 'src/test/java/com/debuggym/api/CustomTest.java', testInfo: 'Tests are JUnit 5 with MockMvc (@SpringBootTest) on Spring Boot 3.4 and Java 21, built offline with Maven. A run compiles the project first, so a run takes about 10 to 20 seconds.'}
 };
+// Languages whose tests run in a Docker image through stack-runner.mjs.
+export const isStack = language => LANGUAGES[language]?.runner === 'docker';
+// Problems in a framework stack are back-end API projects.
+export const isApi = language => LANGUAGES[language]?.api === true;
 export const KINDS = ['bug', 'feature', 'optimize'];
 export const DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
 const TEXT_LIMIT = 150000;
@@ -35,8 +64,10 @@ export function localize(value, language) {
 
 export function validateProblem(problem, dirName) {
   const errors = [];
+  // Text is one string for every language, or one entry per language the problem ships in.
   const text = (value, label) => {
-    if (typeof value === 'string' ? !value.trim() : !(value && typeof value === 'object' && Object.values(value).every(v => typeof v === 'string' && v.trim()))) errors.push(`${label} must be non-empty markdown (string or {python, javascript}).`);
+    if (typeof value === 'string' ? !value.trim() : !(value && typeof value === 'object' && Object.values(value).every(v => typeof v === 'string' && v.trim()))) errors.push(`${label} must be non-empty markdown (a string, or one per language).`);
+    else if (typeof value === 'object' && Array.isArray(problem.languages)) for (const language of problem.languages) if (!(language in value)) errors.push(`${label} has no ${language} version.`);
   };
   if (problem.id !== dirName) errors.push(`id "${problem.id}" must match its directory "${dirName}".`);
   if (!/^[a-z0-9-]+$/.test(problem.id || '')) errors.push('id must be kebab-case.');
@@ -88,7 +119,7 @@ export async function getProblem(id) {
 
 export function problemSummary(problem) {
   const {id, title, difficulty, pattern, summary, minutes, languages} = problem;
-  return {id, title, difficulty, pattern, summary, minutes, languages};
+  return {id, title, difficulty, pattern, summary, minutes, languages, track: languages.some(isApi) ? 'api' : 'algorithm', languageLabels: Object.fromEntries(languages.map(l => [l, LANGUAGES[l].label]))};
 }
 
 // Problem content for one language, without answers unless requested.

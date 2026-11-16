@@ -1,0 +1,99 @@
+[
+  {
+    "id": "api-post-201-location",
+    "topic": "REST APIs",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "A `POST /orders` request successfully creates a new order. What is the most appropriate response?",
+    "options": [
+      "200 OK with an empty body",
+      "201 Created with a Location header pointing to the new order",
+      "202 Accepted, always",
+      "204 No Content"
+    ],
+    "answer": [1],
+    "explanation": "201 Created says a resource was made, and the Location header (often with the created representation in the body) tells the client where to find it.\n\n202 Accepted is for work that will finish later, such as a queued job. 204 means success with nothing to return, and a bare 200 hides the fact that something new exists."
+  },
+  {
+    "id": "api-idempotency-key",
+    "topic": "REST APIs",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "Mobile clients retry `POST /payments` when a request times out, and some customers get charged twice. What is the standard fix?",
+    "options": [
+      "Have clients send an Idempotency-Key header; the server stores the key with the result and returns the stored result for repeats",
+      "Tell clients never to retry",
+      "Change the endpoint to GET",
+      "Shorten the server timeout"
+    ],
+    "answer": [0],
+    "explanation": "A timeout doesn't tell the client whether the payment happened, so retries are necessary. A client-generated idempotency key lets the server recognise a repeat and replay the original response instead of charging again; store the key atomically with the payment.\n\nGET must be safe and can't create payments, and a shorter timeout causes more retries, not fewer."
+  },
+  {
+    "id": "api-cursor-pagination",
+    "topic": "REST APIs",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "A feed API uses `?page=2&size=20` (offset pagination). Because new posts are added at the top while people scroll, users see some posts twice. What is the better design?",
+    "options": [
+      "Cursor (keyset) pagination: return an opaque cursor based on the last item's sort key, and fetch the items after it",
+      "Increase the page size",
+      "Cache each page for an hour",
+      "Sort the feed randomly"
+    ],
+    "answer": [0],
+    "explanation": "With offsets, every insert at the top shifts all later items down, so page 2 repeats the end of page 1. A cursor anchors the next page to the last item seen, for example its timestamp and id, so inserts don't move it; it is also faster than skipping N rows on large tables.\n\nBigger pages only make the overlap rarer, caching serves stale data, and random order breaks the feed."
+  },
+  {
+    "id": "api-put-vs-patch",
+    "topic": "REST APIs",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "What is the difference between PUT and PATCH for updating a resource?",
+    "options": [
+      "PUT replaces the whole resource with the request body and is idempotent; PATCH applies a partial change",
+      "PUT creates resources and PATCH deletes them",
+      "PATCH is always idempotent and PUT is not",
+      "There is no difference; they are aliases"
+    ],
+    "answer": [0],
+    "explanation": "PUT sends the complete new representation, so repeating it leaves the same state. PATCH sends only the changes, and whether it is idempotent depends on the patch: \"increment by 1\" is not.\n\nFields left out of a PUT body are typically cleared or reset, which surprises clients that meant a partial update."
+  },
+  {
+    "id": "api-rate-limit-select",
+    "topic": "REST APIs",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "A client exceeds an API's rate limit. What should a well-designed API send back? Select all that apply.",
+    "options": [
+      "Status 429 Too Many Requests",
+      "A Retry-After header saying when to try again",
+      "Headers showing the limit, the remaining quota and when it resets",
+      "Status 500 Internal Server Error",
+      "Nothing: silently drop the request"
+    ],
+    "answer": [0, 1, 2],
+    "explanation": "429 tells the client exactly what happened, Retry-After tells it how long to back off, and quota headers let well-behaved clients slow down before they hit the limit.\n\nA 500 blames the server and invites pointless retries, and dropping requests silently leaves clients hanging until they time out."
+  },
+  {
+    "id": "api-breaking-change",
+    "topic": "REST APIs",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "Which change to a public JSON API breaks existing clients?",
+    "options": [
+      "Adding a new optional field to a response",
+      "Adding a new endpoint",
+      "Making a previously optional request field required",
+      "Accepting a new optional query parameter"
+    ],
+    "answer": [2],
+    "explanation": "Existing clients don't send the field, so their requests start failing validation: a breaking change that needs a new version or a default value.\n\nClients should ignore unknown response fields, and new endpoints or optional parameters don't affect existing calls. Removing or renaming fields, changing types and changing the error format are other common breaking changes."
+  }
+]

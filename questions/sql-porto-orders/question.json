@@ -1,0 +1,61 @@
+{
+  "id": "sql-porto-orders",
+  "title": "Delivered Orders in Porto",
+  "difficulty": "Easy",
+  "maxScore": 30,
+  "kind": "sql",
+  "languages": [
+    "sql"
+  ],
+  "skills": [
+    "SQL"
+  ],
+  "summary": "Join customers to their orders and keep the big delivered ones from one city.",
+  "statement": "A bakery chain keeps its customers and their orders in two tables. The manager of the Porto shop wants a list of the larger orders that actually reached customers in Porto.\n\nWrite a query that returns every order that:\n\n- was placed by a customer whose `city` is exactly `Porto`,\n- has the `status` `delivered`, and\n- has a `total` of at least `25`.\n\nReturn the columns `order_id`, `customer_name` and `total`, sorted by `total` from highest to lowest, then by `order_id` from lowest to highest.",
+  "functionDescription": "Write one **SELECT** statement in the editor. Every test case creates these tables and fills them with its own rows:\n\n```sql\nCREATE TABLE customers (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  city TEXT NOT NULL\n);\nCREATE TABLE orders (\n  id INTEGER PRIMARY KEY,\n  customer_id INTEGER NOT NULL REFERENCES customers(id),\n  total REAL NOT NULL,\n  status TEXT NOT NULL\n);\n```\n\nThe query runs on SQLite.",
+  "inputFormat": "The test input is the SQL that creates and fills the tables, as shown in the samples. Hidden test cases use different rows, so the query must not depend on particular ids or names.",
+  "constraints": "- `0 ≤` rows in `customers` `≤ 2000`\n- `0 ≤` rows in `orders` `≤ 20000`\n- `status` is one of `delivered`, `pending` and `cancelled`\n- Cities are compared exactly: `porto` is not `Porto`.",
+  "outputFormat": "The first line holds the column names in lower case, separated by tabs: `order_id`, `customer_name`, `total`. Each following line is one row, with values separated by tabs. Numbers print without trailing zeros (`31.5`, `40`) and NULL prints as `NULL`. Rows must come in the order described above.",
+  "samples": [
+    {
+      "input": "CREATE TABLE customers (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  city TEXT NOT NULL\n);\nCREATE TABLE orders (\n  id INTEGER PRIMARY KEY,\n  customer_id INTEGER NOT NULL REFERENCES customers(id),\n  total REAL NOT NULL,\n  status TEXT NOT NULL\n);\nINSERT INTO customers VALUES\n  (1, 'Ana Costa', 'Porto'),\n  (2, 'Rui Silva', 'Porto'),\n  (3, 'Marta Lopes', 'Lisbon');\nINSERT INTO orders VALUES\n  (1, 1, 42.5, 'delivered'),\n  (2, 2, 12.0, 'pending'),\n  (3, 2, 60.0, 'cancelled'),\n  (4, 2, 31.0, 'delivered'),\n  (5, 1, 19.99, 'delivered'),\n  (6, 3, 80.0, 'delivered');\n",
+      "output": "order_id\tcustomer_name\ttotal\n1\tAna Costa\t42.5\n4\tRui Silva\t31\n",
+      "explanation": "Order `3` is cancelled, order `5` is below `25` and order `6` belongs to a customer from Lisbon, so only orders `1` and `4` qualify. Order `1` has the higher total, so it comes first."
+    },
+    {
+      "input": "CREATE TABLE customers (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  city TEXT NOT NULL\n);\nCREATE TABLE orders (\n  id INTEGER PRIMARY KEY,\n  customer_id INTEGER NOT NULL REFERENCES customers(id),\n  total REAL NOT NULL,\n  status TEXT NOT NULL\n);\nINSERT INTO customers VALUES\n  (1, 'Ines Santos', 'Porto'),\n  (2, 'Tiago Almeida', 'porto'),\n  (3, 'Sofia Pereira', 'Porto');\nINSERT INTO orders VALUES\n  (7, 1, 30.0, 'delivered'),\n  (8, 3, 25.0, 'delivered'),\n  (9, 3, 30.0, 'delivered'),\n  (10, 2, 99.0, 'delivered'),\n  (11, 1, 24.99, 'delivered');\n",
+      "output": "order_id\tcustomer_name\ttotal\n7\tInes Santos\t30\n9\tSofia Pereira\t30\n8\tSofia Pereira\t25\n",
+      "explanation": "Orders `7` and `9` have the same total, so the lower `order_id` comes first. Order `8` totals exactly `25`, which counts. The customer from `porto` (lower case) is not in Porto."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06",
+      "weight": 2
+    },
+    {
+      "file": "07",
+      "weight": 2
+    }
+  ]
+}

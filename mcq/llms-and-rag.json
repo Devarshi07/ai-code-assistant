@@ -1,0 +1,164 @@
+[
+  {
+    "id": "llm-temperature-zero",
+    "topic": "LLMs and RAG",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "What does setting the sampling temperature to 0 (greedy decoding) do to an LLM's output?",
+    "options": [
+      "It makes every answer factually correct",
+      "It picks the most likely token at each step, so the output is much more repeatable",
+      "It switches to a smaller, faster model",
+      "It shortens the context window"
+    ],
+    "answer": [1],
+    "explanation": "Temperature scales the logits before sampling; at 0 the model always takes the highest-probability token, so the same prompt gives (nearly) the same output. Repeatable is not the same as correct: a model can consistently give the same wrong answer.\n\nTemperature doesn't change the model or its context window."
+  },
+  {
+    "id": "llm-context-window",
+    "topic": "LLMs and RAG",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "What is an LLM's context window?",
+    "options": [
+      "The maximum number of tokens, prompt and generated output together, that the model can attend to in one request",
+      "The number of past conversations the model remembers between sessions",
+      "The size of the model's training dataset",
+      "The number of documents a retriever returns"
+    ],
+    "answer": [0],
+    "explanation": "The context window is the token budget for a single request: system prompt, conversation, retrieved documents and the reply all share it. Anything outside it is invisible to the model, which is why long chats get trimmed or summarized.\n\nModels have no memory between sessions unless an application stores past text and sends it again."
+  },
+  {
+    "id": "llm-tokenization-letters",
+    "topic": "LLMs and RAG",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "An LLM sometimes miscounts the letters in a long word such as \"bookkeeper\". What is the main reason?",
+    "options": [
+      "It sees subword tokens, not individual characters",
+      "Its temperature is too high",
+      "Its context window is too small for one word",
+      "It was trained only on lowercase text"
+    ],
+    "answer": [0],
+    "explanation": "Text is split into tokens, often multi-character pieces, before the model sees it, so it has no direct view of individual letters and has to infer spelling from patterns. Asking it to spell the word out letter by letter first, or to use code, works better.\n\nOne word is nowhere near a context limit, and temperature affects randomness, not what the model can see."
+  },
+  {
+    "id": "llm-hallucination-mitigation-select",
+    "topic": "LLMs and RAG",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "A customer-support bot sometimes invents refund policies. Which changes reduce these hallucinated answers? Select all that apply.",
+    "options": [
+      "Retrieve the relevant policy pages and instruct the model to answer only from them, with citations",
+      "Let the bot say it doesn't know when retrieval finds nothing relevant",
+      "Evaluate answers against a labelled question set, checking that every claim is supported by a source",
+      "Raise the temperature so answers are more varied",
+      "Remove the system prompt to leave more room in the context"
+    ],
+    "answer": [0, 1, 2],
+    "explanation": "Grounding answers in retrieved sources, allowing an explicit \"I don't know\", and measuring groundedness on a test set all reduce invented answers and expose the ones that remain.\n\nA higher temperature adds randomness, which tends to increase unsupported claims. The system prompt is where the grounding rules live, so removing it removes the guardrails."
+  },
+  {
+    "id": "rag-chunk-boundaries",
+    "topic": "LLMs and RAG",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "In a RAG system, the right document is retrieved, but answers keep missing a key sentence that falls on the boundary between two chunks. What should you try first?",
+    "options": [
+      "Chunk by section or paragraph, with some overlap between consecutive chunks",
+      "Switch to a larger LLM",
+      "Lower the temperature to 0",
+      "Retrieve fewer chunks"
+    ],
+    "answer": [0],
+    "explanation": "Fixed-size chunks can split a fact from its context. Splitting on natural boundaries such as headings and paragraphs, and overlapping consecutive chunks, keeps related sentences together.\n\nA bigger model can't use text it never receives, temperature doesn't affect retrieval, and retrieving fewer chunks makes the miss more likely."
+  },
+  {
+    "id": "rag-retrieval-vs-generation",
+    "topic": "LLMs and RAG",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "A RAG assistant gives wrong answers on a set of 200 labelled questions, each tagged with the passage that contains its answer. What is the best first measurement to separate retrieval failures from generation failures?",
+    "options": [
+      "Recall@k: how often the tagged passage appears in the top k retrieved chunks",
+      "The average length of the generated answers",
+      "The LLM's perplexity on the passages",
+      "The number of tokens in the system prompt"
+    ],
+    "answer": [0],
+    "explanation": "If the right passage isn't in the top k, the generator never had a chance, so fix retrieval: chunking, embeddings, hybrid search or reranking. If recall@k is high but answers are still wrong, the problem is in generation: the prompt, the model, or too many distracting chunks.\n\nAnswer length, perplexity and prompt size don't separate the two failure modes."
+  },
+  {
+    "id": "rag-hybrid-search",
+    "topic": "LLMs and RAG",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "Users search a knowledge base for exact error codes such as `E-4021`, and pure embedding search often returns loosely related pages instead. What usually helps most?",
+    "options": [
+      "Hybrid retrieval that combines keyword search, such as BM25, with vector search",
+      "Increasing the embedding dimension",
+      "Removing stop words from the documents",
+      "Raising the LLM's temperature"
+    ],
+    "answer": [0],
+    "explanation": "Embeddings capture meaning but blur rare exact strings such as codes, IDs and product names. Keyword search matches them exactly, and combining the two, then reranking, handles both kinds of query.\n\nA bigger embedding doesn't fix exact matching, stop words don't affect codes, and temperature only affects generation."
+  },
+  {
+    "id": "llm-prompt-injection-select",
+    "topic": "LLMs and RAG",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "multiple",
+    "question": "An assistant summarizes web pages and can call a tool that sends email. Which measures reduce the risk of prompt injection from those pages? Select all that apply.",
+    "options": [
+      "Mark retrieved page text as untrusted data and tell the model never to follow instructions found inside it",
+      "Limit the tools the model can call, and require the user's confirmation before actions with side effects",
+      "Validate the model's output before acting on it, for example by allow-listing recipients and URLs",
+      "Rely on the model to refuse malicious instructions",
+      "Put the email API key in the system prompt so the model can authenticate"
+    ],
+    "answer": [0, 1, 2],
+    "explanation": "No single defence is enough, so layer them: separate untrusted content from instructions, restrict what the model can do, keep a person in the loop for consequential actions, and check outputs in code.\n\nModels can be talked out of their own refusals, so relying on that alone is weak. A secret in the prompt can be extracted by the very injection you're defending against; keep credentials in the tool layer."
+  },
+  {
+    "id": "llm-kv-cache",
+    "topic": "LLMs and RAG",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "What does the KV cache speed up when an LLM generates text one token at a time?",
+    "options": [
+      "It stores the keys and values of earlier tokens, so each new token computes attention only for itself instead of reprocessing the whole prefix",
+      "It caches complete answers to repeated questions",
+      "It compresses the model's weights",
+      "It stores the vocabulary embeddings"
+    ],
+    "answer": [0],
+    "explanation": "Without a cache, every step would recompute keys and values for all previous tokens. With it, each step adds one token's keys and values and attends over the stored ones. The cost is memory that grows with sequence length, which is why long contexts need more GPU memory.\n\nCaching whole answers is a separate, application-level idea."
+  },
+  {
+    "id": "llm-rag-vs-finetune",
+    "topic": "LLMs and RAG",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "A company's HR policies change every week, and its assistant must quote the current version and say where it came from. What is the best fit?",
+    "options": [
+      "Retrieval-augmented generation over the policy documents, re-indexing whenever they change",
+      "Fine-tuning the model on the policies every week",
+      "Pasting every policy into one long system prompt",
+      "Using a higher temperature"
+    ],
+    "answer": [0],
+    "explanation": "RAG keeps knowledge outside the model: update the index and the next answer uses the new text, with a citation. Weekly fine-tuning is slow and costly, and it doesn't reliably make a model reproduce exact wording or cite sources. Putting every document in the prompt wastes the context window and fails once the policies outgrow it.\n\nFine-tuning suits style and format, not fast-changing facts."
+  }
+]

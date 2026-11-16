@@ -50,14 +50,14 @@ test('runner isolates modules per test file and supports main, fs and require.ma
   assert.ok(!isDeepStrictEqual([1, 2], [1, '2']));
 });
 
-test('every shipped problem passes schema validation and has both language trees', async () => {
+test('every shipped problem passes schema validation and has a tree per language', async () => {
   const problems = await loadProblems({fresh: true});
   assert.ok(problems.length >= 13, `expected 13 problems, found ${problems.length}`);
   for (const problem of problems) {
     assert.deepEqual(validateProblem(problem, problem.id), []);
     for (const language of problem.languages) {
       const starter = await overlay(problem, language, 'starter');
-      assert.ok(starter[LANGUAGES[language].main], `${problem.id}/${language} has a main entry point`);
+      if (LANGUAGES[language].main) assert.ok(starter[LANGUAGES[language].main], `${problem.id}/${language} has a main entry point`);
       assert.ok(starter[LANGUAGES[language].test(1)], `${problem.id}/${language} has phase 1 tests`);
       assert.ok((await overlay(problem, language, 'phase2'))[LANGUAGES[language].test(2)], `${problem.id}/${language} has phase 2 tests`);
       assert.ok(Object.keys(await overlay(problem, language, 'solution/phase3')).length, `${problem.id}/${language} has a phase 3 solution`);

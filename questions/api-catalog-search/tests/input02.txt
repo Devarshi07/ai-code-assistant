@@ -1,0 +1,4 @@
+{"method": "GET", "path": "/books"}
+{"method": "GET", "path": "/books/1"}
+{"method": "GET", "path": "/books?author=Nobody&page=3"}
+{"method": "GET", "path": "/books/abc"}

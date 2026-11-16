@@ -1,0 +1,5 @@
+region	rep	total	sales_rank
+North	Ana	900	1
+North	Ben	700	2
+South	Dev	500	1
+South	Eli	500	1

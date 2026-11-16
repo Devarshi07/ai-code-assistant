@@ -1,0 +1,7 @@
+{"method": "POST", "path": "/payments", "body": {"amount": 500, "currency": "GBP"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 500, "currency": "GBP"}, "headers": {"Idempotency-Key": "k7"}}
+{"method": "POST", "path": "/payments/pay_1/refund"}
+{"method": "POST", "path": "/payments", "body": {"amount": 500, "currency": "GBP"}, "headers": {"Idempotency-Key": "k7"}}
+{"method": "GET", "path": "/payments/pay_1"}
+{"method": "POST", "path": "/payments/pay_1/refund"}
+{"method": "GET", "path": "/payments"}

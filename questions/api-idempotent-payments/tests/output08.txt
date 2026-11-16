@@ -1,0 +1,150 @@
+1. POST /payments -> 201 {"amount":2231,"currency":"GBP","id":"pay_1","status":"captured"}
+2. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+3. POST /payments -> 201 {"amount":2231,"currency":"GBP","id":"pay_1","status":"captured"}
+4. POST /payments/pay_6/refund -> 404 {"error":"payment not found"}
+5. GET /payments -> 200 {"captured":{"GBP":2231},"count":1}
+6. POST /payments -> 201 {"amount":36351,"currency":"USD","id":"pay_2","status":"captured"}
+7. POST /payments/pay_2/refund -> 200 {"amount":36351,"currency":"USD","id":"pay_2","status":"refunded"}
+8. GET /payments/nope -> 404 {"error":"payment not found"}
+9. GET /payments -> 200 {"captured":{"GBP":2231},"count":2}
+10. POST /payments -> 201 {"amount":2231,"currency":"GBP","id":"pay_1","status":"captured"}
+11. GET /payments -> 200 {"captured":{"GBP":2231},"count":2}
+12. POST /payments -> 400 {"error":"invalid payment"}
+13. GET /payments/pay_9 -> 404 {"error":"payment not found"}
+14. GET /payments -> 200 {"captured":{"GBP":2231},"count":2}
+15. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+16. GET /payments -> 200 {"captured":{"GBP":2231},"count":2}
+17. GET /payments -> 200 {"captured":{"GBP":2231},"count":2}
+18. GET /payments/pay_9 -> 404 {"error":"payment not found"}
+19. GET /payments -> 200 {"captured":{"GBP":2231},"count":2}
+20. GET /payments -> 200 {"captured":{"GBP":2231},"count":2}
+21. GET /payments -> 200 {"captured":{"GBP":2231},"count":2}
+22. GET /payments/pay_8 -> 404 {"error":"payment not found"}
+23. POST /payments -> 201 {"amount":479,"currency":"EUR","id":"pay_3","status":"captured"}
+24. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+25. GET /payments -> 200 {"captured":{"EUR":479,"GBP":2231},"count":3}
+26. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+27. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+28. POST /payments -> 400 {"error":"missing idempotency key"}
+29. POST /payments -> 201 {"amount":11245,"currency":"USD","id":"pay_4","status":"captured"}
+30. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+31. GET /payments/pay_8 -> 404 {"error":"payment not found"}
+32. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+33. GET /payments -> 200 {"captured":{"EUR":479,"GBP":2231,"USD":11245},"count":4}
+34. GET /payments/pay_8 -> 404 {"error":"payment not found"}
+35. GET /payments/pay_6 -> 404 {"error":"payment not found"}
+36. POST /payments/pay_2/refund -> 409 {"error":"payment already refunded"}
+37. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+38. POST /payments -> 201 {"amount":48666,"currency":"GBP","id":"pay_5","status":"captured"}
+39. POST /payments/pay_5/refund -> 200 {"amount":48666,"currency":"GBP","id":"pay_5","status":"refunded"}
+40. POST /payments -> 201 {"amount":37766,"currency":"GBP","id":"pay_6","status":"captured"}
+41. GET /payments -> 200 {"captured":{"EUR":479,"GBP":39997,"USD":11245},"count":6}
+42. POST /payments -> 201 {"amount":48251,"currency":"USD","id":"pay_7","status":"captured"}
+43. GET /payments/pay_10 -> 404 {"error":"payment not found"}
+44. POST /payments -> 400 {"error":"invalid payment"}
+45. GET /payments -> 200 {"captured":{"EUR":479,"GBP":39997,"USD":59496},"count":7}
+46. POST /payments/pay_2/refund -> 409 {"error":"payment already refunded"}
+47. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+48. GET /payments -> 200 {"captured":{"EUR":479,"GBP":39997,"USD":59496},"count":7}
+49. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+50. GET /payments/pay_8 -> 404 {"error":"payment not found"}
+51. GET /payments/nope -> 404 {"error":"payment not found"}
+52. GET /payments/nope -> 404 {"error":"payment not found"}
+53. POST /payments -> 400 {"error":"missing idempotency key"}
+54. POST /payments/pay_1/refund -> 200 {"amount":2231,"currency":"GBP","id":"pay_1","status":"refunded"}
+55. POST /payments -> 201 {"amount":26436,"currency":"USD","id":"pay_8","status":"captured"}
+56. GET /payments -> 200 {"captured":{"EUR":479,"GBP":37766,"USD":85932},"count":8}
+57. GET /payments/pay_3 -> 200 {"amount":479,"currency":"EUR","id":"pay_3","status":"captured"}
+58. POST /payments -> 201 {"amount":25861,"currency":"USD","id":"pay_9","status":"captured"}
+59. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+60. GET /payments/nope -> 404 {"error":"payment not found"}
+61. POST /payments -> 201 {"amount":26436,"currency":"USD","id":"pay_8","status":"captured"}
+62. POST /payments -> 400 {"error":"missing idempotency key"}
+63. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+64. GET /payments/nope -> 404 {"error":"payment not found"}
+65. POST /payments/pay_7/refund -> 200 {"amount":48251,"currency":"USD","id":"pay_7","status":"refunded"}
+66. GET /payments -> 200 {"captured":{"EUR":479,"GBP":37766,"USD":63542},"count":9}
+67. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+68. GET /payments/nope -> 404 {"error":"payment not found"}
+69. GET /payments/nope -> 404 {"error":"payment not found"}
+70. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+71. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+72. GET /payments -> 200 {"captured":{"EUR":479,"GBP":37766,"USD":63542},"count":9}
+73. GET /payments/nope -> 404 {"error":"payment not found"}
+74. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+75. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+76. POST /payments/pay_6/refund -> 200 {"amount":37766,"currency":"GBP","id":"pay_6","status":"refunded"}
+77. POST /payments/pay_2/refund -> 409 {"error":"payment already refunded"}
+78. POST /payments -> 201 {"amount":33812,"currency":"GBP","id":"pay_10","status":"captured"}
+79. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+80. GET /payments/nope -> 404 {"error":"payment not found"}
+81. POST /payments/pay_2/refund -> 409 {"error":"payment already refunded"}
+82. GET /payments/nope -> 404 {"error":"payment not found"}
+83. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+84. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+85. GET /payments/pay_3 -> 200 {"amount":479,"currency":"EUR","id":"pay_3","status":"captured"}
+86. POST /payments -> 400 {"error":"invalid idempotency key"}
+87. POST /payments -> 400 {"error":"invalid payment"}
+88. POST /payments -> 400 {"error":"missing idempotency key"}
+89. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+90. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+91. GET /payments/pay_7 -> 200 {"amount":48251,"currency":"USD","id":"pay_7","status":"refunded"}
+92. GET /payments/pay_6 -> 200 {"amount":37766,"currency":"GBP","id":"pay_6","status":"refunded"}
+93. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+94. GET /payments -> 200 {"captured":{"EUR":479,"GBP":33812,"USD":63542},"count":10}
+95. GET /payments -> 200 {"captured":{"EUR":479,"GBP":33812,"USD":63542},"count":10}
+96. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+97. POST /payments -> 201 {"amount":33812,"currency":"GBP","id":"pay_10","status":"captured"}
+98. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+99. GET /payments -> 200 {"captured":{"EUR":479,"GBP":33812,"USD":63542},"count":10}
+100. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+101. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+102. POST /payments -> 400 {"error":"missing idempotency key"}
+103. GET /payments -> 200 {"captured":{"EUR":479,"GBP":33812,"USD":63542},"count":10}
+104. GET /payments -> 200 {"captured":{"EUR":479,"GBP":33812,"USD":63542},"count":10}
+105. GET /payments -> 200 {"captured":{"EUR":479,"GBP":33812,"USD":63542},"count":10}
+106. GET /payments/nope -> 404 {"error":"payment not found"}
+107. POST /payments/pay_6/refund -> 409 {"error":"payment already refunded"}
+108. GET /payments/nope -> 404 {"error":"payment not found"}
+109. GET /payments/pay_8 -> 200 {"amount":26436,"currency":"USD","id":"pay_8","status":"captured"}
+110. POST /payments -> 201 {"amount":2231,"currency":"GBP","id":"pay_1","status":"captured"}
+111. POST /payments -> 201 {"amount":25861,"currency":"USD","id":"pay_9","status":"captured"}
+112. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+113. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+114. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+115. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+116. GET /payments -> 200 {"captured":{"EUR":479,"GBP":33812,"USD":63542},"count":10}
+117. GET /payments/pay_1 -> 200 {"amount":2231,"currency":"GBP","id":"pay_1","status":"refunded"}
+118. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+119. POST /payments/pay_8/refund -> 200 {"amount":26436,"currency":"USD","id":"pay_8","status":"refunded"}
+120. GET /payments -> 200 {"captured":{"EUR":479,"GBP":33812,"USD":37106},"count":10}
+121. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+122. GET /payments/nope -> 404 {"error":"payment not found"}
+123. GET /payments -> 200 {"captured":{"EUR":479,"GBP":33812,"USD":37106},"count":10}
+124. POST /payments -> 201 {"amount":55,"currency":"EUR","id":"pay_11","status":"captured"}
+125. GET /payments/pay_2 -> 200 {"amount":36351,"currency":"USD","id":"pay_2","status":"refunded"}
+126. POST /payments -> 201 {"amount":40726,"currency":"USD","id":"pay_12","status":"captured"}
+127. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+128. POST /payments -> 400 {"error":"invalid idempotency key"}
+129. GET /payments -> 200 {"captured":{"EUR":534,"GBP":33812,"USD":77832},"count":12}
+130. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+131. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+132. POST /payments/pay_6/refund -> 409 {"error":"payment already refunded"}
+133. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+134. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+135. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+136. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+137. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+138. POST /payments -> 400 {"error":"invalid idempotency key"}
+139. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+140. POST /payments -> 201 {"amount":11245,"currency":"USD","id":"pay_4","status":"captured"}
+141. GET /payments/pay_1 -> 200 {"amount":2231,"currency":"GBP","id":"pay_1","status":"refunded"}
+142. POST /payments -> 201 {"amount":48666,"currency":"GBP","id":"pay_5","status":"captured"}
+143. GET /payments -> 200 {"captured":{"EUR":534,"GBP":33812,"USD":77832},"count":12}
+144. POST /payments -> 201 {"amount":40726,"currency":"USD","id":"pay_12","status":"captured"}
+145. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+146. POST /payments/pay_10/refund -> 200 {"amount":33812,"currency":"GBP","id":"pay_10","status":"refunded"}
+147. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+148. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+149. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+150. GET /payments -> 200 {"captured":{"EUR":534,"USD":77832},"count":12}

@@ -1,0 +1,6 @@
+{"method": "POST", "path": "/payments", "body": {"amount": 100, "currency": "USD"}, "headers": {"Idempotency-Key": "a"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 100, "currency": "EUR"}, "headers": {"Idempotency-Key": "a"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 101, "currency": "USD"}, "headers": {"Idempotency-Key": "a"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 100, "currency": "USD", "note": "retry"}, "headers": {"Idempotency-Key": "a"}}
+{"method": "POST", "path": "/payments", "body": ["retry"], "headers": {"Idempotency-Key": "a"}}
+{"method": "GET", "path": "/payments"}

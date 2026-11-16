@@ -11,6 +11,10 @@ export const MODE_INFO = {
   agent: {label: 'Agent', hint: 'Edits files, runs commands and runs tests. Each change waits for your approval.'}
 };
 const TOOL_LABEL = {list_files: 'Listed files', read_file: 'Read file', search_code: 'Searched', view_changes: 'Viewed changes', write_file: 'Write file', edit_file: 'Edit file', delete_file: 'Delete file', run_command: 'Run command', run_tests: 'Run tests'};
+// Small models (the 3B autocomplete coder, 1.5B chat models) answer fast but
+// often print tool calls as text or ignore the task; the menu says so.
+const billions = m => parseFloat(String(m.parameterSize || '').replace(/[^\d.]/g, '')) * (/M$/i.test(m.parameterSize || '') ? 0.001 : 1);
+const smallModel = m => { const size = billions(m); return !Number.isFinite(size) ? '' : size < 4 && /coder/i.test(m.name) ? 'autocomplete model, weak at chat' : size < 2 ? 'small, weak at tools' : ''; };
 const COMMANDS = [
   {name: 'explain', text: 'Explain how this works: ', description: 'Explain the open file or your selection', attach: 'selection'},
   {name: 'fix', text: 'Find the cause of the failing tests and fix it.', description: 'Fix the failing tests', attach: 'tests', mode: 'agent'},
@@ -22,10 +26,11 @@ const COMMANDS = [
 const k = n => n >= 1000 ? `${Math.round(n / 100) / 10}K` : String(n);
 
 export function createAssistant(options) {
-  const {scope, variant = 'ade', modes = ['ask', 'plan', 'agent'], context = () => ({}), files = async () => [], hooks = {}, codeActions = [], suggestions = []} = options;
+  const {scope, variant = 'ade', modes = ['ask', 'plan', 'agent'], context = () => ({}), files = async () => [], hooks = {}, codeActions = [], suggestions = [], standingApproval = true} = options;
   const refs = {};
   let chat = null, chatId = null, models = null, busy = null, live = null, usage = null, attachments = [], popup = null;
-  let mode = modes.includes(store.get(`dg-assistant-mode-${variant}`, '')) ? store.get(`dg-assistant-mode-${variant}`) : modes.includes('agent') ? 'agent' : modes[0];
+  // Ask is the starting mode: look before you let the agent change anything.
+  let mode = modes.includes(store.get(`dg-assistant-mode-${variant}`, '')) ? store.get(`dg-assistant-mode-${variant}`) : modes[0];
   const autoApprove = () => store.get('dg-auto-approve', {edits: false, commands: false});
   const query = (extra = {}) => new URLSearchParams(Object.fromEntries(Object.entries({...scope(), ...extra}).filter(([, v]) => v !== undefined && v !== null))).toString();
 
@@ -40,13 +45,16 @@ export function createAssistant(options) {
   refs.input = el('textarea', {rows: 2, maxlength: 12000, placeholder: variant === 'ade' ? 'Ask, plan or build. @ to add context, / for commands' : 'Ask about the problem or your code…', 'aria-label': 'Message the AI assistant'});
   refs.send = el('button', {class: 'send-button', title: 'Send (Enter)', 'aria-label': 'Send', onclick: () => busy ? stop() : send()}, icon('send'));
   refs.mode = el('button', {class: 'chip-button mode-button', title: 'Mode', onclick: event => modeMenu(event.currentTarget)});
-  refs.model = el('select', {class: 'model-select', 'aria-label': 'Model', onchange: () => store.set('dg-assistant-model', refs.model.value)});
+  // A compact button and menu: a native select sizes itself to its longest option.
+  let modelName = '';
+  refs.model = el('button', {class: 'chip-button model-button', type: 'button', 'aria-label': 'Choose the AI model', onclick: event => modelMenu(event.currentTarget)});
   refs.meter = el('span', {class: 'context-meter', title: 'Context window used by this session'});
   refs.attach = el('button', {class: 'icon-button', title: 'Add context (@)', 'aria-label': 'Add context', onclick: () => { insertAtCaret('@'); refs.input.focus(); onInput(); }}, '@');
-  refs.status = el('div', {class: 'chat-status', hidden: true});
+  refs.jump = el('button', {class: 'jump-latest', hidden: true, onclick: () => scrollDown(true)}, icon('caret'), 'Jump to latest');
   const foot = el('div', {class: 'composer-foot'}, modes.length > 1 ? refs.mode : null, refs.model, refs.meter, el('span', {class: 'grow'}), refs.attach, refs.send);
-  refs.composer = el('div', {class: 'chat-composer'}, refs.attachments, el('div', {class: 'composer-field'}, refs.input), foot);
-  const root = el('div', {class: `assistant assistant-${variant}`}, refs.head, refs.messages, refs.status, refs.composer);
+  refs.composer = el('div', {class: 'chat-composer'}, refs.jump, refs.attachments, el('div', {class: 'composer-field'}, refs.input), foot);
+  refs.disclaimer = el('div', {class: 'chat-disclaimer', text: 'AI responses can be wrong. Check them against the code and the tests.'});
+  const root = el('div', {class: `assistant assistant-${variant}`}, refs.head, refs.messages, refs.composer, refs.disclaimer);
 
   refs.input.addEventListener('keydown', event => {
     if (popup && ['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(event.key)) { popupKey(event); return; }
@@ -61,10 +69,27 @@ export function createAssistant(options) {
     try {
       models = await api('/api/models');
       const preferred = store.get('dg-assistant-model', null);
-      refs.model.replaceChildren(...models.models.map(m => el('option', {value: m.name, text: `${m.name}${m.parameterSize ? ` · ${m.parameterSize}` : ''}${m.tools === false && variant === 'ade' ? ' · no tools' : ''}`})));
-      refs.model.value = models.models.some(m => m.name === preferred) ? preferred : models.assistant || models.models[0]?.name || '';
-      if (!models.models.length) refs.model.append(el('option', {value: '', text: 'No models installed'}));
-    } catch { refs.model.replaceChildren(el('option', {value: '', text: 'Ollama not running'})); }
+      modelName = models.models.some(m => m.name === preferred) ? preferred : models.assistant || models.models[0]?.name || '';
+    } catch { models = null; modelName = ''; }
+    paintModel();
+  }
+  const shortName = name => String(name).replace(/^hf\.co\/[^/]+\//, '').replace(/-GGUF(?=:|$)/i, '').replace(/:Q\d[\w_]*$/i, '');
+  function paintModel() {
+    const m = models?.models.find(x => x.name === modelName);
+    const note = m ? (m.tools === false && variant === 'ade' ? 'no tools' : smallModel(m)) : '';
+    refs.model.replaceChildren(icon('spark'), el('span', {class: 'model-name', text: modelName ? shortName(modelName) : models ? 'No models' : 'Ollama off'}), icon('caret', 'icon caret'));
+    refs.model.title = m ? `${m.name}${m.parameterSize ? ` · ${m.parameterSize}` : ''}${note ? ` · ${note}` : ''}` : models ? 'No chat model is installed. Open Local setup to download one.' : 'Ollama is not running.';
+    refs.model.classList.toggle('warn', !!note);
+  }
+  async function modelMenu(anchor) {
+    // Ollama may have started since the page loaded: look again before showing the list.
+    if (!models?.models?.length) await loadModels();
+    const list = models?.models || [];
+    openMenu(anchor, list.length ? [el('div', {class: 'menu-label', text: 'Model'}), ...list.map(m => {
+      const note = m.tools === false && variant === 'ade' ? 'no tools' : smallModel(m);
+      return el('button', {class: `menu-item${m.name === modelName ? ' selected' : ''}`, role: 'menuitemradio', 'aria-checked': String(m.name === modelName), onclick: () => { modelName = m.name; store.set('dg-assistant-model', m.name); paintModel(); closeMenu(); }},
+        el('strong', {text: shortName(m.name)}), el('small', {text: [m.parameterSize, m.name === models.assistant ? 'recommended' : '', note].filter(Boolean).join(' · ') || m.name}));
+    })] : [el('div', {class: 'menu-label', text: models ? 'No chat model is installed. Open Local setup to download one.' : 'Ollama is not running. Start it, then reopen this menu.'})], 'model-menu');
   }
   function paintMode() {
     refs.mode.replaceChildren(icon(mode === 'agent' ? 'agent' : mode === 'plan' ? 'list' : 'chat'), MODE_INFO[mode].label, icon('caret', 'icon caret'));
@@ -77,7 +102,7 @@ export function createAssistant(options) {
     const items = modes.map(m => el('button', {class: `menu-item${m === mode ? ' selected' : ''}`, role: 'menuitemradio', 'aria-checked': String(m === mode), onclick: () => { setMode(m); closeMenu(); }},
       el('strong', {text: MODE_INFO[m].label}), el('small', {text: MODE_INFO[m].hint})));
     const toggle = (key, label) => el('label', {class: 'menu-check'}, el('input', {type: 'checkbox', checked: auto[key], onchange: event => store.set('dg-auto-approve', {...autoApprove(), [key]: event.target.checked})}), label);
-    const extra = modes.includes('agent') ? [el('div', {class: 'menu-sep'}), el('div', {class: 'menu-label', text: 'Agent approvals'}), toggle('edits', 'Auto-approve file edits'), toggle('commands', 'Auto-approve commands and test runs')] : [];
+    const extra = modes.includes('agent') && standingApproval ? [el('div', {class: 'menu-sep'}), el('div', {class: 'menu-label', text: 'Agent approvals'}), toggle('edits', 'Auto-approve file edits'), toggle('commands', 'Auto-approve commands and test runs')] : [];
     openMenu(anchor, [...items, ...extra], 'mode-menu');
   }
   function paintMeter() {
@@ -130,17 +155,28 @@ export function createAssistant(options) {
   }
 
   // ---------- rendering ----------
-  function render() {
+  function render(force = true) {
     refs.title.textContent = chat?.title || 'New session';
     const nodes = [];
     if (!chat || !chat.items.length) nodes.push(emptyState());
     else for (const item of chat.items) nodes.push(itemNode(item));
     if (chat?.pending && !busy) nodes.push(pendingCard(chat.pending));
+    const keep = refs.messages.scrollTop;
     refs.messages.replaceChildren(...nodes);
-    scrollDown();
+    // Opening a session goes to the latest message; after a reply the view stays
+    // where the candidate left it unless they were following along at the bottom.
+    if (force || pinned) scrollDown(true); else refs.messages.scrollTop = keep;
     paintMeter();
   }
-  const scrollDown = () => { refs.messages.scrollTop = refs.messages.scrollHeight; };
+  // The log follows new output only while the candidate is at the bottom.
+  // Scrolling up to read stops that, and "Jump to latest" brings it back.
+  let pinned = true;
+  const atBottom = () => refs.messages.scrollHeight - refs.messages.scrollTop - refs.messages.clientHeight < 48;
+  refs.messages.addEventListener('scroll', () => { pinned = atBottom(); if (pinned) refs.jump.hidden = true; }, {passive: true});
+  const scrollDown = (force = false) => {
+    if (force || pinned) { refs.messages.scrollTop = refs.messages.scrollHeight; pinned = true; refs.jump.hidden = true; }
+    else refs.jump.hidden = false;
+  };
 
   function emptyState() {
     const tips = suggestions.length ? suggestions : [];
@@ -160,7 +196,9 @@ export function createAssistant(options) {
           item.restorable ? el('button', {class: 'link-button', title: 'Undo every file change the assistant made from this message on', onclick: () => restore(item)}, icon('restore'), 'Restore checkpoint') : null));
       return node;
     }
-    if (item.type === 'assistant') return el('div', {class: 'msg assistant'}, el('div', {class: 'md'}, renderMarkdown(item.text, {language: context().language, codeActions, onCopy: hooks.onCopy})), item.stopped ? el('div', {class: 'msg-meta', text: 'Stopped'}) : null);
+    if (item.type === 'assistant') return el('div', {class: 'msg assistant'}, el('div', {class: 'md'}, renderMarkdown(item.text, {language: context().language, codeActions, onCopy: hooks.onCopy})),
+      item.redacted ? el('div', {class: 'msg-meta guard-note', title: 'Code longer than the help level allows, or too close to the full solution, is hidden'}, icon('shield'), `Guardrail hid ${item.redacted} code block${item.redacted === 1 ? '' : 's'}`) : null,
+      item.stopped ? el('div', {class: 'msg-meta', text: 'Stopped'}) : null);
     if (item.type === 'tool') return toolNode(item);
     if (item.type === 'notice') return el('div', {class: 'chat-notice', text: item.text});
     if (item.type === 'error') return el('div', {class: 'chat-error'}, icon('cross'), el('span', {text: item.text}));
@@ -185,7 +223,22 @@ export function createAssistant(options) {
       } else body.append(el('pre', {class: 'tool-output', text: item.output || item.summary || ''}));
     });
     details.append(body);
+    // An applied edit can be rejected afterwards: Undo puts the file back.
+    if (item.diff && item.status === 'done') {
+      const summary = details.querySelector('summary');
+      summary.append(item.undone ? el('span', {class: 'tool-note', text: 'Undone'}) : el('button', {class: 'link-button undo-edit', title: `Put ${item.diff.path} back the way it was before this edit`, onclick: event => { event.preventDefault(); event.stopPropagation(); undoEdit(item); }}, icon('restore'), 'Undo'));
+    }
     return details;
+  }
+  async function undoEdit(item) {
+    if (busy) return;
+    try {
+      const result = await api('/api/assistant/undo', {...scope(), chat: chatId, item: item.id});
+      chat = result.chat;
+      render(false);
+      hooks.onFilesChanged?.();
+      notify(`Undid the change to ${item.diff.path}.`, 'success');
+    } catch (error) { notify(error.message, 'error'); }
   }
 
   function pendingCard(pending) {
@@ -195,32 +248,60 @@ export function createAssistant(options) {
     const body = p.path ? diffView(p.before, p.after) : p.command ? el('pre', {class: 'tool-output command'}, el('span', {class: 'prompt', text: '$ '}), p.command) : el('p', {class: 'muted', text: pending.client ? 'The tests run in your browser, then the results go back to the agent.' : 'Runs the workspace test suite in a sandbox and returns the results to the agent.'});
     const allow = el('button', {class: 'button primary small', onclick: () => resume('allow')}, pending.name === 'run_command' || pending.name === 'run_tests' ? 'Run' : 'Allow');
     const kind = ['write_file', 'edit_file', 'delete_file'].includes(pending.name) ? 'edits' : 'commands';
+    // "Allow all this turn" approves this and the agent's next actions until it stops.
+    const turn = pending.client ? null : el('button', {class: 'button ghost small', title: 'Approve this and every edit or command the agent makes until it finishes this reply', onclick: () => resume('allow', {turn: true})}, 'Allow all this turn');
     return el('div', {class: 'pending-card', role: 'group', 'aria-label': 'Pending tool call'},
       el('div', {class: 'pending-head'}, el('span', {class: 'pending-pill'}, el('span', {class: 'pulse'}), 'Pending tool call'), el('strong', {text: title}),
         counts ? el('span', {class: 'diff-counts'}, el('span', {class: 'add', text: `+${counts.added}`}), el('span', {class: 'del', text: `−${counts.removed}`})) : null),
       body,
       el('div', {class: 'pending-actions'},
-        el('label', {class: 'menu-check small'}, el('input', {type: 'checkbox', onchange: event => store.set('dg-auto-approve', {...autoApprove(), [kind]: event.target.checked})}), kind === 'edits' ? 'Always allow edits' : 'Always allow commands'),
+        standingApproval ? el('label', {class: 'menu-check small'}, el('input', {type: 'checkbox', onchange: event => store.set('dg-auto-approve', {...autoApprove(), [kind]: event.target.checked})}), kind === 'edits' ? 'Always allow edits' : 'Always allow commands') : null,
         el('span', {class: 'grow'}),
-        el('button', {class: 'button ghost small', onclick: () => resume('deny')}, 'Cancel'), allow));
+        el('button', {class: 'button ghost small', onclick: () => resume('deny')}, 'Cancel'), turn, allow));
   }
 
   // ---------- streaming ----------
+  // One status line stays at the end of the live reply ("Thinking…", a tool
+  // or test progress), so indicators change text instead of popping in and out.
   function startLive() {
-    const container = el('div', {class: 'live'});
+    const status = el('div', {class: 'live-status'});
+    const container = el('div', {class: 'live'}, status);
     refs.messages.querySelector('.chat-empty')?.remove();
     refs.messages.querySelector('.pending-card')?.remove();
     refs.messages.append(container);
-    return {container, text: '', bubble: null, md: null, frame: null, tools: new Map(), edited: false};
+    return {container, status, text: '', bubble: null, md: null, done: null, tail: null, stable: 0, frame: null, tools: new Map(), edited: false};
   }
+  const addLive = node => live.container.insertBefore(node, live.status);
+  // Where the finished part of a streamed reply ends: after the last blank
+  // line or closing code fence that is outside a code block.
+  function stableCut(text) {
+    let fence = false, cut = 0, offset = 0;
+    const lines = text.split('\n');
+    for (let n = 0; n < lines.length - 1; n++) {
+      offset += lines[n].length + 1;
+      if (/^\s*(```|~~~)/.test(lines[n])) { fence = !fence; if (!fence) cut = offset; }
+      else if (!fence && !lines[n].trim()) cut = offset;
+    }
+    return cut;
+  }
+  // Finished blocks render once; only the block being written is redrawn, so
+  // code blocks, copy buttons and selections don't flicker while text streams.
   function paintLive() {
     live.frame = null;
+    const text = live.text.replace(/<tool_call>[\s\S]*$/, '');
+    const options = {language: context().language, codeActions, onCopy: hooks.onCopy};
     if (!live.bubble) {
-      live.md = el('div', {class: 'md'});
+      live.done = el('div', {class: 'md-done'});
+      live.tail = el('div', {class: 'md-tail'});
+      live.md = el('div', {class: 'md'}, live.done, live.tail);
       live.bubble = el('div', {class: 'msg assistant streaming'}, live.md);
-      live.container.append(live.bubble);
+      live.stable = 0;
+      addLive(live.bubble);
     }
-    live.md.replaceChildren(renderMarkdown(live.text.replace(/<tool_call>[\s\S]*$/, ''), {language: context().language, codeActions}));
+    if (live.stable > text.length) { live.done.replaceChildren(); live.stable = 0; }
+    const cut = stableCut(text);
+    if (cut > live.stable) { live.done.append(renderMarkdown(text.slice(live.stable, cut), options)); live.stable = cut; }
+    live.tail.replaceChildren(renderMarkdown(text.slice(live.stable), options));
     scrollDown();
   }
   function onEvent(event) {
@@ -228,17 +309,28 @@ export function createAssistant(options) {
     if (event.type === 'start') {
       if (!chatId) { chatId = event.chat; hooks.onSessionsChanged?.(); }
     } else if (event.type === 'user') {
-      live.container.append(itemNode(event.item));
+      addLive(itemNode(event.item));
       thinking(true);
+      scrollDown(true);
     } else if (event.type === 'context') { usage = {used: event.used, limit: event.limit}; paintMeter(); }
     else if (event.type === 'usage') { usage = {used: event.prompt + event.completion, limit: event.limit}; paintMeter(); }
     else if (event.type === 'delta') {
       thinking(false);
       live.text += event.text;
-      if (!live.frame) live.frame = requestAnimationFrame(paintLive);
+      // The first words paint at once; after that at most every 60 ms.
+      if (!live.frame) live.frame = setTimeout(paintLive, live.bubble ? 60 : 0);
+    } else if (event.type === 'revise') {
+      // The server removed a tool call the model printed as text.
+      if (live.frame) { clearTimeout(live.frame); live.frame = null; }
+      live.text = event.text || '';
+      // Only this step's bubble is redrawn; earlier steps' bubbles are final.
+      if (live.text) { if (live.bubble) { live.done.replaceChildren(); live.stable = 0; } paintLive(); }
+      else if (live.bubble) { live.bubble.remove(); live.bubble = null; live.md = live.done = live.tail = null; live.stable = 0; }
     } else if (event.type === 'step') {
-      if (live.frame) { cancelAnimationFrame(live.frame); paintLive(); }
-      live.text = ''; live.bubble = null;
+      if (live.frame) { clearTimeout(live.frame); paintLive(); }
+      live.bubble?.classList.remove('streaming');
+      // The next step starts a new bubble; nothing may write into this one again.
+      live.text = ''; live.bubble = null; live.md = live.done = live.tail = null; live.stable = 0;
       thinking(true);
     } else if (event.type === 'tool') {
       thinking(event.status === 'running');
@@ -246,24 +338,24 @@ export function createAssistant(options) {
       if (event.status === 'running') {
         const row = el('div', {class: 'tool-row live-tool'}, el('span', {class: 'spinner'}), el('span', {class: 'tool-name', text: label}), event.args?.path || event.args?.query ? el('code', {class: 'tool-target', text: event.args.path || event.args.query}) : null);
         live.tools.set(event.name, row);
-        live.container.append(row);
+        addLive(row);
       } else {
         const row = live.tools.get(event.name) || el('div', {class: 'tool-row live-tool'});
         live.tools.delete(event.name);
         row.replaceChildren(icon(event.status === 'done' ? 'check' : event.status === 'denied' ? 'ban' : 'cross', `icon status ${event.status}`), el('span', {class: 'tool-name', text: event.summary || label}));
-        if (!row.isConnected) live.container.append(row);
+        if (!row.isConnected) addLive(row);
         if (['write_file', 'edit_file', 'delete_file'].includes(event.name) && event.status === 'done') { live.edited = true; hooks.onFilesChanged?.(); }
         if (event.name === 'run_tests' || event.name === 'run_command') hooks.onToolOutput?.(event);
       }
       scrollDown();
     } else if (event.type === 'progress') {
-      refs.status.hidden = false;
-      refs.status.replaceChildren(el('span', {class: 'spinner'}), event.text);
+      live.status.className = 'live-status on';
+      live.status.replaceChildren(el('span', {class: 'spinner'}), el('span', {text: event.text}));
     }
   }
   function thinking(on) {
-    live.container.querySelector('.thinking')?.remove();
-    if (on) live.container.append(el('div', {class: 'thinking'}, el('span', {class: 'dots'}, el('i'), el('i'), el('i')), mode === 'agent' ? 'Working…' : 'Thinking…'));
+    live.status.className = `live-status${on ? ' on' : ''}`;
+    live.status.replaceChildren(...(on ? [el('span', {class: 'dots'}, el('i'), el('i'), el('i')), el('span', {text: mode === 'agent' ? 'Working…' : 'Thinking…'})] : []));
     scrollDown();
   }
 
@@ -297,14 +389,13 @@ export function createAssistant(options) {
     } catch (error) { if (!controller.signal.aborted) failure = error.message; }
     const edited = live?.edited;
     busy = null; live = null;
-    refs.status.hidden = true;
     if (final?.chat) { chat = final.chat; chatId = chat.id; }
     else if (chatId) { try { chat = await api(`/api/assistant/chat?${query({chat: chatId})}`); } catch {} }
     if (chat?.usage) usage = {used: chat.usage.prompt + chat.usage.completion, limit: chat.usage.limit};
-    render();
+    render(false);
     paintComposer();
     if (failure && !chat?.items.some(i => i.type === 'error' && i.text === failure)) refs.messages.append(el('div', {class: 'chat-error'}, icon('cross'), el('span', {text: failure})));
-    scrollDown();
+    scrollDown(!!failure);
     if (edited) hooks.onFilesChanged?.();
     hooks.onSessionsChanged?.();
     hooks.onTurnEnd?.(chat);
@@ -315,17 +406,17 @@ export function createAssistant(options) {
   async function send(text = refs.input.value.trim()) {
     if (busy || !text) return;
     if (chat?.pending) { notify('Approve or cancel the pending action first.', 'error'); return; }
-    if (!refs.model.value) { notify('No local model is available. Start Ollama and download a chat model.', 'error'); return; }
+    if (!modelName) { await loadModels(); if (!modelName) { notify('No local model is available. Start Ollama and download a chat model.', 'error'); return; } }
     await hooks.beforeSend?.();
     const mentions = attachments.map(({type, path, text: body}) => ({type, path, text: body}));
     refs.input.value = '';
     autosize();
     attachments = [];
     paintAttachments();
-    await runStream('/api/assistant/send', {...scope(), ...context(), chat: chatId, mode, model: refs.model.value, message: text, mentions, autoApprove: autoApprove()});
+    await runStream('/api/assistant/send', {...scope(), ...context(), chat: chatId, mode, model: modelName, message: text, mentions, autoApprove: standingApproval ? autoApprove() : {}});
   }
 
-  async function resume(decision) {
+  async function resume(decision, {turn = false} = {}) {
     if (busy || !chat?.pending) return;
     const pending = chat.pending;
     let result;
@@ -333,7 +424,7 @@ export function createAssistant(options) {
       try { result = await hooks.runClientTool?.(pending.client); }
       catch (error) { result = `The test run failed to start: ${error.message}`; }
     }
-    await runStream('/api/assistant/resume', {...scope(), ...context(), chat: chatId, decision, result, model: refs.model.value, autoApprove: autoApprove()});
+    await runStream('/api/assistant/resume', {...scope(), ...context(), chat: chatId, decision, turn, result, model: modelName, autoApprove: standingApproval ? autoApprove() : {}});
   }
 
   function stop() { busy?.controller.abort(); }

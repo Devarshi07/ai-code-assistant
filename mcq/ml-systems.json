@@ -1,0 +1,127 @@
+[
+  {
+    "id": "mls-training-serving-skew",
+    "topic": "ML Systems",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "A model does well offline but noticeably worse in production. You find that one feature is computed with SQL in the nightly training pipeline and with separate Python code in the online service, and the two disagree on some rows. What is this called, and what fixes it?",
+    "options": [
+      "Training-serving skew; compute the feature from one shared definition, for example in a feature store, and log the online values for training",
+      "Concept drift; retrain the model more often",
+      "Overfitting; add regularization",
+      "Label leakage; drop the feature"
+    ],
+    "answer": [0],
+    "explanation": "When the same feature is computed two ways, the model sees different inputs in production than in training: training-serving skew. One shared definition, or training on logged online features, removes the mismatch.\n\nConcept drift is a real change in the world over time, and retraining wouldn't fix a bug in feature code. Overfitting and leakage would show up in offline evaluation too."
+  },
+  {
+    "id": "mls-drift-signals-select",
+    "topic": "ML Systems",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "Labels for a credit model arrive 60 days after each prediction. Which signals can warn you of trouble before the labels arrive? Select all that apply.",
+    "options": [
+      "Shifts in input feature distributions compared with the training data",
+      "Shifts in the distribution of predicted scores",
+      "Rising rates of missing or out-of-range feature values",
+      "The training loss of the deployed model",
+      "The number of parameters in the model"
+    ],
+    "answer": [0, 1, 2],
+    "explanation": "Input drift (measured with tests such as PSI or Kolmogorov-Smirnov), prediction drift and data-quality metrics are all available immediately and often come before a drop in accuracy.\n\nThe deployed model's training loss was fixed when it was trained, and its parameter count never changes, so neither says anything about current traffic."
+  },
+  {
+    "id": "mls-launch-decision",
+    "topic": "ML Systems",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "A new ranking model improves offline NDCG by 4%. What is the right way to decide whether to launch it?",
+    "options": [
+      "Run an online A/B test on the business metric, with guardrail metrics and enough traffic and time to detect a meaningful effect",
+      "Launch it, because a 4% offline gain is significant",
+      "Compare the two models' training losses",
+      "Ask annotators to rate ten results from each model"
+    ],
+    "answer": [0],
+    "explanation": "Offline metrics are a proxy: position bias, feedback loops and real user behaviour mean offline wins don't always carry over. A properly powered A/B test measures the effect on the target metric, such as purchases or retention, while guardrail metrics such as latency and complaints catch regressions.\n\nTraining losses aren't comparable across models, and ten annotated results are far too few to decide."
+  },
+  {
+    "id": "mls-shadow-deployment",
+    "topic": "ML Systems",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "You run a new model on live traffic alongside the current one and log its predictions for comparison, but users only ever see the current model's results. What is this deployment pattern called?",
+    "options": ["Canary release", "Shadow deployment", "Blue-green deployment", "A/B test"],
+    "answer": [1],
+    "explanation": "In a shadow deployment the new model receives a copy of real requests but its output isn't used, so you can check latency, errors and prediction differences without risk.\n\nA canary sends a small share of users to the new version, blue-green switches all traffic between two environments, and an A/B test shows each variant to users to measure its impact."
+  },
+  {
+    "id": "mls-feature-store-purpose",
+    "topic": "ML Systems",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "What is the main problem a feature store solves?",
+    "options": [
+      "Serving the same feature definitions for training, with point-in-time correct history, and for low-latency online inference",
+      "Storing model weights and versions",
+      "Labelling training data",
+      "Choosing hyperparameters automatically"
+    ],
+    "answer": [0],
+    "explanation": "A feature store defines each feature once, produces historical values for building training sets without leakage, and serves fresh values online with low latency. That prevents training-serving skew and lets teams reuse features.\n\nModel weights belong in a model registry, and labelling and hyperparameter search are separate tools."
+  },
+  {
+    "id": "mls-point-in-time-join",
+    "topic": "ML Systems",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "You build a churn training set where each row is a customer on a snapshot date, labelled with whether they churned in the next 30 days. You join the feature \"support tickets in the last 90 days\". What must the join guarantee?",
+    "options": [
+      "The feature counts only tickets created on or before each row's snapshot date",
+      "The feature uses each customer's latest ticket count",
+      "The feature is averaged over all snapshot dates",
+      "The join happens after the train-test split"
+    ],
+    "answer": [0],
+    "explanation": "This is point-in-time correctness: each training row may use only information that existed at its snapshot date, exactly as at prediction time. Using the latest count leaks future tickets, which are often filed by customers who are about to churn, so the model looks great offline and fails live.\n\nAveraging across dates leaks the future too, and doing the join after the split doesn't prevent it."
+  },
+  {
+    "id": "mls-gpu-serving-select",
+    "topic": "ML Systems",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "multiple",
+    "question": "A GPU model server is mostly idle at low traffic but misses its latency target at peak. Which changes are reasonable? Select all that apply.",
+    "options": [
+      "Dynamic batching with a short maximum wait time",
+      "Autoscaling replicas on queue length or GPU utilization",
+      "Quantizing the model to lower precision, if accuracy stays acceptable",
+      "Raising the maximum batch size with no limit on how long a request may wait",
+      "Removing request timeouts"
+    ],
+    "answer": [0, 1, 2],
+    "explanation": "Dynamic batching groups concurrent requests to use the GPU efficiently while capping the added wait. Autoscaling adds capacity at peak and saves cost when quiet, and quantization makes each request cheaper.\n\nAn unbounded batch wait trades latency for throughput in exactly the wrong direction, and removing timeouts lets slow requests pile up instead of failing fast."
+  },
+  {
+    "id": "mls-retraining-policy",
+    "topic": "ML Systems",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "Which retraining policy is most sensible for a fraud model in production?",
+    "options": [
+      "Retrain on a schedule and when monitored drift or performance crosses a threshold, and promote the new model only if it beats the current one on recent data",
+      "Retrain after every single transaction",
+      "Never retrain, so the model's behaviour stays predictable",
+      "Retrain only when customers complain"
+    ],
+    "answer": [0],
+    "explanation": "Fraud patterns shift, so models decay. Scheduled plus trigger-based retraining keeps them fresh, and an evaluation gate against the current model stops a bad retrain from shipping.\n\nRetraining on every event is expensive and unstable, never retraining lets accuracy erode, and complaints are a slow, biased signal."
+  }
+]

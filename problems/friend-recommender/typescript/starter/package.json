@@ -1,0 +1,11 @@
+{
+  "name": "campfire-recommender",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The \"People you may know\" service of the Campfire social network.",
+  "scripts": {
+    "start": "node main.ts",
+    "test": "node --test \"tests/*.test.ts\""
+  }
+}

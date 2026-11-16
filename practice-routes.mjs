@@ -1,18 +1,21 @@
 // HTTP routes for structured AI-coding practice. Wired up by server.mjs.
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {LANGUAGES, loadProblems, getProblem, problemSummary, problemFor, localize, overlay} from './problems.mjs';
+import {randomUUID} from 'node:crypto';
+import {LANGUAGES, isStack, loadProblems, getProblem, problemSummary, problemFor, localize, overlay} from './problems.mjs';
 import {
   createPractice, loadPractice, publicPractice, mutate, record, assertWritable, advance, useHint, hintsShown,
-  testTargets, recordRun, submit, saveDebrief, finishReview, assistantMessages, workspaceFiles, runFiles,
+  testTargets, recordRun, submit, abandon, saveDebrief, finishReview, assistantMessages, workspaceFiles, runFiles, switchLanguage, baselineFiles,
   solutionFiles, listPractice, codebaseVocabulary, promptSignals, readPractice
 } from './practice.mjs';
 import {review, diffText, diffStats} from './practice-review.mjs';
 import {ensurePythonImage, runPython as sandboxPython} from './sandbox.mjs';
+import {ensureStackImage, runStack} from './stack-runner.mjs';
+import {chatRequest} from './ai-runtime.mjs';
 const ASSISTANT_PREFERENCE = ['qwen3:8b', 'qwen3.5:9b', 'qwen2.5-coder:7b', 'qwen2.5-coder:14b', 'llama3.1:8b', 'qwen2.5-coder:3b', 'qwen2.5-coder:1.5b', 'qwen2.5-coder:0.5b'];
 const REVIEW_PREFERENCE = ['qwen3.5:9b', 'qwen3:8b', 'qwen2.5-coder:14b', 'qwen2.5-coder:7b', 'llama3.1:8b', 'qwen2.5-coder:3b'];
 
-export function practiceRoutes({SESSIONS, run, listFiles, job, ollama, OLLAMA}) {
+export function practiceRoutes({SESSIONS, run, listFiles, job, ollama, OLLAMA, pool = null}) {
   const vocabularies = new Map();
   const vocabulary = async (problem, language) => {
     const key = `${problem.id}:${language}`;
@@ -20,8 +23,11 @@ export function practiceRoutes({SESSIONS, run, listFiles, job, ollama, OLLAMA}) 
     return vocabularies.get(key);
   };
 
-  async function models() {
-    const tags = await ollama('/api/tags', null, 4000);
+  // The model list is cached briefly: every AI request needs it, and asking Ollama each time adds latency.
+  let tagsCache = null, tagsAt = 0;
+  async function models({fresh = false} = {}) {
+    if (fresh || !tagsCache || Date.now() - tagsAt > 30000) { tagsCache = await ollama('/api/tags', null, 4000); tagsAt = Date.now(); }
+    const tags = tagsCache;
     const list = tags.models
       .filter(m => !(m.capabilities || []).includes('embedding') && !/embed/i.test(m.name))
       .map(m => {
@@ -54,13 +60,16 @@ export function practiceRoutes({SESSIONS, run, listFiles, job, ollama, OLLAMA}) 
     return {...publicPractice(session.state, session.problem), files: names, hintsShown: hintsShown(session.state, session.problem)};
   }
 
-  const ensureImage = progress => ensurePythonImage(run, progress);
+  // Python sessions use the Python sandbox; framework stacks (Express, Django,
+  // FastAPI, Spring Boot) use their own image. JavaScript runs in the browser.
+  const ensureImage = (language, progress) => isStack(language) ? ensureStackImage(run, language, progress) : ensurePythonImage(run, progress);
 
-  async function runPython(session, target) {
+  async function runServer(session, target) {
     const names = await listFiles(session.repo);
-    const lang = LANGUAGES.python;
+    const language = session.state.language, lang = LANGUAGES[language];
+    const options = {sourceDir: session.repo, overlayDir: path.join(session.dir, 'canonical'), mode: target, pool, key: `practice:${session.state.id}`};
     const targets = target === 'main' ? [lang.main] : testTargets(session.state, names);
-    const result = await sandboxPython(run, {sourceDir: session.repo, overlayDir: path.join(session.dir, 'canonical'), mode: target, targets});
+    const result = isStack(language) ? await runStack(run, {...options, language, targets: target === 'main' ? [] : targets}) : await sandboxPython(run, {...options, targets});
     return {target, ...result};
   }
 
@@ -77,11 +86,12 @@ export function practiceRoutes({SESSIONS, run, listFiles, job, ollama, OLLAMA}) 
     }
     if (req.method === 'GET' && p === '/api/problems/answers') {
       const problem = await getProblem(url.searchParams.get('problem'));
+      if ((await listPractice(SESSIONS)).some(h => h.problemId === problem.id && h.status === 'active')) throw new Error('Submit or finish your session on this problem before opening its answer key.');
       const language = url.searchParams.get('language') || problem.languages[0];
       if (!problem.languages.includes(language)) throw new Error('Unknown language.');
       return {...problemFor(problem, language, {answers: true}), solutions: await solutionFiles(problem, language), starter: await overlay(problem, language, 'starter')};
     }
-    if (req.method === 'GET' && p === '/api/models') return models();
+    if (req.method === 'GET' && p === '/api/models') return models({fresh: true});
     if (req.method === 'GET' && p === '/api/practice/history') return listPractice(SESSIONS);
     if (req.method === 'GET' && p === '/api/practice') return view(await open(url.searchParams.get('id')));
     if (req.method === 'GET' && p === '/api/practice/file') {
@@ -93,20 +103,21 @@ export function practiceRoutes({SESSIONS, run, listFiles, job, ollama, OLLAMA}) 
     }
     if (req.method === 'GET' && p === '/api/practice/bundle') {
       const session = await open(url.searchParams.get('id'));
-      if (session.state.language !== 'javascript') throw new Error('Only JavaScript sessions run in the browser.');
+      if (LANGUAGES[session.state.language].runner !== 'browser') throw new Error('This session runs on the server.');
       const files = await runFiles(session.dir);
       return {files, tests: testTargets(session.state, Object.keys(files)), main: LANGUAGES.javascript.main};
     }
     if (req.method !== 'POST' || !p.startsWith('/api/practice')) return undefined;
 
     if (p === '/api/practice/preflight') {
-      if (data.language === 'python') return job(progress => ensureImage(progress));
-      if (data.language === 'javascript') return {ready: true};
-      throw new Error('Choose Python or JavaScript.');
+      const lang = LANGUAGES[data.language];
+      if (!lang) throw new Error('Choose a language.');
+      if (lang.runner === 'browser') return {ready: true};
+      return job(progress => ensureImage(data.language, progress));
     }
     if (p === '/api/practice/start') {
       const problem = await getProblem(data.problem);
-      if (!LANGUAGES[data.language]) throw new Error('Choose Python or JavaScript.');
+      if (!LANGUAGES[data.language] || !problem.languages.includes(data.language)) throw new Error('Choose one of the languages this problem offers.');
       const state = await createPractice(SESSIONS, problem, data.language);
       return view(await open(state.id));
     }
@@ -129,7 +140,7 @@ export function practiceRoutes({SESSIONS, run, listFiles, job, ollama, OLLAMA}) 
     }
     if (p === '/api/practice/file/create') {
       const name = safeName(data.path);
-      if (!/\.(py|js|json|txt|md|csv)$/.test(name)) throw new Error('Create a .py, .js, .json, .txt, .md or .csv file.');
+      if (!/\.(py|js|java|json|txt|md|csv|properties|ya?ml|html|sql)$/.test(name)) throw new Error('Create a source, config, text or data file (for example .py, .js, .java, .json, .md).');
       return mutate(dir, problem, async state => {
         assertWritable(state, name);
         const target = path.join(session.repo, ...name.split('/'));
@@ -155,20 +166,33 @@ export function practiceRoutes({SESSIONS, run, listFiles, job, ollama, OLLAMA}) 
     if (p === '/api/practice/run') {
       if (session.state.status !== 'active') throw new Error('This session has ended.');
       const target = data.target === 'main' ? 'main' : 'tests';
-      if (session.state.language !== 'python') throw new Error('JavaScript runs in the browser.');
+      const lang = LANGUAGES[session.state.language];
+      if (lang.runner === 'browser') throw new Error('JavaScript runs in the browser.');
+      if (target === 'main' && !lang.main) throw new Error(`${lang.label} projects have no demo entry point. Run the tests instead.`);
       return job(async progress => {
-        progress('Starting the Python sandbox…');
-        await ensureImage(progress);
-        progress(target === 'main' ? `Running ${LANGUAGES.python.main}…` : 'Running tests…');
-        const result = await runPython(session, target);
+        progress(isStack(session.state.language) ? `Starting the ${lang.label} environment…` : 'Starting the Python sandbox…');
+        await ensureImage(session.state.language, progress);
+        progress(target === 'main' ? `Running ${lang.main}…` : session.state.language === 'spring' ? 'Compiling and running the JUnit tests…' : 'Running tests…');
+        const result = await runServer(session, target);
         const recorded = await recordRun(dir, problem, result);
         return {...result, summary: recorded.summary, newlyPassed: recorded.newlyPassed, practice: await view(await open(data.id))};
       });
     }
     if (p === '/api/practice/result') {
-      if (session.state.language !== 'javascript') throw new Error('Python runs on the server.');
+      if (LANGUAGES[session.state.language].runner !== 'browser') throw new Error('This session runs on the server.');
       const recorded = await recordRun(dir, problem, {target: data.target, results: data.results, output: data.output, exitCode: data.exitCode, ms: data.ms, timedOut: data.timedOut});
       return {summary: recorded.summary, newlyPassed: recorded.newlyPassed, practice: await view(await open(data.id))};
+    }
+    // Switch the workspace to another language mid-session: the timer and
+    // phase progress carry over, and each language keeps its own code.
+    if (p === '/api/practice/language') {
+      const language = String(data.language || '');
+      if (!LANGUAGES[language] || !problem.languages.includes(language)) throw new Error('This problem is not available in that language.');
+      if (language === session.state.language) return {restored: false, practice: await view(session)};
+      const result = await switchLanguage(dir, problem, language);
+      for (const key of [`practice:${session.state.id}`, `practice-js:${session.state.id}`]) pool?.forget(key);
+      await cancelPendingAgentCalls(dir, `Cancelled: the workspace switched to ${LANGUAGES[language].label}, so this change no longer applies.`);
+      return {restored: result.restored, practice: await view(await open(data.id))};
     }
     if (p === '/api/practice/advance') {
       const result = await advance(dir, problem, {skip: !!data.skip});
@@ -181,6 +205,22 @@ export function practiceRoutes({SESSIONS, run, listFiles, job, ollama, OLLAMA}) 
     if (p === '/api/practice/submit') {
       await submit(dir, problem, data.reason);
       return view(await open(data.id));
+    }
+    // Restart: close this attempt without a review and start a fresh copy of
+    // the same problem in the same language, with a new timer.
+    if (p === '/api/practice/restart') {
+      // The new attempt can be in another of the problem's languages.
+      const language = data.language === undefined || data.language === null || data.language === '' ? session.state.language : String(data.language);
+      if (!LANGUAGES[language] || !problem.languages.includes(language)) throw new Error('This problem is not available in that language.');
+      // The new attempt is created first, so a failure never leaves the
+      // candidate with a closed attempt and nothing to continue in. If the old
+      // one can't be closed (a second click got there first), the new one goes.
+      const state = await createPractice(SESSIONS, problem, language);
+      try { await abandon(dir, problem); }
+      catch (error) { await fs.rm(path.join(SESSIONS, state.id), {recursive: true, force: true}).catch(() => {}); throw error; }
+      // Free the old attempt's warm containers (tests, terminal).
+      for (const key of [`practice:${session.state.id}`, `practice-js:${session.state.id}`]) pool?.forget(key);
+      return view(await open(state.id));
     }
     if (p === '/api/practice/debrief') {
       const state = await saveDebrief(dir, problem, data.answers);
@@ -203,14 +243,31 @@ export function practiceRoutes({SESSIONS, run, listFiles, job, ollama, OLLAMA}) 
     throw new Error('Unknown endpoint.');
   }
 
+  // An edit or command waiting for approval in an agent chat names the old
+  // language's files; after a language switch it must not run.
+  async function cancelPendingAgentCalls(dir, text) {
+    const folder = path.join(dir, 'assistant');
+    let names = [];
+    try { names = (await fs.readdir(folder)).filter(name => name.endsWith('.json')); } catch { return; }
+    for (const name of names) {
+      const file = path.join(folder, name);
+      try {
+        const chat = JSON.parse(await fs.readFile(file, 'utf8'));
+        if (!chat.pending) continue;
+        chat.pending = null;
+        chat.items = [...(chat.items || []), {id: randomUUID(), at: Date.now(), type: 'notice', text}];
+        await fs.writeFile(file, JSON.stringify(chat));
+      } catch {}
+    }
+  }
+
   async function finalDiff(dir, problem, state) {
-    const baseline = {};
-    Object.assign(baseline, await overlay(problem, state.language, 'starter'));
-    for (let n = 2; n <= state.unlocked; n++) Object.assign(baseline, await overlay(problem, state.language, `phase${n}`));
+    // Measured from where this language's code started (after a switch, that includes reference fixes).
+    const baseline = await baselineFiles(problem, state);
     const current = await workspaceFiles(dir);
     let text = '';
     for (const name of [...new Set([...Object.keys(baseline), ...Object.keys(current)])].sort()) {
-      if (name.startsWith('tests/') && state.readonly.includes(name)) continue;
+      if (LANGUAGES[state.language].canonical(name) && state.readonly.includes(name)) continue;
       const before = baseline[name] ?? '', after = current[name] ?? '';
       if (before !== after) text += diffText(before, after, name + (baseline[name] === undefined ? ' (new file)' : ''));
     }
@@ -236,10 +293,7 @@ export function practiceRoutes({SESSIONS, run, listFiles, job, ollama, OLLAMA}) 
     res.on('close', () => { if (!res.writableFinished) controller.abort(); });
     let response;
     try {
-      response = await fetch(OLLAMA + '/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json'}, signal: controller.signal, body: JSON.stringify({
-        model: model.name, messages, stream: true, keep_alive: '20m', ...(model.thinking ? {think: false} : {}),
-        options: {num_ctx: 16384, temperature: 0.3, num_predict: 2048}
-      })});
+      response = await fetch(OLLAMA + '/api/chat', {method: 'POST', headers: {'Content-Type': 'application/json'}, signal: controller.signal, body: JSON.stringify(chatRequest(model, {messages, temperature: 0.3, numPredict: 2048}))});
     } catch { throw new Error('Ollama is not responding. Start Ollama, then try again.'); }
     if (!response.ok) { const text = await response.text(); let message = text; try { message = JSON.parse(text).error; } catch {} throw new Error(message || 'The model request failed.'); }
     res.writeHead(200, {'Content-Type': 'application/x-ndjson; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff'});

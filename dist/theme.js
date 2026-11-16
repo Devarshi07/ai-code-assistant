@@ -1,5 +1,8 @@
-// Applies the saved colour theme before first paint.
+// Applies the saved colour theme before first paint. Light is the default, as
+// on assessment platforms; the toggle in the top bar switches to dark.
 try {
   const saved = JSON.parse(localStorage.getItem('dg-theme') || 'null');
-  if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
-} catch {}
+  document.documentElement.dataset.theme = saved === 'dark' ? 'dark' : 'light';
+} catch {
+  document.documentElement.dataset.theme = 'light';
+}

@@ -86,6 +86,16 @@ export function confirmDialog({title, body, confirm = 'Continue', cancel = 'Canc
   });
 }
 
+// A segmented choice (a language, say) for a dialog body. options: [[value, label], ...].
+export function choicePicker(options, value, onChange, label = 'Choose one') {
+  let current = value;
+  const box = el('div', {class: 'segmented choice-picker', role: 'radiogroup', 'aria-label': label});
+  const paint = () => box.replaceChildren(...options.map(([key, text]) => el('button', {type: 'button', class: key === current ? 'active' : '', role: 'radio', 'aria-checked': String(key === current),
+    onclick: () => { current = key; onChange?.(key); paint(); }}, text)));
+  paint();
+  return box;
+}
+
 // Drag handle that resizes a pane by setting a CSS variable on root; sizes persist under storeKey.
 export function splitter(root, handle, variable, measure, min, max, storeKey = 'dg-ide-sizes') {
   handle.addEventListener('pointerdown', start => {

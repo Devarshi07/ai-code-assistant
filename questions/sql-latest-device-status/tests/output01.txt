@@ -1,0 +1,2 @@
+device	status	recorded_at	copies
+gate	degraded	2025-06-02 12:00:00	1

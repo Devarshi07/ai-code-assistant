@@ -1,0 +1,50 @@
+1. POST /books -> 400 {"error":"invalid book"}
+2. POST /books -> 201 {"author":"Ursula Le Guin","id":1,"tags":["award","space","short-stories"],"title":"Book 663","year":1678}
+3. POST /books -> 201 {"author":"Octavia Butler","id":2,"tags":[],"title":"Book 601","year":1695}
+4. POST /books -> 201 {"author":"Jane Austen","id":3,"tags":["sci-fi","short-stories","romance"],"title":"Book 114","year":1550}
+5. POST /books -> 201 {"author":"Jane Austen","id":4,"tags":["space","award","sci-fi"],"title":"Book 258","year":1815}
+6. POST /books -> 201 {"author":"Ted Chiang","id":5,"tags":["romance","short-stories"],"title":"Book 92","year":2000}
+7. POST /books -> 400 {"error":"invalid book"}
+8. POST /books -> 201 {"author":"Jane Austen","id":6,"tags":["romance","short-stories"],"title":"Book 592","year":1475}
+9. POST /books -> 201 {"author":"Ted Chiang","id":7,"tags":["sci-fi","short-stories","award"],"title":"Book 409","year":2017}
+10. POST /books -> 201 {"author":"Jane Austen","id":8,"tags":["award","space","sci-fi"],"title":"Book 538","year":1880}
+11. POST /books -> 201 {"author":"Frank Herbert","id":9,"tags":[],"title":"Book 785","year":1500}
+12. POST /books -> 201 {"author":"Octavia Butler","id":10,"tags":["classic","sci-fi","short-stories"],"title":"Book 440","year":1595}
+13. POST /books -> 201 {"author":"Ted Chiang","id":11,"tags":["space","romance","short-stories"],"title":"Book 732","year":1707}
+14. POST /books -> 201 {"author":"Octavia Butler","id":12,"tags":["romance","sci-fi"],"title":"Book 412","year":1657}
+15. POST /books -> 400 {"error":"invalid book"}
+16. POST /books -> 201 {"author":"Octavia Butler","id":13,"tags":["romance","classic","space"],"title":"Book 984","year":1985}
+17. POST /books -> 201 {"author":"Ted Chiang","id":14,"tags":["award","sci-fi","romance"],"title":"Book 478","year":1959}
+18. POST /books -> 201 {"author":"Ursula Le Guin","id":15,"tags":["short-stories","classic"],"title":"Book 939","year":1898}
+19. POST /books -> 201 {"author":"jane austen","id":16,"tags":[],"title":"Book 863","year":1940}
+20. POST /books -> 201 {"author":"Octavia Butler","id":17,"tags":[],"title":"Book 925","year":1829}
+21. POST /books -> 201 {"author":"Octavia Butler","id":18,"tags":["sci-fi","space","award"],"title":"Book 878","year":1599}
+22. POST /books -> 201 {"author":"Ursula Le Guin","id":19,"tags":["classic"],"title":"Book 560","year":2074}
+23. POST /books -> 400 {"error":"invalid book"}
+24. POST /books -> 201 {"author":"Jane Austen","id":20,"tags":["classic","sci-fi"],"title":"Book 980","year":2100}
+25. POST /books -> 201 {"author":"Ted Chiang","id":21,"tags":["award"],"title":"Book 598","year":1953}
+26. POST /books -> 201 {"author":"Frank Herbert","id":22,"tags":["sci-fi","short-stories"],"title":"Book 603","year":2062}
+27. POST /books -> 201 {"author":"Frank Herbert","id":23,"tags":["award","short-stories"],"title":"Book 958","year":2050}
+28. POST /books -> 201 {"author":"Ted Chiang","id":24,"tags":["sci-fi","space","short-stories"],"title":"Book 153","year":1651}
+29. POST /books -> 201 {"author":"Jane Austen","id":25,"tags":[],"title":"Book 53","year":1811}
+30. POST /books -> 400 {"error":"invalid book"}
+31. GET /books?author=Jane%20Austen&page=0 -> 400 {"error":"invalid query"}
+32. GET /books?tag=award&year_from=1521&page=x&sort=year -> 400 {"error":"invalid query"}
+33. GET /books?year_to=1810&page=0&per_page=80 -> 400 {"error":"invalid query"}
+34. GET /books?tag=romance&page=3&per_page=5 -> 200 {"data":[],"page":3,"per_page":5,"total":7,"total_pages":2}
+35. GET /books?page=1&per_page=80 -> 200 {"data":[{"author":"Ursula Le Guin","id":1,"tags":["award","space","short-stories"],"title":"Book 663","year":1678},{"author":"Octavia Butler","id":2,"tags":[],"title":"Book 601","year":1695},{"author":"Jane Austen","id":3,"tags":["sci-fi","short-stories","romance"],"title":"Book 114","year":1550},{"author":"Jane Austen","id":4,"tags":["space","award","sci-fi"],"title":"Book 258","year":1815},{"author":"Ted Chiang","id":5,"tags":["romance","short-stories"],"title":"Book 92","year":2000},{"author":"Jane Austen","id":6,"tags":["romance","short-stories"],"title":"Book 592","year":1475},{"author":"Ted Chiang","id":7,"tags":["sci-fi","short-stories","award"],"title":"Book 409","year":2017},{"author":"Jane Austen","id":8,"tags":["award","space","sci-fi"],"title":"Book 538","year":1880},{"author":"Frank Herbert","id":9,"tags":[],"title":"Book 785","year":1500},{"author":"Octavia Butler","id":10,"tags":["classic","sci-fi","short-stories"],"title":"Book 440","year":1595},{"author":"Ted Chiang","id":11,"tags":["space","romance","short-stories"],"title":"Book 732","year":1707},{"author":"Octavia Butler","id":12,"tags":["romance","sci-fi"],"title":"Book 412","year":1657},{"author":"Octavia Butler","id":13,"tags":["romance","classic","space"],"title":"Book 984","year":1985},{"author":"Ted Chiang","id":14,"tags":["award","sci-fi","romance"],"title":"Book 478","year":1959},{"author":"Ursula Le Guin","id":15,"tags":["short-stories","classic"],"title":"Book 939","year":1898},{"author":"jane austen","id":16,"tags":[],"title":"Book 863","year":1940},{"author":"Octavia Butler","id":17,"tags":[],"title":"Book 925","year":1829},{"author":"Octavia Butler","id":18,"tags":["sci-fi","space","award"],"title":"Book 878","year":1599},{"author":"Ursula Le Guin","id":19,"tags":["classic"],"title":"Book 560","year":2074},{"author":"Jane Austen","id":20,"tags":["classic","sci-fi"],"title":"Book 980","year":2100},{"author":"Ted Chiang","id":21,"tags":["award"],"title":"Book 598","year":1953},{"author":"Frank Herbert","id":22,"tags":["sci-fi","short-stories"],"title":"Book 603","year":2062},{"author":"Frank Herbert","id":23,"tags":["award","short-stories"],"title":"Book 958","year":2050},{"author":"Ted Chiang","id":24,"tags":["sci-fi","space","short-stories"],"title":"Book 153","year":1651},{"author":"Jane Austen","id":25,"tags":[],"title":"Book 53","year":1811}],"page":1,"per_page":50,"total":25,"total_pages":1}
+36. GET /books?tag=sci-fi&page=x&per_page=1 -> 400 {"error":"invalid query"}
+37. GET /books?year_to=1943&page=0 -> 400 {"error":"invalid query"}
+38. GET /books?tag=romance&year_from=1896&year_to=1830 -> 200 {"data":[],"page":1,"per_page":10,"total":0,"total_pages":0}
+39. GET /books?tag=sci-fi&year_from=1772&year_to=1931&page=7 -> 200 {"data":[],"page":7,"per_page":10,"total":2,"total_pages":1}
+40. GET /books?tag=classic&year_from=1575&year_to=2087&page=3&per_page=50 -> 200 {"data":[],"page":3,"per_page":50,"total":4,"total_pages":1}
+41. GET /books/abc -> 404 {"error":"book not found"}
+42. GET /books/abc -> 404 {"error":"book not found"}
+43. GET /books?author=Ursula%20Le%20Guin&year_from=1575&year_to=1864&page=0 -> 400 {"error":"invalid query"}
+44. GET /books?tag=short-stories -> 200 {"data":[{"author":"Ursula Le Guin","id":1,"tags":["award","space","short-stories"],"title":"Book 663","year":1678},{"author":"Jane Austen","id":3,"tags":["sci-fi","short-stories","romance"],"title":"Book 114","year":1550},{"author":"Ted Chiang","id":5,"tags":["romance","short-stories"],"title":"Book 92","year":2000},{"author":"Jane Austen","id":6,"tags":["romance","short-stories"],"title":"Book 592","year":1475},{"author":"Ted Chiang","id":7,"tags":["sci-fi","short-stories","award"],"title":"Book 409","year":2017},{"author":"Octavia Butler","id":10,"tags":["classic","sci-fi","short-stories"],"title":"Book 440","year":1595},{"author":"Ted Chiang","id":11,"tags":["space","romance","short-stories"],"title":"Book 732","year":1707},{"author":"Ursula Le Guin","id":15,"tags":["short-stories","classic"],"title":"Book 939","year":1898},{"author":"Frank Herbert","id":22,"tags":["sci-fi","short-stories"],"title":"Book 603","year":2062},{"author":"Frank Herbert","id":23,"tags":["award","short-stories"],"title":"Book 958","year":2050}],"page":1,"per_page":10,"total":11,"total_pages":2}
+45. GET /books?per_page=1 -> 200 {"data":[{"author":"Ursula Le Guin","id":1,"tags":["award","space","short-stories"],"title":"Book 663","year":1678}],"page":1,"per_page":1,"total":25,"total_pages":25}
+46. GET /books?author=Jane%20Austen&tag=space&page=x -> 400 {"error":"invalid query"}
+47. GET /books/35 -> 404 {"error":"book not found"}
+48. GET /books?tag=romance&year_to=1941&page=2&per_page=50 -> 200 {"data":[],"page":2,"per_page":50,"total":4,"total_pages":1}
+49. GET /books?year_to=2010&page=1 -> 200 {"data":[{"author":"Ursula Le Guin","id":1,"tags":["award","space","short-stories"],"title":"Book 663","year":1678},{"author":"Octavia Butler","id":2,"tags":[],"title":"Book 601","year":1695},{"author":"Jane Austen","id":3,"tags":["sci-fi","short-stories","romance"],"title":"Book 114","year":1550},{"author":"Jane Austen","id":4,"tags":["space","award","sci-fi"],"title":"Book 258","year":1815},{"author":"Ted Chiang","id":5,"tags":["romance","short-stories"],"title":"Book 92","year":2000},{"author":"Jane Austen","id":6,"tags":["romance","short-stories"],"title":"Book 592","year":1475},{"author":"Jane Austen","id":8,"tags":["award","space","sci-fi"],"title":"Book 538","year":1880},{"author":"Frank Herbert","id":9,"tags":[],"title":"Book 785","year":1500},{"author":"Octavia Butler","id":10,"tags":["classic","sci-fi","short-stories"],"title":"Book 440","year":1595},{"author":"Ted Chiang","id":11,"tags":["space","romance","short-stories"],"title":"Book 732","year":1707}],"page":1,"per_page":10,"total":20,"total_pages":2}
+50. GET /books/18 -> 200 {"author":"Octavia Butler","id":18,"tags":["sci-fi","space","award"],"title":"Book 878","year":1599}

@@ -7,22 +7,37 @@ import {loadMonaco, editorOptions, applySettings, setInlineSource, settings, mon
 import {createAssistant, ago} from './assistant-ui.js';
 import {enterFullscreen} from './app.js';
 
-const LANGUAGE_LABEL = {python: 'Python 3', javascript: 'JavaScript (Node.js)', java: 'Java 21', cpp: 'C++20', go: 'Go'};
+const LANGUAGE_LABEL = {python: 'Python 3', javascript: 'JavaScript (Node.js)', java: 'Java 21', cpp: 'C++20', go: 'Go', sql: 'SQL (SQLite)'};
 const VERDICT = {success: 'Success', wrong: 'Wrong Answer', runtime: 'Runtime Error', timeout: 'Terminated due to timeout', compile: 'Compilation error', output: 'Output limit exceeded'};
-const EXT = {python: 'py', javascript: 'js', java: 'java', cpp: 'cpp', go: 'go'};
+const EXT = {python: 'py', javascript: 'js', java: 'java', cpp: 'cpp', go: 'go', sql: 'sql'};
+// Question kinds beyond classic algorithm problems.
+const KIND_LABEL = {ml: 'Machine learning', sql: 'SQL', rest: 'REST API client', api: 'Build an API'};
+const CUSTOM_PLACEHOLDER = {
+  sql: 'SQL that creates and fills the tables, then Run Code runs your query against them.',
+  rest: 'Your program\'s stdin. The first sample\'s API data is served to it.',
+  api: 'One JSON request per line, such as {"method": "GET", "path": "/tasks"}.'
+};
 
 // ---------- library ----------
 export async function renderLibrary(root) {
   root.replaceChildren(el('div', {class: 'progress-line'}, el('span', {class: 'spinner'}), 'Loading questions…'));
   const questions = await api('/api/coding/questions');
-  const filters = store.get('dg-question-filters', {status: [], difficulty: [], skills: [], search: ''});
+  const filters = {status: [], difficulty: [], skills: [], search: '', track: 'all', ...store.get('dg-question-filters', {})};
   const skills = [...new Set(questions.flatMap(q => q.skills))].sort();
+  // Tracks group the bank the way assessments do: algorithms, ML, SQL and API questions.
+  const TRACKS = [['all', 'All'], ['algorithms', 'Algorithms'], ['ml', 'Machine learning'], ['sql', 'SQL'], ['api', 'APIs']];
+  const trackOf = q => q.kind === 'ml' ? 'ml' : q.kind === 'sql' ? 'sql' : q.kind === 'rest' || q.kind === 'api' ? 'api'
+    : q.skills.includes('Machine Learning') ? 'ml' : q.skills.includes('SQL') ? 'sql' : q.skills.some(s => s === 'REST APIs' || s === 'API Design') ? 'api' : 'algorithms';
+  const trackBar = el('div', {class: 'segmented track-bar', role: 'radiogroup', 'aria-label': 'Question track'});
   const list = el('div', {class: 'challenge-list'});
   const count = el('span', {class: 'muted'});
   const paint = () => {
     store.set('dg-question-filters', filters);
+    trackBar.replaceChildren(...TRACKS.filter(([id]) => id === 'all' || questions.some(q => trackOf(q) === id)).map(([id, label]) => el('button', {class: filters.track === id ? 'active' : '', role: 'radio', 'aria-checked': String(filters.track === id), onclick: () => { filters.track = id; paint(); }},
+      label, id !== 'all' ? el('span', {class: 'track-count', text: String(questions.filter(q => trackOf(q) === id).length)}) : null)));
     const needle = filters.search.trim().toLowerCase();
     const shown = questions.filter(q =>
+      (filters.track === 'all' || trackOf(q) === filters.track) &&
       (!filters.status.length || filters.status.includes(q.status === 'solved' ? 'solved' : 'unsolved')) &&
       (!filters.difficulty.length || filters.difficulty.includes(q.difficulty)) &&
       (!filters.skills.length || q.skills.some(s => filters.skills.includes(s))) &&
@@ -33,6 +48,7 @@ export async function renderLibrary(root) {
         el('h3', {}, el('a', {href: `#/question/${q.id}`, text: q.title})),
         el('div', {class: 'challenge-meta'},
           el('span', {class: `difficulty ${DIFFICULTY_CLASS[q.difficulty]}`, text: q.difficulty}),
+          KIND_LABEL[q.kind] ? el('span', {class: `kind-chip ${q.kind}`, text: KIND_LABEL[q.kind]}) : null,
           el('span', {text: `Max score: ${q.maxScore}`}),
           el('span', {text: q.skills.join(', ')})),
         el('p', {class: 'challenge-summary', text: q.summary})),
@@ -50,14 +66,15 @@ export async function renderLibrary(root) {
   const solved = questions.filter(q => q.status === 'solved').length;
   root.replaceChildren(
     el('div', {class: 'page-title'}, el('h1', {text: 'Coding questions'}), el('span', {class: 'title-badge', text: `${solved}/${questions.length} solved`})),
-    el('p', {class: 'page-lead', text: 'Assessment-style problems with sample and hidden test cases. Write your solution in Python, JavaScript, Java, C++ or Go, run it against the samples, then submit to be scored on every test case. An AI assistant sits beside the editor.'}),
+    el('p', {class: 'page-lead', text: 'Assessment-style problems with sample and hidden test cases: algorithms in Python, JavaScript, Java, C++ or Go, plus machine learning, SQL and API questions. Run against the samples, then submit to be scored on every test case. An AI assistant sits beside the editor.'}),
+    trackBar,
     el('div', {class: 'library-layout'},
       el('div', {}, el('div', {class: 'library-tools'}, search, count), list),
       el('aside', {class: 'filters', 'aria-label': 'Filters'},
         group('Status', 'status', ['solved', 'unsolved'], {solved: 'Solved', unsolved: 'Unsolved'}),
         group('Difficulty', 'difficulty', ['Easy', 'Medium', 'Hard']),
         group('Skills', 'skills', skills),
-        el('button', {class: 'button link small', onclick: () => { filters.status = []; filters.difficulty = []; filters.skills = []; filters.search = ''; search.value = ''; renderLibrary(root); }}, 'Clear filters'))));
+        el('button', {class: 'button link small', onclick: () => { filters.status = []; filters.difficulty = []; filters.skills = []; filters.search = ''; filters.track = 'all'; search.value = ''; store.set('dg-question-filters', filters); renderLibrary(root); }}, 'Clear filters'))));
   paint();
 }
 
@@ -99,13 +116,17 @@ function createWorkspace(root, q, monaco, options = {}) {
     save: (language, code) => api('/api/coding/save', {id: q.id, language, code})
   };
   let language = state.language || store.get('dg-code-language', 'python');
-  if (!q.languages.some(l => l.id === language)) language = 'python';
+  // SQL, ML and API questions offer only some languages.
+  if (!q.languages.some(l => l.id === language)) language = q.languages[0].id;
   const models = {};      // one Monaco model per language keeps undo history
   const templates = {};
   // In tests the assistant starts collapsed, so the editor has room; the toggle opens it.
   const aiKey = test ? 'dg-test-ai-open' : 'dg-coding-ai-open';
   let editor = null, saveTimer = null, running = false, lastResult = null, selectedCase = 0, leftTab = 'problem', aiOpen = aiAllowed && store.get(aiKey, !test);
   let lastRunSummary = '';
+  // In tests, edits are recorded for code playback; pastes and AI inserts are tagged.
+  let pendingSource = null;
+  const takeSource = () => { const source = pendingSource; pendingSource = null; return source; };
   const disposables = [];
 
   // ---------- layout ----------
@@ -115,23 +136,26 @@ function createWorkspace(root, q, monaco, options = {}) {
   refs.aiToggle = el('button', {class: `button small ai-toggle${aiOpen ? ' active' : ''}`, onclick: () => toggleAi()}, icon('spark'), 'AI Assistant');
   const top = el('header', {class: 'fs-top'},
     el('a', {class: 'icon-button', href: '#/questions', title: 'Back to questions', 'aria-label': 'Back to questions'}, icon('back')),
-    el('div', {class: 'fs-title'}, el('strong', {text: q.title}), el('span', {class: `difficulty ${DIFFICULTY_CLASS[q.difficulty]}`, text: q.difficulty}), el('span', {class: 'chip', text: `Max score ${q.maxScore}`})),
+    el('div', {class: 'fs-title'}, el('strong', {text: q.title}), el('span', {class: `difficulty ${DIFFICULTY_CLASS[q.difficulty]}`, text: q.difficulty}), KIND_LABEL[q.kind] ? el('span', {class: 'chip', text: KIND_LABEL[q.kind]}) : null, el('span', {class: 'chip', text: `Max score ${q.maxScore}`})),
     el('span', {class: 'grow'}),
     refs.aiToggle);
 
   refs.problemTab = el('button', {class: 'tab', onclick: () => setLeft('problem')}, 'Problem');
   refs.submissionsTab = el('button', {class: 'tab', hidden: !!test, onclick: () => setLeft('submissions')}, 'Submissions');
   refs.leftBody = el('div', {class: 'pane-scroll'});
-  const left = el('section', {class: 'cq-left'}, el('div', {class: 'tabs'}, refs.problemTab, refs.submissionsTab), refs.leftBody);
+  // In a test the question header ("Question 2 of 5") replaces the tab row.
+  const left = el('section', {class: 'cq-left'}, test ? null : el('div', {class: 'tabs'}, refs.problemTab, refs.submissionsTab), refs.leftBody);
 
   refs.editorHost = el('div', {class: 'monaco-host'});
   refs.saved = el('span', {class: 'muted small'});
+  refs.expand = el('button', {class: 'icon-button', title: 'Expand the editor (hide the problem)', 'aria-label': 'Expand the editor', 'aria-pressed': 'false', onclick: () => toggleLeft()}, icon('expand'));
   const editorBar = el('div', {class: 'editor-bar'},
     refs.languageSelect,
     el('button', {class: 'icon-button', title: 'Execution environment: versions and limits', 'aria-label': 'Execution environment', onclick: () => environmentDialog(q, language)}, icon('info')),
     el('span', {class: 'grow'}),
     refs.saved,
     test && aiAllowed ? refs.aiToggle : null,
+    refs.expand,
     el('button', {class: 'icon-button', title: 'Upload code as a file', 'aria-label': 'Upload code as a file', onclick: upload}, icon('upload')),
     el('button', {class: 'icon-button', title: 'Reset to the starter template', 'aria-label': 'Reset to the starter template', onclick: reset}, icon('reset')),
     el('button', {class: 'icon-button', title: 'Editor settings', 'aria-label': 'Editor settings', onclick: event => settingsMenu(event.currentTarget)}, icon('gear')));
@@ -151,10 +175,12 @@ function createWorkspace(root, q, monaco, options = {}) {
   refs.customTab = el('button', {class: 'tab', onclick: () => setResultsTab('custom')}, 'Custom');
   refs.resultsSummary = el('span', {class: 'results-summary'});
   refs.raw = el('input', {type: 'checkbox', onchange: () => renderResults()});
-  refs.customInput = el('textarea', {class: 'custom-input', rows: 5, spellcheck: 'false', 'aria-label': 'Custom input', placeholder: 'Type the input your program reads from stdin, then Run Code.'});
+  refs.customInput = el('textarea', {class: 'custom-input', rows: 5, spellcheck: 'false', 'aria-label': 'Custom input', placeholder: CUSTOM_PLACEHOLDER[q.kind] || 'Type the input your program reads from stdin, then Run Code.'});
   refs.resultsBody = el('div', {class: 'results-body'});
-  refs.results = el('section', {class: 'cq-results', 'aria-live': 'polite'},
-    el('div', {class: 'results-head'}, el('strong', {text: 'Test Results'}), el('div', {class: 'results-tabs'}, refs.casesTab, refs.customTab), el('span', {class: 'grow'}), refs.resultsSummary,
+  // Test Results stays folded until the first run, so the editor gets the room.
+  refs.resultsFold = el('button', {class: 'icon-button results-fold', title: 'Show or hide test results', 'aria-label': 'Show or hide test results', 'aria-expanded': 'false', onclick: () => setResultsOpen(refs.results.classList.contains('collapsed'))}, icon('caret'));
+  refs.results = el('section', {class: 'cq-results collapsed', 'aria-live': 'polite'},
+    el('div', {class: 'results-head'}, refs.resultsFold, el('strong', {class: 'results-title', text: 'Test Results', onclick: () => setResultsOpen(refs.results.classList.contains('collapsed'))}), el('div', {class: 'results-tabs'}, refs.casesTab, refs.customTab), el('span', {class: 'grow'}), refs.resultsSummary,
       el('label', {class: 'custom-check', title: 'Show spaces, tabs and line ends'}, refs.raw, 'Raw format')),
     refs.resultsBody);
   const resultsSplit = el('div', {class: 'splitter horizontal', role: 'separator', 'aria-orientation': 'horizontal'});
@@ -168,11 +194,16 @@ function createWorkspace(root, q, monaco, options = {}) {
     codeActions: [{label: 'Insert', title: 'Insert at the cursor in the editor', action: code => insertCode(code)}],
     suggestions: ['Explain the problem with a small example', 'What approach would fit these constraints?', 'Why does my code fail the sample test?', 'What edge cases should I test?']
   }) : null;
+  const closeAi = el('button', {class: 'icon-button', title: 'Close the assistant', 'aria-label': 'Close the assistant', onclick: () => toggleAi()}, '×');
   if (assistant && !test) {
-    const help = el('select', {class: 'help-select', 'aria-label': 'Help level', title: 'Guided: hints and explanations only. Full: the assistant may write code.', onchange: event => store.set('dg-help-level', event.target.value)},
+    const help = el('select', {class: 'help-select', 'aria-label': 'Help level', title: 'Guided: hints and explanations only, enforced by a guardrail. Full: the assistant may write code.', onchange: event => store.set('dg-help-level', event.target.value)},
       el('option', {value: 'full', text: 'Full help'}), el('option', {value: 'guided', text: 'Guided help'}));
     help.value = store.get('dg-help-level', 'full');
-    assistant.setHeaderExtra(help);
+    assistant.setHeaderExtra(help, closeAi);
+  } else if (assistant) {
+    // The test sets the level; the badge says what the assistant will and won't do.
+    const full = options.aiLevel === 'unguarded';
+    assistant.setHeaderExtra(el('span', {class: `chip ai-level ${full ? 'full' : 'guarded'}`, title: full ? 'Full help, including code.' : 'Hints, explanations and short snippets. Full solutions are blocked.', text: full ? 'Full help' : 'Guarded: hints only'}), closeAi);
   }
   refs.ai = el('aside', {class: 'cq-ai', 'aria-label': 'AI assistant'}, assistant ? assistant.root : el('span'));
 
@@ -201,7 +232,9 @@ function createWorkspace(root, q, monaco, options = {}) {
   // Pastes from outside the test can be tracked or blocked (secure mode).
   if (options.pasteGuard) refs.editorHost.addEventListener('paste', event => {
     const text = event.clipboardData?.getData('text/plain') || '';
-    if (text && options.pasteGuard(text) === 'block') { event.preventDefault(); event.stopPropagation(); }
+    if (text && options.pasteGuard(text) === 'block') { event.preventDefault(); event.stopPropagation(); return; }
+    pendingSource = 'paste';
+    setTimeout(() => { if (pendingSource === 'paste') pendingSource = null; }, 0);
   }, true);
   const paintStatus = () => {
     const s = settings.get();
@@ -229,9 +262,12 @@ function createWorkspace(root, q, monaco, options = {}) {
     const text = state.drafts[lang] ?? await template(lang);
     const model = monaco.editor.createModel(text, monacoLanguage(lang), monaco.Uri.parse(`inmemory://question/${q.id}/solution.${EXT[lang]}`));
     model.updateOptions({tabSize: settings.get().tabSize});
-    model.onDidChangeContent(() => { refs.saved.textContent = 'Unsaved'; clearTimeout(saveTimer); saveTimer = setTimeout(() => save(), 1500); });
+    model.onDidChangeContent(event => {
+      refs.saved.textContent = 'Unsaved'; clearTimeout(saveTimer); saveTimer = setTimeout(() => save(), 1500);
+      options.recorder?.edit(lang, event.changes, model.getValueLength(), takeSource());
+    });
     // Inline AI suggestions only where AI help is allowed (in tests: the unguarded level).
-    if (options.inline !== false) setInlineSource(model, ({prefix, suffix, signal}) => fetch('/api/assistant/complete', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({prefix, suffix, language: lang}), signal}).then(r => r.json()).then(r => r.completion || ''));
+    if (options.inline !== false) setInlineSource(model, ({prefix, suffix, signal}) => fetch('/api/assistant/complete', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({prefix, suffix, language: lang, scope: 'question', question: q.id, ...(test ? {test: test.id} : {})}), signal}).then(r => r.json()).then(r => r.completion || ''));
     models[lang] = model;
     return model;
   }
@@ -240,6 +276,7 @@ function createWorkspace(root, q, monaco, options = {}) {
     language = lang;
     store.set('dg-code-language', lang);
     editor.setModel(await modelFor(lang));
+    options.recorder?.snapshot(lang, editor.getValue());
     applySettings(editor);
     editor.focus();
   }
@@ -269,9 +306,11 @@ function createWorkspace(root, q, monaco, options = {}) {
   }
   function insertCode(code) {
     const selection = editor.getSelection();
+    pendingSource = 'ai';
     editor.executeEdits('assistant', [{range: selection, text: code, forceMoveMarkers: true}]);
     editor.pushUndoStop();
     editor.focus();
+    options.onAiInsert?.(code);
     notify('Inserted at the cursor. Review it, then run your code.');
   }
   async function reset() {
@@ -282,13 +321,14 @@ function createWorkspace(root, q, monaco, options = {}) {
     editor.focus();
   }
   function upload() {
-    const input = el('input', {type: 'file', accept: '.py,.js,.java,.cpp,.cc,.cxx,.h,.hpp,.go,.txt'});
+    const input = el('input', {type: 'file', accept: '.py,.js,.java,.cpp,.cc,.cxx,.h,.hpp,.go,.sql,.txt'});
     input.onchange = async () => {
       const file = input.files[0];
       if (!file) return;
       if (file.size > 200000) { notify('That file is larger than 200 KB.', 'error'); return; }
       const text = await file.text();
       const model = await modelFor(language);
+      pendingSource = 'upload';
       model.pushEditOperations([], [{range: model.getFullModelRange(), text}], () => null);
       notify(`Loaded ${file.name}.`);
     };
@@ -333,6 +373,7 @@ function createWorkspace(root, q, monaco, options = {}) {
       el('h3', {text: `Sample Output ${i}`}), ioBlock(s.output),
       s.explanation ? el('h3', {text: `Explanation ${i}`}) : null, s.explanation ? el('div', {class: 'md'}, renderMarkdown(s.explanation)) : null);
     return el('article', {class: 'statement'},
+      options.header || null,
       el('div', {class: 'md'}, renderMarkdown(q.statement)),
       section('Function Description', q.functionDescription),
       section('Input Format', q.inputFormat),
@@ -388,6 +429,7 @@ function createWorkspace(root, q, monaco, options = {}) {
     await save();
     const code = editor.getValue();
     const label = kind === 'submit' ? 'Submitting…' : kind === 'tests' ? 'Running every test case…' : 'Running…';
+    setResultsOpen(true);
     refs.resultsSummary.textContent = '';
     refs.resultsBody.replaceChildren(el('div', {class: 'progress-line'}, el('span', {class: 'spinner'}), el('span', {text: label})));
     if (custom) refs.resultsBody.prepend(customInputBlock());
@@ -414,7 +456,18 @@ function createWorkspace(root, q, monaco, options = {}) {
       for (const b of buttons) b.disabled = false;
     }
   }
+  function setResultsOpen(open) {
+    refs.results.classList.toggle('collapsed', !open);
+    refs.resultsFold.setAttribute('aria-expanded', String(open));
+  }
+  function toggleLeft() {
+    const hidden = refs.main.classList.toggle('left-hidden');
+    refs.expand.setAttribute('aria-pressed', String(hidden));
+    refs.expand.title = hidden ? 'Show the problem' : 'Expand the editor (hide the problem)';
+    editor?.layout();
+  }
   function setResultsTab(name) {
+    setResultsOpen(true);
     resultsTab = name;
     if (name === 'custom' && !refs.customInput.value) refs.customInput.value = q.samples[0]?.input || '';
     renderResults();
@@ -425,7 +478,7 @@ function createWorkspace(root, q, monaco, options = {}) {
     if (!result.compiled) return `Compilation error:\n${result.compileMessage.slice(0, 1500)}`;
     const failing = result.tests.filter(t => t.status !== 'success');
     const first = failing[0];
-    return `${result.mode === 'submit' ? 'Submission' : result.mode === 'custom' ? 'Custom input run' : 'Sample run'}: ${result.passed}/${result.total} passed.${first ? ` First failure: ${first.name} (${first.verdict})${first.input !== undefined ? `\nInput:\n${first.input.slice(0, 600)}\nExpected:\n${(first.expected || '').slice(0, 300)}\nGot:\n${(first.stdout || '').slice(0, 300)}` : ''}${first.stderr ? `\nStderr:\n${first.stderr.slice(-600)}` : ''}` : ''}`;
+    return `${result.mode === 'submit' ? 'Submission' : result.mode === 'custom' ? 'Custom input run' : 'Sample run'}: ${result.passed}/${result.total} passed.${first ? ` First failure: ${first.name} (${first.verdict}${first.errorType ? `, ${first.errorType}` : ''})${first.hidden ? ' on a hidden test case' : ''}${first.input !== undefined ? `\nInput:\n${first.input.slice(0, 600)}\nExpected:\n${(first.expected || '').slice(0, 300)}\nGot:\n${(first.stdout || '').slice(0, 300)}` : ''}${first.stderr ? `\nStderr:\n${first.stderr.slice(-600)}` : ''}` : ''}`;
   }
   function renderResults() {
     refs.casesTab.classList.toggle('active', resultsTab === 'cases');
@@ -446,32 +499,36 @@ function createWorkspace(root, q, monaco, options = {}) {
       refs.resultsBody.replaceChildren(el('div', {class: 'results-empty muted', text: test ? 'Run Code runs the sample test cases. Run Tests runs every test case. Save & Proceed saves this answer and moves to the next question.' : 'Run Code runs the sample test cases. Submit Code runs every test case and scores your solution. Use the Custom tab to try your own input.'}));
       return;
     }
-    refs.resultsSummary.className = `results-summary ${r.compiled && r.passed === r.total ? 'ok' : 'bad'}`;
+    const allPassed = r.compiled && r.passed === r.total;
+    refs.resultsSummary.className = `results-summary ${allPassed ? 'ok' : 'bad'}`;
     refs.resultsSummary.textContent = !r.compiled ? 'Compilation error' : `${r.passed}/${r.total} test cases passed`;
+    // One headline, as assessment editors show it: compiled or not, then how many cases passed.
+    const what = r.mode === 'run' ? 'sample test cases' : 'test cases';
     const banner = !r.compiled
       ? el('div', {class: 'result-banner bad'}, el('strong', {text: 'Compilation error'}), el('p', {text: 'Check the compiler message below.'}))
-      : r.mode === 'submit'
-        ? el('div', {class: `result-banner ${r.passed === r.total ? 'ok' : 'bad'}`}, el('strong', {text: r.passed === r.total ? 'Congratulations! You passed every test case.' : `${r.passed} of ${r.total} test cases passed`}), el('p', {text: `Score: ${r.score} / ${r.maxScore}`}))
-        : r.mode === 'tests'
-          ? el('div', {class: `result-banner ${r.passed === r.total ? 'ok' : 'bad'}`}, el('strong', {text: r.passed === r.total ? 'All test cases passed.' : `${r.passed} of ${r.total} test cases passed`}), el('p', {text: 'Save & Proceed to record this as your answer.'}))
-          : el('div', {class: `result-banner ${r.passed === r.total ? 'ok' : 'bad'}`}, el('strong', {text: r.passed === r.total ? 'Congratulations! You passed the sample test cases.' : `${r.passed} of ${r.total} sample test cases passed`}),
-            el('p', {text: r.passed === r.total ? (test ? 'Run Tests to check every test case, then Save & Proceed.' : 'Click Submit Code to run your code against all the test cases.') : 'Look at the failing case, fix your code and run it again.'}));
+      : el('div', {class: `result-banner ${allPassed ? 'ok' : 'bad'}`},
+        el('strong', {text: allPassed ? `Compiled successfully. All ${what} passed!` : `Compiled successfully. ${r.passed}/${r.total} ${what} passed.`}),
+        el('p', {text: r.mode === 'submit' ? `Score: ${r.score} / ${r.maxScore}`
+          : r.mode === 'tests' ? (allPassed ? 'Save & Proceed to record this as your answer.' : 'Fix the failing cases, then Run Tests again.')
+          : allPassed ? (test ? 'Run Tests to check every test case, then Save & Proceed.' : 'Submit Code to run your code against every test case.') : 'Open the failing case, fix your code and run it again.'}));
     if (!r.compiled) {
       refs.resultsBody.replaceChildren(banner, ...pane('Compiler Message', r.compileMessage || 'Compilation failed.', 'error', false));
       return;
     }
-    const cases = el('div', {class: 'case-list-wrap'}, el('div', {class: 'io-label', text: 'All Cases'}),
-      el('ul', {class: 'case-list', role: 'tablist'}, r.tests.map((t, i) => el('li', {}, el('button', {class: `case-item ${t.status === 'success' ? 'ok' : 'bad'}${i === selectedCase ? ' active' : ''}`, role: 'tab', 'aria-selected': String(i === selectedCase), onclick: () => { selectedCase = i; renderResults(); }},
-        icon(t.status === 'success' ? 'check' : 'cross'), el('span', {text: t.name}), t.hidden ? icon('lock', 'icon lock') : null)))));
+    const tabs = el('div', {class: 'case-tabs', role: 'tablist', 'aria-label': 'Test cases'}, r.tests.map((t, i) => el('button', {class: `case-tab ${t.status === 'success' ? 'ok' : 'bad'}${i === selectedCase ? ' active' : ''}`, role: 'tab', 'aria-selected': String(i === selectedCase), title: `${t.name}: ${t.verdict}`, onclick: () => { selectedCase = i; renderResults(); }},
+      icon(t.status === 'success' ? 'check' : 'cross'), el('span', {text: t.name}), t.hidden ? icon('lock', 'icon lock') : null)));
     const t = r.tests[selectedCase];
+    // SQL results read better as a table; the input (the setup script) stays text.
+    const column = (label, text, kind = '') => el('div', {class: 'io-col'}, el('div', {class: 'io-label', text: label}),
+      language === 'sql' && !label.startsWith('Input') && !refs.raw.checked ? sqlTable(text) || ioBlock(text, {kind}) : ioBlock(text, {raw: refs.raw.checked, kind}));
     const detail = el('div', {class: 'case-detail'},
-      ...pane('Compiler Message', t.verdict, t.status === 'success' ? 'ok' : 'error', false),
-      ...(t.hidden
-        ? [el('div', {class: 'hidden-case'}, icon('lock'), el('p', {text: 'Hidden test case: its input and expected output stay private. Your output and debug output are shown below.'})), ...pane('Your Output (stdout)', t.stdout || '~ no response on stdout ~')]
-        : [...pane('Input (stdin)', t.input || ''), ...pane('Your Output (stdout)', t.stdout || '~ no response on stdout ~'), ...(t.expected !== undefined ? pane('Expected Output', t.expected) : [])]),
-      ...(t.stderr ? pane('Debug Output', t.stderr, 'error') : []),
-      t.ms !== null && t.ms !== undefined ? el('div', {class: 'muted small', text: `Time: ${(t.ms / 1000).toFixed(2)} s`}) : el('span'));
-    refs.resultsBody.replaceChildren(banner, el('div', {class: 'case-layout'}, cases, detail));
+      el('div', {class: `case-verdict ${t.status === 'success' ? 'ok' : 'bad'}`}, el('span', {class: 'io-label', text: 'Compiler Message'}), el('strong', {text: t.verdict}),
+        t.ms !== null && t.ms !== undefined ? el('span', {class: 'muted small', text: `${(t.ms / 1000).toFixed(2)} s`}) : null),
+      t.hidden
+        ? el('div', {class: 'hidden-case'}, icon('lock'), el('p', {text: `Hidden test case: its input, its expected output and your program's output stay private.${t.errorType ? ` Error: ${t.errorType}.` : ''}`}))
+        : el('div', {class: 'io-grid'}, column('Input (stdin)', t.input || ''), column('Your Output (stdout)', t.stdout || '~ no response on stdout ~', t.status === 'success' ? '' : 'error'), t.expected !== undefined ? column('Expected Output', t.expected) : null),
+      t.stderr ? column('Debug Output', t.stderr, 'error') : null);
+    refs.resultsBody.replaceChildren(banner, tabs, detail);
   }
 
   // ---------- AI panel ----------
@@ -486,8 +543,11 @@ function createWorkspace(root, q, monaco, options = {}) {
 
   // ---------- start ----------
   (async () => {
+    // Loads the local models while the candidate reads the problem.
+    if (aiAllowed) fetch('/api/assistant/warm', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({completion: options.inline !== false})}).catch(() => {});
     await template(language).catch(() => '');
     editor.setModel(await modelFor(language));
+    options.recorder?.snapshot(language, editor.getValue());
     applySettings(editor);
     paintStatus();
     updateKeymap();
@@ -511,6 +571,16 @@ function createWorkspace(root, q, monaco, options = {}) {
     save: () => save(),
     focus: () => editor?.focus()
   };
+}
+
+// Query output is a header line and tab-separated rows.
+function sqlTable(text) {
+  const lines = String(text).replace(/\n+$/, '').split('\n');
+  if (lines.length < 2 && !lines[0]?.includes('\t')) return null;
+  const [head, ...rows] = lines.map(line => line.split('\t'));
+  return el('div', {class: 'md-table sql-result'}, el('table', {},
+    el('thead', {}, el('tr', {}, head.map(h => el('th', {text: h})))),
+    el('tbody', {}, rows.map(row => el('tr', {}, row.map(cell => el('td', {text: cell})))))));
 }
 
 // Raw format shows spaces, tabs and line ends, which helps with Wrong Answer on whitespace.

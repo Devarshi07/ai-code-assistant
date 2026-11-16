@@ -1,0 +1,40 @@
+{"method": "POST", "path": "/tasks", "body": {"title": "  Write tests 4 "}}
+{"method": "PATCH", "path": "/tasks/999", "body": {"title": "Renamed", "priority": 9}}
+{"method": "PATCH", "path": "/tasks/abc", "body": {}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Call vendor 8 "}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Plan sprint 7 "}}
+{"method": "GET", "path": "/tasks"}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": true}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Plan sprint 1 "}}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Write tests 7 ", "priority": 5}}
+{"method": "DELETE", "path": "/tasks/999"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 9 ", "priority": 1}}
+{"method": "GET", "path": "/tasks"}
+{"method": "DELETE", "path": "/tasks/999"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 4 "}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Deploy 9 ", "priority": 4}}
+{"method": "PATCH", "path": "/tasks/999", "body": {"title": "Renamed", "priority": 9}}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"done": "yes"}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 9 "}}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "PATCH", "path": "/tasks/999", "body": {"title": ""}}
+{"method": "GET", "path": "/tasks"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Call vendor 9 ", "priority": 2}}
+{"method": "DELETE", "path": "/tasks/abc"}
+{"method": "DELETE", "path": "/tasks/abc"}
+{"method": "DELETE", "path": "/tasks/6"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Write tests 2 ", "priority": 5}}
+{"method": "GET", "path": "/tasks"}
+{"method": "PATCH", "path": "/tasks/4", "body": {"owner": "sam"}}
+{"method": "DELETE", "path": "/tasks/999"}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"title": "Update docs"}}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "DELETE", "path": "/tasks/abc"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Call vendor 5 ", "priority": 4}}
+{"method": "PATCH", "path": "/tasks/9", "body": {"done": false}}
+{"method": "GET", "path": "/tasks/2"}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"owner": "sam"}}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks/abc"}

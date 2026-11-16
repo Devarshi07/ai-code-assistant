@@ -1,0 +1,11 @@
+saws
+--- api data ---
+{
+  "per_page": 4,
+  "throttle": "first",
+  "resources": {
+    "stock": [
+      {"sku": "SKU-0001", "category": "drills", "warehouse": "LIS-1", "quantity": 9}
+    ]
+  }
+}

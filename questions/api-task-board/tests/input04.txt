@@ -1,0 +1,7 @@
+{"method": "POST", "path": "/tasks", "body": {"title": "A"}}
+{"method": "POST", "path": "/tasks", "body": {"title": "B"}}
+{"method": "DELETE", "path": "/tasks/1"}
+{"method": "DELETE", "path": "/tasks/1"}
+{"method": "POST", "path": "/tasks", "body": {"title": "C"}}
+{"method": "GET", "path": "/tasks"}
+{"method": "GET", "path": "/tasks/3"}

@@ -1,0 +1,5 @@
+1. GET /tasks -> 200 {"tasks":[]}
+2. GET /tasks/1 -> 404 {"error":"task not found"}
+3. GET /tasks/abc -> 404 {"error":"task not found"}
+4. DELETE /tasks/1 -> 404 {"error":"task not found"}
+5. PATCH /tasks/1 -> 404 {"error":"task not found"}

@@ -1,0 +1,65 @@
+{
+  "id": "ml-classification-metrics",
+  "title": "Model Scorecard",
+  "difficulty": "Easy",
+  "maxScore": 30,
+  "kind": "ml",
+  "languages": [
+    "python"
+  ],
+  "skills": [
+    "Machine Learning",
+    "Math"
+  ],
+  "summary": "Compute accuracy, precision, recall and F1 for a binary classifier's predictions.",
+  "statement": "A fraud-detection model labels each transaction `1` (fraud) or `0` (legitimate). Given the true labels and the model's predictions, compute its scorecard.\n\nCount the true positives `TP` (label 1, predicted 1), false positives `FP` (label 0, predicted 1), false negatives `FN` (label 1, predicted 0) and true negatives `TN`. Then:\n\n- **accuracy** = `(TP + TN) / n`\n- **precision** = `TP / (TP + FP)`, or `0` when `TP + FP = 0`\n- **recall** = `TP / (TP + FN)`, or `0` when `TP + FN = 0`\n- **F1** = `2 · precision · recall / (precision + recall)`, or `0` when `precision + recall = 0`",
+  "functionDescription": "Complete the **scorecard** function in the editor below.\n\n**scorecard** has the following parameters:\n\n- `int y_true[n]`: the true labels\n- `int y_pred[n]`: the model's predictions\n\n**Returns**\n\n- `float[4]`: accuracy, precision, recall and F1, in that order\n\nNumPy is available as `np`.",
+  "inputFormat": "The first line contains an integer `n`.\n\nThe second line contains `n` space-separated labels `y_true[i]`.\n\nThe third line contains `n` space-separated predictions `y_pred[i]`.",
+  "constraints": "- `1 ≤ n ≤ 2 × 10^5`\n- Every label and prediction is `0` or `1`.",
+  "outputFormat": "The template prints the four values on one line, each rounded to 4 decimal places.",
+  "samples": [
+    {
+      "input": "6\n1 0 1 1 0 0\n1 0 0 1 1 0\n",
+      "output": "0.6667 0.6667 0.6667 0.6667\n",
+      "explanation": "`TP = 2`, `FP = 1`, `FN = 1`, `TN = 2`. Accuracy is `4/6`, precision `2/3`, recall `2/3` and F1 `2/3`."
+    },
+    {
+      "input": "4\n1 0 0 0\n0 0 0 0\n",
+      "output": "0.7500 0.0000 0.0000 0.0000\n",
+      "explanation": "The model never predicts fraud, so `TP + FP = 0` and precision is `0` by definition; so are recall and F1. Accuracy is still `3/4`."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06"
+    },
+    {
+      "file": "07",
+      "weight": 2
+    },
+    {
+      "file": "08",
+      "weight": 2
+    }
+  ]
+}

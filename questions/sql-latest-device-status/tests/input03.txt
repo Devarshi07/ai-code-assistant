@@ -1,0 +1,9 @@
+CREATE TABLE readings (
+  id INTEGER PRIMARY KEY,
+  device TEXT NOT NULL,
+  status TEXT,
+  recorded_at TEXT NOT NULL
+);
+INSERT INTO readings VALUES
+  (1, 'solo', 'retired', '2025-06-03 00:00:00'),
+  (2, 'solo', 'online', '2025-06-02 23:59:59');

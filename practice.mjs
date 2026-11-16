@@ -28,7 +28,9 @@ async function writeFiles(root, files, {overwrite = true} = {}) {
 }
 
 const phaseRecord = (number, at) => ({number, unlockedAt: at, passedAt: null, skippedAt: null, hints: 0, runs: 0});
-const isCanonical = name => name.startsWith('tests/');
+// The runtime preset a guided session's terminal and agent describe.
+const runtimeOf = language => ({python: 'python', java: 'java', go: 'go'})[LANGUAGES[language].family] || 'node';
+const isCanonical = (name, language) => LANGUAGES[language].canonical(name);
 
 export async function createPractice(sessionsDir, problem, language) {
   if (!problem.languages.includes(language)) throw new Error('This problem is not available in that language.');
@@ -39,7 +41,7 @@ export async function createPractice(sessionsDir, problem, language) {
   const starter = await overlay(problem, language, 'starter');
   if (!Object.keys(starter).length) throw new Error('This problem has no starter files.');
   await writeFiles(repo, starter);
-  const tests = Object.fromEntries(Object.entries(starter).filter(([name]) => isCanonical(name)));
+  const tests = Object.fromEntries(Object.entries(starter).filter(([name]) => isCanonical(name, language)));
   await writeFiles(canonical, tests);
   const now = Date.now();
   const state = {
@@ -49,7 +51,7 @@ export async function createPractice(sessionsDir, problem, language) {
     events: [{type: 'start', at: now}], chat: [], lastRun: null, debrief: null, report: null
   };
   await writePractice(dir, state);
-  await fs.writeFile(path.join(dir, 'session.json'), JSON.stringify({id, title: problem.title, practice: true, runtime: language === 'python' ? 'python' : 'node', started: now, source: 'AI coding practice', brief: ''}));
+  await fs.writeFile(path.join(dir, 'session.json'), JSON.stringify({id, title: problem.title, practice: true, runtime: runtimeOf(language), started: now, source: 'AI coding practice', brief: ''}));
   return state;
 }
 
@@ -81,8 +83,11 @@ export function publicPractice(state, problem) {
   const {events, ...safe} = state;
   return {
     ...safe,
-    problem: problemFor(problem, state.language, {unlocked: state.unlocked, answers: state.status === 'ended'}),
+    // A restarted attempt never shows answers: the new attempt may still be running.
+    problem: problemFor(problem, state.language, {unlocked: state.unlocked, answers: state.status === 'ended' && state.endReason !== 'restarted'}),
     main: LANGUAGES[state.language].main,
+    runner: LANGUAGES[state.language].runner, languageLabel: LANGUAGES[state.language].label,
+    testFiles: [1, 2, 3].map(LANGUAGES[state.language].test), customExample: LANGUAGES[state.language].customExample,
     remainingMs: remaining(state),
     serverNow: Date.now(),
     stats: summarize(state)
@@ -90,7 +95,7 @@ export function publicPractice(state, problem) {
 }
 
 function assertActive(state) {
-  if (state.status !== 'active') throw new Error(state.endReason === 'time_up' ? 'Time is up. Answer the debrief questions to get your feedback.' : 'This session has been submitted.');
+  if (state.status !== 'active') throw new Error(state.endReason === 'time_up' ? 'Time is up. Answer the debrief questions to get your feedback.' : state.endReason === 'restarted' ? 'This attempt was restarted. Open the new attempt from Code repos.' : 'This session has been submitted.');
   if (remaining(state) === 0) throw new Error('Time is up.');
 }
 
@@ -113,7 +118,7 @@ export function record(dir, problem, event) {
 }
 
 export function assertWritable(state, name) {
-  if (state.readonly.includes(name)) throw new Error(`${name} is a provided test file and is read-only. Add your own tests in a new file instead, for example ${state.language === 'python' ? 'tests/test_custom.py' : 'tests/custom.test.js'}.`);
+  if (state.readonly.includes(name)) throw new Error(`${name} is a provided test file and is read-only. Add your own tests in a new file instead, for example ${LANGUAGES[state.language].customExample}.`);
 }
 
 export async function advance(dir, problem, {skip = false} = {}) {
@@ -127,8 +132,8 @@ export async function advance(dir, problem, {skip = false} = {}) {
     const next = current + 1;
     const files = await overlay(problem, state.language, `phase${next}`);
     const dirRepo = path.join(dir, 'repo'), dirCanonical = path.join(dir, 'canonical');
-    const tests = Object.fromEntries(Object.entries(files).filter(([name]) => isCanonical(name)));
-    const others = Object.fromEntries(Object.entries(files).filter(([name]) => !isCanonical(name)));
+    const tests = Object.fromEntries(Object.entries(files).filter(([name]) => isCanonical(name, state.language)));
+    const others = Object.fromEntries(Object.entries(files).filter(([name]) => !isCanonical(name, state.language)));
     await writeFiles(dirRepo, tests);
     await writeFiles(dirRepo, others, {overwrite: false});
     await writeFiles(dirCanonical, tests);
@@ -137,6 +142,79 @@ export async function advance(dir, problem, {skip = false} = {}) {
     state.phases.push(phaseRecord(next, now));
     state.events.push({type: 'phase_unlocked', phase: next, skipped: !phase.passedAt, at: now});
     return {state, added: Object.keys(files)};
+  });
+}
+
+// ---- Switching language mid-session --------------------------------------
+// Progress carries over: phases passed in a row from phase 1 count as solved,
+// so the new language starts from their reference fixes. A skipped phase
+// stays unsolved, so switching never hands out an answer.
+export function solvedPhases(state) {
+  let solved = 0;
+  while (solved < state.unlocked - 1 && state.phases[solved]?.passedAt) solved++;
+  return solved;
+}
+
+// The files a language's workspace starts from at a phase: the starter, each
+// unlocked phase's files, and the reference fixes of the first `solved` phases.
+export async function startingFiles(problem, language, unlocked, solved = 0) {
+  const files = {...await overlay(problem, language, 'starter')};
+  for (let n = 2; n <= unlocked; n++) Object.assign(files, await overlay(problem, language, `phase${n}`));
+  for (let n = 1; n <= solved; n++) Object.assign(files, await overlay(problem, language, `solution/phase${n}`));
+  return files;
+}
+
+// What the candidate's changes are measured against (Changes view, review):
+// the starting files of the current language, including any reference fixes
+// a language switch put in.
+export const baselineFiles = (problem, state) => startingFiles(problem, state.language, state.unlocked, state.base?.solved || 0);
+
+const exists = target => fs.access(target).then(() => true, () => false);
+
+// Moves the workspace to another language. The current code is kept as that
+// language's draft and comes back if the candidate switches back at the same
+// phase; otherwise the language starts fresh at the current phase.
+export async function switchLanguage(dir, problem, language) {
+  return mutate(dir, problem, async state => {
+    if (state.mock) throw new Error('The language is fixed during a mock interview.');
+    if (!problem.languages.includes(language) || !LANGUAGES[language]) throw new Error('This problem is not available in that language.');
+    const from = state.language;
+    if (from === language) return {state, restored: false};
+    const repo = path.join(dir, 'repo'), canonical = path.join(dir, 'canonical'), drafts = path.join(dir, 'drafts');
+    const keep = path.join(drafts, from);
+    await fs.rm(keep, {recursive: true, force: true});
+    await fs.mkdir(drafts, {recursive: true});
+    await fs.cp(repo, keep, {recursive: true});
+    state.drafts = {...(state.drafts || {}), [from]: {unlocked: state.unlocked, base: state.base || null, at: Date.now()}};
+    const phaseFiles = await startingFiles(problem, language, state.unlocked, 0);
+    const tests = Object.fromEntries(Object.entries(phaseFiles).filter(([name]) => isCanonical(name, language)));
+    const saved = state.drafts[language];
+    const restored = !!saved && saved.unlocked === state.unlocked && await exists(path.join(drafts, language));
+    await fs.rm(repo, {recursive: true, force: true});
+    await fs.mkdir(repo, {recursive: true});
+    if (restored) {
+      await fs.cp(path.join(drafts, language), repo, {recursive: true});
+      state.base = saved.base || null;
+    } else {
+      const solved = solvedPhases(state);
+      await writeFiles(repo, await startingFiles(problem, language, state.unlocked, solved));
+      state.base = solved ? {solved} : null;
+    }
+    // The provided tests are always the current, untouched versions.
+    await writeFiles(repo, tests);
+    await fs.rm(canonical, {recursive: true, force: true});
+    await fs.mkdir(canonical, {recursive: true});
+    await writeFiles(canonical, tests);
+    state.readonly = Object.keys(tests).sort();
+    state.language = language;
+    state.lastRun = null;
+    state.events.push({type: 'language', from, to: language, phase: state.unlocked, restored, at: Date.now()});
+    try {
+      const meta = JSON.parse(await fs.readFile(path.join(dir, 'session.json'), 'utf8'));
+      meta.runtime = runtimeOf(language);
+      await fs.writeFile(path.join(dir, 'session.json'), JSON.stringify(meta));
+    } catch {}
+    return {state, restored};
   });
 }
 
@@ -211,7 +289,8 @@ export async function recordRun(dir, problem, run) {
     const failures = results.filter(r => r.status === 'fail' || r.status === 'error').slice(0, 6).map(r => `${r.name}: ${String(r.message || r.status).split('\n')[0].slice(0, 200)}`);
     const event = {type: 'run', target, at: now, ms: run.ms | 0, exitCode: run.exitCode ?? null, timedOut: !!run.timedOut, ...summary, failures};
     state.events.push(event);
-    state.lastRun = {...event, output: String(run.output || '').slice(-3000)};
+    // Per-test results (names and status only) let the question panel show each check after a reload.
+    state.lastRun = {...event, output: String(run.output || '').slice(-3000), results: target === 'tests' ? results.slice(0, 300).map(r => ({file: r.file, name: r.name, status: r.status})) : (state.lastRun?.results || [])};
     return {state, summary, newlyPassed, results};
   });
 }
@@ -224,6 +303,27 @@ export async function submit(dir, problem, reason = 'submitted') {
     state.endReason = reason === 'give_up' ? 'give_up' : 'submitted';
     state.events.push({type: 'submit', reason: state.endReason, at: now});
     state.debrief = {questions: problem.debrief, answers: null, at: now};
+  });
+}
+
+// Closes an attempt without a review so the candidate can start over. The
+// attempt stays in the history, marked as restarted.
+export async function abandon(dir, problem) {
+  return exclusive(dir, async () => {
+    const state = await readPractice(dir);
+    if (!state) throw new Error('Practice session not found.');
+    if (state.mock) throw new Error('This attempt is part of a mock interview. End the interview instead.');
+    refresh(state, problem);
+    if (state.status === 'reviewing') throw new Error('Your review is being written. Open the feedback when it is ready, then try again.');
+    // Under the lock, so a double-click can't start two new attempts.
+    if (state.status === 'ended') throw new Error(state.endReason === 'restarted' ? 'This attempt was already restarted.' : 'This attempt has ended. Use Try again on its feedback page to start a new one.');
+    const now = Date.now();
+    state.status = 'ended';
+    state.ended = state.ended || Math.min(now, state.deadline);
+    state.endReason = 'restarted';
+    state.events.push({type: 'restart', at: now});
+    await writePractice(dir, state);
+    return state;
   });
 }
 
@@ -340,7 +440,7 @@ export function assistantMessages(state, problem, files, {openFile, question}) {
   const phase = problem.phases[state.unlocked - 1];
   const budget = 36000;
   const names = Object.keys(files).filter(name => !/\.(png|jpg|gif|ico)$/i.test(name));
-  const rank = name => name === openFile ? 0 : name.endsWith(lang.ext) && !name.startsWith('tests/') ? 1 : name === 'README.md' ? 2 : name.startsWith('tests/') ? 3 : 4;
+  const rank = name => name === openFile ? 0 : name.endsWith(lang.ext) && !lang.canonical(name) ? 1 : name === 'README.md' ? 2 : lang.canonical(name) ? 3 : 4;
   names.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
   let used = 0;
   const blocks = [], omitted = [];
@@ -402,7 +502,7 @@ export async function listPractice(sessionsDir) {
     if (!state || state.kind !== 'structured') continue;
     // A session whose timer ran out is awaiting its debrief, even before it is reopened.
     const status = state.status === 'active' && Date.now() >= state.deadline ? 'debrief' : state.status;
-    items.push({id: state.id, problemId: state.problemId, language: state.language, title: state.title, started: state.started, status, phasesPassed: state.phases.filter(p => p.passedAt).length, verdict: state.report?.verdict || null, score: state.report?.average ?? null, mock: state.mock || null});
+    items.push({id: state.id, problemId: state.problemId, language: state.language, title: state.title, started: state.started, status, endReason: state.endReason || null, phasesPassed: state.phases.filter(p => p.passedAt).length, verdict: state.report?.verdict || null, score: state.report?.average ?? null, mock: state.mock || null});
   }
   return items.sort((a, b) => b.started - a.started);
 }

@@ -1,0 +1,178 @@
+[
+  {
+    "id": "ml-precision-recall-compute",
+    "topic": "Machine Learning",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "A spam filter is evaluated on 1,000 emails, 100 of which are spam. It flags 80 emails as spam, and 60 of those really are spam. What are its precision and recall for the spam class?",
+    "options": ["Precision 0.75, recall 0.60", "Precision 0.60, recall 0.75", "Precision 0.75, recall 0.80", "Precision 0.94, recall 0.60"],
+    "answer": [0],
+    "explanation": "Precision asks how many flagged emails were spam: 60 of 80 = 0.75. Recall asks how much of the spam was caught: 60 of 100 = 0.60. Swapping the two is the most common slip.\n\n0.94 is the accuracy (60 true positives plus 880 true negatives out of 1,000), which says little when most emails are not spam."
+  },
+  {
+    "id": "ml-accuracy-imbalanced",
+    "topic": "Machine Learning",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "Fraud makes up 0.5% of card transactions. A new model labels every transaction as legitimate and scores 99.5% accuracy. Which metric would immediately show that the model is useless?",
+    "options": ["Accuracy on a larger test set", "Recall on the fraud class", "Specificity (true negative rate)", "Training loss"],
+    "answer": [1],
+    "explanation": "The model never predicts fraud, so it catches none of it: recall on the fraud class is 0. Accuracy stays near 99.5% on any test set because legitimate transactions dominate, and specificity is a perfect 100% because every legitimate transaction is labelled correctly.\n\nFor rare positives, report recall, precision and precision-recall AUC for the positive class."
+  },
+  {
+    "id": "ml-data-leakage-select",
+    "topic": "Machine Learning",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "Which of these setups leak information from the evaluation data or from the future into training? Select all that apply.",
+    "options": [
+      "Fitting a feature scaler on the full dataset, then splitting it into train and test sets",
+      "Predicting churn with a feature that records the date the account was closed",
+      "Randomly splitting a year of daily sales data, so the model trains on December and is tested on June",
+      "Choosing the regularization strength with cross-validation on the training set only",
+      "Removing exact duplicate rows before splitting into train and test sets"
+    ],
+    "answer": [0, 1, 2],
+    "explanation": "Fitting the scaler before the split lets test-set statistics shape the training features. An account-closed date only exists after a customer churns, so it is target leakage: the value won't be available at prediction time. A random split of time-series data trains on the future and tests on the past, which overstates real accuracy; split by time instead.\n\nTuning with cross-validation inside the training set is correct practice, and deduplicating before the split stops copies of a row landing on both sides."
+  },
+  {
+    "id": "ml-bias-variance-curves",
+    "topic": "Machine Learning",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "A model has 2% training error and 25% validation error. As you add training data, the validation error falls slowly and the gap narrows. What is the most likely problem, and what should you try first?",
+    "options": [
+      "High bias: add features or use a larger model",
+      "High variance: regularize more, simplify the model or collect more data",
+      "The validation labels are wrong: relabel the validation set",
+      "The learning rate is too high: lower it"
+    ],
+    "answer": [1],
+    "explanation": "Low training error, much higher validation error, and a gap that shrinks as data grows is the classic overfitting (high variance) picture. Regularization, a simpler model, data augmentation or more data all attack it.\n\nHigh bias shows up as high error on both sets. A learning rate that is too high usually stops the training error from getting low in the first place. Label noise is possible, but nothing here points to it."
+  },
+  {
+    "id": "ml-l1-sparsity",
+    "topic": "Machine Learning",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "You want a linear model that drives the weights of irrelevant features to exactly zero, so that it effectively selects features. Which regularization does that?",
+    "options": ["L2 (ridge)", "L1 (lasso)", "Dropout", "Early stopping"],
+    "answer": [1],
+    "explanation": "The L1 penalty pulls every nonzero weight toward zero with the same force, so weights that don't earn their keep land exactly on zero and the model becomes sparse. L2 shrinks weights in proportion to their size, so they get small but rarely reach zero.\n\nDropout and early stopping reduce overfitting in other ways and don't produce exact zeros in a linear model."
+  },
+  {
+    "id": "ml-kfold-train-size",
+    "topic": "Machine Learning",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "You run 5-fold cross-validation on a dataset of 1,000 rows. How many rows does each of the five models train on?",
+    "options": ["200", "800", "1,000", "960"],
+    "answer": [1],
+    "explanation": "Each fold holds out one fifth of the data (200 rows) for validation and trains on the other four fifths: 800 rows. Every row is used for validation exactly once across the five runs.\n\n200 is the validation size, and 1,000 would mean training on the validation rows too."
+  },
+  {
+    "id": "ml-roc-auc-meaning",
+    "topic": "Machine Learning",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "A classifier has a ROC-AUC of 0.80. Which statement is correct?",
+    "options": [
+      "80% of its predictions are correct at a threshold of 0.5",
+      "If you pick a random positive and a random negative example, the model gives the positive a higher score 80% of the time",
+      "Its precision is 0.80 at the best threshold",
+      "It recalls 80% of positives at every threshold"
+    ],
+    "answer": [1],
+    "explanation": "ROC-AUC measures ranking quality across all thresholds: it is the probability that a randomly chosen positive scores higher than a randomly chosen negative (ties count half).\n\nIt says nothing directly about accuracy, precision or recall at a particular threshold, which depend on where you set the cut-off and on the class balance."
+  },
+  {
+    "id": "ml-pr-vs-roc-rare",
+    "topic": "Machine Learning",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "In a fraud model there is about one fraud case per 1,000 transactions. The team wants a curve that shows how many false alarms analysts will review for each fraud caught, at different thresholds. Which should they plot?",
+    "options": [
+      "The ROC curve, because it is insensitive to class balance",
+      "The precision-recall curve",
+      "The learning curve",
+      "The calibration curve"
+    ],
+    "answer": [1],
+    "explanation": "Precision is exactly the share of alerts that are real fraud, so the precision-recall curve shows the review burden directly.\n\nThe ROC curve's false positive rate divides by the huge number of legitimate transactions, so a tiny-looking 1% FPR still means about ten false alarms per real case. That insensitivity to class balance is why ROC looks reassuring on rare-event problems. Learning and calibration curves answer different questions."
+  },
+  {
+    "id": "ml-kmeans-properties",
+    "topic": "Machine Learning",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "Which statements about k-means clustering are true? Select all that apply.",
+    "options": [
+      "Different random initializations can converge to different clusterings",
+      "An iteration never increases the total within-cluster sum of squared distances",
+      "It reliably separates non-convex shapes such as two interleaved crescents",
+      "Features should be on comparable scales, because it uses Euclidean distance",
+      "It chooses the number of clusters automatically"
+    ],
+    "answer": [0, 1, 3],
+    "explanation": "k-means finds only a local optimum, so results depend on initialization (k-means++ and several restarts help). Both the assignment step and the centroid update can only lower or keep the within-cluster sum of squares, which is why it converges. Distance-based methods let large-scale features dominate unless you standardize.\n\nIt assumes roughly spherical clusters, so crescents defeat it; density-based methods such as DBSCAN handle them. You choose k yourself, for example with the elbow method or silhouette scores."
+  },
+  {
+    "id": "ml-loss-diverges",
+    "topic": "Machine Learning",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "From the first few steps of gradient descent, the training loss jumps around wildly and then climbs to very large values. What is the most likely cause?",
+    "options": ["The learning rate is too high", "The learning rate is too low", "Too few training epochs", "Too much L2 regularization"],
+    "answer": [0],
+    "explanation": "A step size that is too large overshoots the minimum, so each update lands further away and the loss oscillates or diverges. Lower the learning rate, or add a warmup.\n\nA learning rate that is too low gives slow, steady progress rather than divergence. Few epochs and strong regularization cause underfitting, not an exploding loss."
+  },
+  {
+    "id": "ml-gini-impurity-compute",
+    "topic": "Machine Learning",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "A decision-tree node holds 10 training samples: 6 of class A and 4 of class B. What is its Gini impurity?",
+    "options": ["0.24", "0.48", "0.52", "0.97"],
+    "answer": [1],
+    "explanation": "Gini impurity is 1 minus the sum of the squared class proportions: 1 − (0.6² + 0.4²) = 1 − (0.36 + 0.16) = 0.48. A pure node has Gini 0, and a 50/50 split of two classes has the maximum, 0.5.\n\n0.52 is the sum of the squared proportions, 0.24 is 0.6 × 0.4, and 0.97 is the node's entropy in bits (−0.6·log₂0.6 − 0.4·log₂0.4 ≈ 0.971)."
+  },
+  {
+    "id": "ml-raise-recall-select",
+    "topic": "Machine Learning",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "A classifier misses too many cases of a rare positive class. Which changes can raise its recall on that class? Select all that apply.",
+    "options": [
+      "Lower the decision threshold",
+      "Give the positive class a larger weight in the loss",
+      "Oversample positive examples in the training data",
+      "Evaluate on a balanced copy of the test set",
+      "Increase the L2 regularization strength"
+    ],
+    "answer": [0, 1, 2],
+    "explanation": "A lower threshold labels more examples positive, trading precision for recall. Class weights and oversampling both make the model pay more attention to the rare class during training.\n\nRebalancing the test set changes the reported numbers, not the model's behaviour. Stronger L2 regularization limits model complexity; it doesn't target the rare class and usually doesn't raise recall."
+  },
+  {
+    "id": "ml-scale-sensitive-models",
+    "topic": "Machine Learning",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "multiple",
+    "question": "Which models usually need features on comparable scales, for example after standardization, to work well? Select all that apply.",
+    "options": ["k-nearest neighbours", "An SVM with an RBF kernel", "Logistic regression with L2 regularization", "A random forest", "Gradient-boosted decision trees"],
+    "answer": [0, 1, 2],
+    "explanation": "k-NN and RBF-kernel SVMs compute distances, so a feature measured in thousands swamps one measured in fractions. With L2 regularization the penalty treats every weight alike, so unscaled features are penalized unevenly.\n\nTrees split on one feature at a time using thresholds, and any monotonic rescaling leaves those splits unchanged, so random forests and gradient boosting don't need scaling."
+  }
+]

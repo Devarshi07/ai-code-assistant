@@ -1,0 +1,65 @@
+{
+  "id": "ml-kmeans-step",
+  "title": "One K-Means Step",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "kind": "ml",
+  "languages": [
+    "python"
+  ],
+  "skills": [
+    "Machine Learning",
+    "Math"
+  ],
+  "summary": "Run one assignment-and-update round of k-means, with exact tie-breaks and empty clusters.",
+  "statement": "A delivery company clusters its drop-off points with k-means. Implement **one round** of the algorithm, starting from the given centroids:\n\n1. **Assign** every point to its nearest centroid by squared Euclidean distance. If several centroids are equally near, choose the one with the smallest index.\n2. **Update** every centroid to the mean of the points assigned to it. A centroid with no points keeps its old position.\n\nReturn how many points each centroid received and the updated centroids.",
+  "functionDescription": "Complete the **kmeansStep** function in the editor below.\n\n**kmeansStep** has the following parameters:\n\n- `int points[n][d]`: the points\n- `int centroids[k][d]`: the starting centroids\n\n**Returns**\n\n- `int[k]`: the number of points assigned to each centroid\n- `float[k][d]`: the updated centroids\n\nReturn both as a pair. NumPy is available as `np`.",
+  "inputFormat": "The first line contains three integers `n`, `k` and `d`.\n\nEach of the next `n` lines contains `d` integers: one point.\n\nEach of the next `k` lines contains `d` integers: one centroid.",
+  "constraints": "- `1 ≤ n ≤ 5 × 10^4`\n- `1 ≤ k ≤ 10`\n- `1 ≤ d ≤ 8`\n- `-1000 ≤` every coordinate `≤ 1000`\n- Centroids may coincide.",
+  "outputFormat": "The template prints the `k` counts on the first line, then one line per centroid with its coordinates rounded to 4 decimal places.",
+  "samples": [
+    {
+      "input": "5 2 2\n0 0\n1 0\n0 1\n9 9\n10 8\n0 0\n10 10\n",
+      "output": "3 2\n0.3333 0.3333\n9.5000 8.5000\n",
+      "explanation": "Points `(0, 0)`, `(1, 0)` and `(0, 1)` are nearest to centroid 0, and `(9, 9)` and `(10, 8)` to centroid 1. The new centroids are their means, `(1/3, 1/3)` and `(9.5, 8.5)`."
+    },
+    {
+      "input": "3 3 1\n5\n-3\n7\n0\n10\n100\n",
+      "output": "2 1 0\n1.0000\n7.0000\n100.0000\n",
+      "explanation": "The point `(5)` is at distance 25 from both centroids `0` and `10`, so it goes to the smaller index, centroid 0. Centroid 2 at `100` gets no points and stays where it is."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06"
+    },
+    {
+      "file": "07",
+      "weight": 2
+    },
+    {
+      "file": "08",
+      "weight": 2
+    }
+  ]
+}

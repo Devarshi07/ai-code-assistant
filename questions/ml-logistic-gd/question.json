@@ -1,0 +1,65 @@
+{
+  "id": "ml-logistic-gd",
+  "title": "Train a Tiny Classifier",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "kind": "ml",
+  "languages": [
+    "python"
+  ],
+  "skills": [
+    "Machine Learning",
+    "Math"
+  ],
+  "summary": "Train logistic regression with batch gradient descent and report the final weights.",
+  "statement": "Train a logistic-regression classifier with plain **batch gradient descent**, exactly as described, and report the learned weights.\n\nThe data has `n` examples `x_i` with `d` features and labels `y_i ∈ {0, 1}`. The model predicts `p_i = σ(w · x_i + b)`, where `σ(z) = 1 / (1 + e^(−z))`.\n\nStart from `w = 0` (all `d` weights) and `b = 0`. Then repeat `T` times:\n\n1. Compute `p_i` for every example with the current `w` and `b`.\n2. Let `g_i = p_i − y_i`.\n3. Update both at once: `w ← w − lr · (Σ g_i · x_i) / n` and `b ← b − lr · (Σ g_i) / n`.\n\nThis is the gradient of the mean log-loss. The tests keep `|w · x_i + b|` below 30, so `e^(−z)` never overflows. Loops over all examples in plain Python can be slow at the largest sizes: NumPy's vector operations help.",
+  "functionDescription": "Complete the **trainLogistic** function in the editor below.\n\n**trainLogistic** has the following parameters:\n\n- `float X[n][d]`: the features\n- `int y[n]`: the labels\n- `int steps`: the number of updates, `T`\n- `float lr`: the learning rate\n\n**Returns**\n\n- `float[d + 1]`: the final weights `w_1 … w_d`, then the bias `b`\n\nNumPy is available as `np`.",
+  "inputFormat": "The first line contains `n`, `d`, `T` and `lr`.\n\nEach of the next `n` lines contains `d` features followed by the label.",
+  "constraints": "- `1 ≤ n ≤ 2000`\n- `1 ≤ d ≤ 10`\n- `1 ≤ T ≤ 500`\n- `0 < lr ≤ 1`\n- Features are between `-5` and `5`, with at most 2 decimal places.",
+  "outputFormat": "The template prints the `d + 1` values on one line, each rounded to 4 decimal places.",
+  "samples": [
+    {
+      "input": "2 1 1 1.0\n1 1\n3 0\n",
+      "output": "-0.5000 0.0000\n",
+      "explanation": "With one step from zero weights, every `p_i` is `0.5`, so `g = (0.5 − 1, 0.5 − 0) = (−0.5, 0.5)`. Then `w ← 0 − 1 · (−0.5·1 + 0.5·3) / 2 = −0.5` and `b ← 0 − 1 · (−0.5 + 0.5) / 2 = 0`."
+    },
+    {
+      "input": "6 2 200 0.1\n2 0.5 1\n1.5 -0.5 1\n-1 0.2 0\n-2.5 -0.1 0\n0.5 1 1\n-0.5 -1 0\n",
+      "output": "2.4763 1.0572 -0.1039\n",
+      "explanation": "After 200 steps of size `0.1`, both weights are positive: in this data, larger values of either feature make label `1` more likely, the first one more strongly. The bias stays close to `0`."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06"
+    },
+    {
+      "file": "07",
+      "weight": 2
+    },
+    {
+      "file": "08",
+      "weight": 2
+    }
+  ]
+}

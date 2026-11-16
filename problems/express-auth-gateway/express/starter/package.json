@@ -1,0 +1,16 @@
+{
+  "name": "inkwell-docs-api",
+  "version": "2.3.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Token-authenticated documents API for the Inkwell team wiki.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "demo": "node demo.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

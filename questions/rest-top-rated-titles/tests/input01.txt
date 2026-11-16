@@ -1,0 +1,15 @@
+Horror
+2020
+5
+--- api data ---
+{
+  "per_page": 2,
+  "resources": {
+    "movies": [
+      {"id": 1, "title": "alpha", "genre": "Horror", "year": 2021, "rating": 6.0},
+      {"id": 2, "title": "Old Crypt", "genre": "Horror", "year": 2010, "rating": 7.0},
+      {"id": 3, "title": "Zed", "genre": "Horror", "year": 2022, "rating": 6.0},
+      {"id": 4, "title": "Fun Run", "genre": "Comedy", "year": 2023, "rating": 8.0}
+    ]
+  }
+}

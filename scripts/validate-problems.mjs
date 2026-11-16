@@ -1,13 +1,17 @@
 // Validates structured problems end to end. See problems/AUTHORING.md.
-// Usage: node scripts/validate-problems.mjs [problem-id ...]
+// Usage: node scripts/validate-problems.mjs [problem-id ...] [--lang=java,go]
+// --lang checks only those languages (the schema is always checked in full),
+// including a language problem.json does not list yet.
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {PROBLEMS_DIR, LANGUAGES, readTree, validateProblem} from '../problems.mjs';
+import {runStack, ensureStackImage} from '../stack-runner.mjs';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const ONLY = process.argv.find(arg => arg.startsWith('--lang='))?.slice(7).split(',').filter(Boolean) || null;
 const PYTHON = process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
 const MARK = '@@DGRESULT@@';
 
@@ -23,7 +27,25 @@ function run(command, args, cwd, timeout) {
   });
 }
 
+// Runs a command for the stack runner, which drives Docker.
+function docker(command, args, {timeout = 60000} = {}) {
+  return new Promise(resolve => {
+    const child = spawn(command, args, {windowsHide: true});
+    let output = '', timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; child.kill(); }, timeout);
+    child.stdout.on('data', d => { output = (output + d).slice(-400000); });
+    child.stderr.on('data', d => { output = (output + d).slice(-400000); });
+    child.on('error', error => { clearTimeout(timer); resolve({code: -1, output: String(error), timedOut}); });
+    child.on('close', code => { clearTimeout(timer); resolve({code, output, timedOut}); });
+  });
+}
+
 async function execute(language, dir, mode, targets) {
+  // API projects run in their framework's Docker image, like the app runs them.
+  if (LANGUAGES[language].runner === 'docker') {
+    await ensureStackImage(docker, language, message => console.log(`    · ${message}`));
+    return runStack(docker, {language, sourceDir: dir, mode, targets});
+  }
   if (language === 'javascript') {
     const result = await run(process.execPath, [path.join(ROOT, 'scripts', 'run-js.mjs'), dir, mode, ...targets], ROOT, 60000);
     if (result.timedOut) return {timedOut: true, results: [], output: result.out};
@@ -71,8 +93,12 @@ async function validate(id) {
   try { problem = JSON.parse(await fs.readFile(path.join(problemDir, 'problem.json'), 'utf8')); }
   catch (error) { report.errors.push(`problem.json: ${error.message}`); return report; }
   report.errors.push(...validateProblem(problem, id).map(e => `schema: ${e}`));
-  for (const language of problem.languages || []) {
-    if (!LANGUAGES[language]) continue;
+  // --lang can also check a language that problem.json doesn't list yet, so a
+  // port is validated before the app offers it.
+  const languages = [...new Set([...(problem.languages || []), ...(ONLY || []).filter(l => LANGUAGES[l])])];
+  for (const language of languages) {
+    if (!LANGUAGES[language] || (ONLY && !ONLY.includes(language))) continue;
+    if (!(problem.languages || []).includes(language)) report.notes.push(`${language}: not listed in problem.json yet (checked because of --lang)`);
     const lang = LANGUAGES[language];
     const tests = [1, 2, 3].map(lang.test);
     const tag = `${language}`;
@@ -88,14 +114,14 @@ async function validate(id) {
     try {
       for (const [name, overlays] of Object.entries(stages)) made[name] = await stage(problemDir, language, overlays);
       const starter = made.starter.files;
-      if (!starter[lang.main]) report.errors.push(`${tag}: starter is missing ${lang.main}`);
+      if (lang.main && !starter[lang.main]) report.errors.push(`${tag}: starter is missing ${lang.main}`);
       if (!starter['README.md']) report.errors.push(`${tag}: starter is missing README.md`);
       if (!starter[tests[0]]) report.errors.push(`${tag}: starter is missing ${tests[0]}`);
       if (starter[tests[1]] || starter[tests[2]]) report.errors.push(`${tag}: phase 2/3 tests must not be in starter/`);
       if (!made.phase2.files[tests[1]]) report.errors.push(`${tag}: phase2/ is missing ${tests[1]}`);
       if (!made.final.files[tests[2]]) report.errors.push(`${tag}: phase3/ is missing ${tests[2]}`);
-      const sourceLines = Object.entries(starter).filter(([n]) => n.endsWith(lang.ext) && !n.startsWith('tests/')).reduce((sum, [, t]) => sum + t.split('\n').length, 0);
-      const sourceFiles = Object.keys(starter).filter(n => n.endsWith(lang.ext) && !n.startsWith('tests/')).length;
+      const sourceLines = Object.entries(starter).filter(([n]) => n.endsWith(lang.ext) && !lang.canonical(n)).reduce((sum, [, t]) => sum + t.split('\n').length, 0);
+      const sourceFiles = Object.keys(starter).filter(n => n.endsWith(lang.ext) && !lang.canonical(n)).length;
       report.notes.push(`${tag}: starter has ${sourceFiles} source files, ${sourceLines} lines`);
       for (const [name, text] of Object.entries(made.final.files)) if (text.length > 100000) report.errors.push(`${tag}: ${name} is larger than 100 KB`);
       if (report.errors.some(e => e.startsWith(tag))) continue;
@@ -124,8 +150,9 @@ async function validate(id) {
       await check('phase2', [tests[0], tests[1]], {[tests[0]]: 'pass', [tests[1]]: 'pass'});
       await check('phase2WithPhase3', [tests[2]], {[tests[2]]: 'fail'});
       await check('final', tests, {[tests[0]]: 'pass', [tests[1]]: 'pass', [tests[2]]: 'pass'});
-      const main = await execute(language, made.final.dir, 'main', [lang.main]);
-      if (main.timedOut || main.exitCode !== 0) report.errors.push(`${tag} final: ${lang.main} exited with ${main.timedOut ? 'a timeout' : main.exitCode}: ${String(main.output).slice(-400)}`);
+      const main = lang.main ? await execute(language, made.final.dir, 'main', [lang.main]) : null;
+      if (!main) report.notes.push(`${tag} final: no demo entry point for this stack`);
+      else if (main.timedOut || main.exitCode !== 0) report.errors.push(`${tag} final: ${lang.main} exited with ${main.timedOut ? 'a timeout' : main.exitCode}: ${String(main.output).slice(-400)}`);
       else report.notes.push(`${tag} final: ${lang.main} printed ${String(main.output).split('\n').length} lines`);
     } finally {
       for (const value of Object.values(made)) await fs.rm(value.dir, {recursive: true, force: true});
@@ -134,7 +161,7 @@ async function validate(id) {
   return report;
 }
 
-const requested = process.argv.slice(2);
+const requested = process.argv.slice(2).filter(arg => !arg.startsWith('--'));
 const ids = requested.length ? requested : (await fs.readdir(PROBLEMS_DIR, {withFileTypes: true})).filter(e => e.isDirectory()).map(e => e.name).sort();
 let failed = 0;
 for (const id of ids) {

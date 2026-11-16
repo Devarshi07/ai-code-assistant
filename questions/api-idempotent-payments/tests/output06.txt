@@ -1,0 +1,50 @@
+1. POST /payments -> 201 {"amount":39390,"currency":"GBP","id":"pay_1","status":"captured"}
+2. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+3. GET /payments/nope -> 404 {"error":"payment not found"}
+4. POST /payments -> 201 {"amount":39390,"currency":"GBP","id":"pay_1","status":"captured"}
+5. GET /payments/nope -> 404 {"error":"payment not found"}
+6. POST /payments -> 201 {"amount":39390,"currency":"GBP","id":"pay_1","status":"captured"}
+7. GET /payments -> 200 {"captured":{"GBP":39390},"count":1}
+8. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+9. POST /payments -> 201 {"amount":39390,"currency":"GBP","id":"pay_1","status":"captured"}
+10. GET /payments/nope -> 404 {"error":"payment not found"}
+11. POST /payments -> 201 {"amount":26135,"currency":"GBP","id":"pay_2","status":"captured"}
+12. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+13. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+14. POST /payments -> 201 {"amount":31405,"currency":"GBP","id":"pay_3","status":"captured"}
+15. POST /payments/pay_1/refund -> 200 {"amount":39390,"currency":"GBP","id":"pay_1","status":"refunded"}
+16. GET /payments/pay_1 -> 200 {"amount":39390,"currency":"GBP","id":"pay_1","status":"refunded"}
+17. GET /payments/nope -> 404 {"error":"payment not found"}
+18. POST /payments -> 400 {"error":"invalid payment"}
+19. GET /payments/nope -> 404 {"error":"payment not found"}
+20. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+21. GET /payments/nope -> 404 {"error":"payment not found"}
+22. POST /payments -> 201 {"amount":39390,"currency":"GBP","id":"pay_1","status":"captured"}
+23. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+24. POST /payments -> 201 {"amount":26135,"currency":"GBP","id":"pay_2","status":"captured"}
+25. GET /payments/nope -> 404 {"error":"payment not found"}
+26. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+27. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+28. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+29. GET /payments/pay_8 -> 404 {"error":"payment not found"}
+30. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+31. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+32. POST /payments/pay_2/refund -> 200 {"amount":26135,"currency":"GBP","id":"pay_2","status":"refunded"}
+33. POST /payments -> 201 {"amount":43810,"currency":"GBP","id":"pay_4","status":"captured"}
+34. POST /payments -> 201 {"amount":43810,"currency":"GBP","id":"pay_4","status":"captured"}
+35. GET /payments -> 200 {"captured":{"GBP":75215},"count":4}
+36. GET /payments -> 200 {"captured":{"GBP":75215},"count":4}
+37. GET /payments/pay_3 -> 200 {"amount":31405,"currency":"GBP","id":"pay_3","status":"captured"}
+38. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+39. POST /payments -> 201 {"amount":38407,"currency":"EUR","id":"pay_5","status":"captured"}
+40. POST /payments/pay_7/refund -> 404 {"error":"payment not found"}
+41. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+42. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+43. POST /payments/pay_1/refund -> 409 {"error":"payment already refunded"}
+44. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+45. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+46. GET /payments -> 200 {"captured":{"EUR":38407,"GBP":75215},"count":5}
+47. POST /payments/pay_3/refund -> 200 {"amount":31405,"currency":"GBP","id":"pay_3","status":"refunded"}
+48. POST /payments/pay_x/refund -> 404 {"error":"payment not found"}
+49. POST /payments/pay_8/refund -> 404 {"error":"payment not found"}
+50. GET /payments/nope -> 404 {"error":"payment not found"}

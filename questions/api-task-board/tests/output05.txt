@@ -1,0 +1,8 @@
+1. POST /tasks -> 201 {"done":false,"id":1,"priority":1,"title":"Edit me"}
+2. PATCH /tasks/1 -> 400 {"error":"invalid task"}
+3. GET /tasks/1 -> 200 {"done":false,"id":1,"priority":1,"title":"Edit me"}
+4. PATCH /tasks/1 -> 200 {"done":true,"id":1,"priority":4,"title":"Renamed"}
+5. PATCH /tasks/1 -> 200 {"done":true,"id":1,"priority":4,"title":"Renamed"}
+6. PATCH /tasks/1 -> 400 {"error":"invalid task"}
+7. PATCH /tasks/1 -> 400 {"error":"invalid task"}
+8. GET /tasks/1 -> 200 {"done":true,"id":1,"priority":4,"title":"Renamed"}

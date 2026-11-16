@@ -1,0 +1,6 @@
+{"method": "GET", "path": "/payments"}
+{"method": "GET", "path": "/payments/pay_1"}
+{"method": "POST", "path": "/payments/pay_1/refund"}
+{"method": "POST", "path": "/payments", "body": {"amount": 10, "currency": "USD"}, "headers": {"Idempotency-Key": ""}}
+{"method": "POST", "path": "/payments", "body": {"amount": 10, "currency": "USD"}, "headers": {"Idempotency-Key": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 10, "currency": "USD"}, "headers": {"Idempotency-Key": "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"}}

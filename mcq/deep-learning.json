@@ -1,0 +1,149 @@
+[
+  {
+    "id": "dl-softmax-compute",
+    "topic": "Deep Learning",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "A classifier outputs the logits `[2, 1, 0]` for three classes. Rounded to two decimal places, what probability does softmax give the first class?",
+    "options": ["0.33", "0.67", "0.73", "0.88"],
+    "answer": [1],
+    "explanation": "Softmax exponentiates and normalizes: e² / (e² + e¹ + e⁰) = 7.389 / 11.107 ≈ 0.665, which rounds to 0.67. The full distribution is about [0.67, 0.24, 0.09].\n\n0.88 is the sigmoid of 2, which scores the first class on its own instead of against the others; 0.73 is the sigmoid of the gap between the top two logits; 0.33 is what equal logits would give."
+  },
+  {
+    "id": "dl-vanishing-gradients",
+    "topic": "Deep Learning",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "A deep feed-forward network with sigmoid activations in every layer trains very slowly, and the weights in its first layers barely change. What is the most likely cause, and a common fix?",
+    "options": [
+      "Vanishing gradients; use ReLU-family activations, residual connections or normalization layers",
+      "Exploding gradients; use a larger learning rate",
+      "Overfitting; add more dropout",
+      "Too little data; use a smaller batch size"
+    ],
+    "answer": [0],
+    "explanation": "The sigmoid's derivative is at most 0.25, and backpropagation multiplies such factors layer after layer, so the gradients that reach the early layers shrink toward zero. ReLU-family activations, residual connections, careful initialization and normalization layers keep gradients flowing.\n\nExploding gradients make updates blow up rather than stall, and a larger learning rate would make that worse."
+  },
+  {
+    "id": "dl-batchnorm-inference",
+    "topic": "Deep Learning",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "At inference time, what should a batch normalization layer use to normalize its inputs?",
+    "options": [
+      "The mean and variance of the current inference batch",
+      "The running mean and variance accumulated during training",
+      "Zero mean and unit variance, ignoring the learned parameters",
+      "Statistics recomputed for each individual sample"
+    ],
+    "answer": [1],
+    "explanation": "During training, batch norm normalizes with the batch's statistics and keeps running averages of them. In evaluation mode it uses those running averages, so a prediction doesn't depend on which other requests share its batch, and it works with a batch of one. Forgetting to switch a model to evaluation mode before serving is a classic production bug.\n\nThe learned scale and shift are still applied after normalizing."
+  },
+  {
+    "id": "dl-dropout-inference",
+    "topic": "Deep Learning",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "A network uses inverted dropout with a drop probability of 0.3 during training. What happens to dropout at inference time?",
+    "options": [
+      "It is turned off, and no rescaling is needed",
+      "It stays on, so predictions vary from run to run",
+      "It is turned off, and activations are multiplied by 0.7",
+      "It is turned off, and activations are divided by 0.7"
+    ],
+    "answer": [0],
+    "explanation": "Inverted dropout divides the surviving activations by the keep probability (0.7) during training, so their expected value already matches inference, where dropout is simply disabled.\n\nMultiplying by 0.7 at test time is what the original, non-inverted formulation did instead. Leaving dropout on at inference gives noisy predictions; it's only done on purpose, to estimate uncertainty."
+  },
+  {
+    "id": "dl-attention-scaling",
+    "topic": "Deep Learning",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "In scaled dot-product attention, why are the query-key dot products divided by √d_k before the softmax?",
+    "options": [
+      "To make the attention weights sum to one",
+      "To keep the dot products from growing with the key dimension, which would saturate the softmax and shrink its gradients",
+      "To reduce the memory used by the attention matrix",
+      "To stop positions from attending to the future"
+    ],
+    "answer": [1],
+    "explanation": "For random-like vectors, the variance of a dot product grows with the dimension d_k, so raw scores get large and the softmax becomes nearly one-hot, where its gradients are tiny. Dividing by √d_k keeps the scores at roughly unit variance.\n\nThe softmax itself makes the weights sum to one, the causal mask handles future positions, and the scaling doesn't change memory use."
+  },
+  {
+    "id": "dl-causal-mask",
+    "topic": "Deep Learning",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "In a decoder-only transformer trained to predict the next token, which positions may the token at position i attend to?",
+    "options": ["Every position in the sequence", "Only the positions before i", "The positions up to and including i", "Only position i itself"],
+    "answer": [2],
+    "explanation": "The causal mask hides every position after i, by setting those scores to −∞ before the softmax, so each token sees itself and the tokens before it. That makes training on whole sequences equivalent to predicting one token at a time.\n\nLetting it see later positions would leak the very token it is meant to predict."
+  },
+  {
+    "id": "dl-overfitting-fixes-select",
+    "topic": "Deep Learning",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "A convolutional network overfits a small image dataset: training accuracy is 99% and validation accuracy is 70%. Which changes are likely to help? Select all that apply.",
+    "options": [
+      "Data augmentation such as random crops and flips",
+      "Weight decay",
+      "Early stopping on the validation loss",
+      "Removing the dropout layers",
+      "Training for many more epochs"
+    ],
+    "answer": [0, 1, 2],
+    "explanation": "Augmentation adds varied training examples, weight decay penalizes large weights, and early stopping halts before the model memorizes noise: all three reduce overfitting. Starting from a pretrained network is another strong option on small datasets.\n\nRemoving dropout removes a regularizer, and training longer usually widens the gap further."
+  },
+  {
+    "id": "dl-linear-param-count",
+    "topic": "Deep Learning",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "How many trainable parameters does a fully connected layer from 512 inputs to 256 outputs have, including biases?",
+    "options": ["131,072", "131,328", "131,584", "768"],
+    "answer": [1],
+    "explanation": "The weight matrix has 512 × 256 = 131,072 entries, and each of the 256 outputs has one bias: 131,072 + 256 = 131,328.\n\n131,584 adds one bias per input instead of per output, and 768 just adds the two layer sizes."
+  },
+  {
+    "id": "dl-log-softmax-stability",
+    "topic": "Deep Learning",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "Why do deep learning libraries compute cross-entropy from logits with a log-softmax (the log-sum-exp trick) instead of calling `log(softmax(logits))`?",
+    "options": [
+      "It is faster because it skips the exponentials",
+      "It avoids overflow and underflow: softmax can round small probabilities to 0, and log(0) is −∞",
+      "It makes the loss convex for neural networks",
+      "It adds label smoothing automatically"
+    ],
+    "answer": [1],
+    "explanation": "For large logits exp overflows, and for very negative ones a probability can underflow to exactly 0, making log(0) = −∞ and the gradients NaN. Log-softmax computes x − max(x) − log Σ exp(x − max(x)), which stays finite.\n\nIt still uses exponentials, it doesn't make a neural network's loss convex, and label smoothing is a separate option."
+  },
+  {
+    "id": "dl-nan-loss-fixes-select",
+    "topic": "Deep Learning",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "multiple",
+    "question": "Early in training a transformer, the loss suddenly spikes and becomes NaN. Which changes are reasonable to try? Select all that apply.",
+    "options": [
+      "Add a learning-rate warmup",
+      "Clip gradients to a maximum norm",
+      "Lower the peak learning rate",
+      "Remove the layer normalization layers",
+      "Increase the initial learning rate"
+    ],
+    "answer": [0, 1, 2],
+    "explanation": "Large early updates are the usual culprit. Warmup ramps the learning rate up while the optimizer's statistics settle, clipping caps any single update, and a lower peak learning rate shrinks every step. Also check for bad inputs and mixed-precision overflow.\n\nLayer normalization stabilizes transformer training, so removing it tends to make things worse, and so does a higher initial learning rate."
+  }
+]

@@ -10,7 +10,10 @@ import {enterFullscreen, loadStatus, getStatus} from './app.js';
 const EXT = {python: 'py', javascript: 'js', java: 'java', cpp: 'cpp', go: 'go'};
 const LANGUAGE_LABEL = {python: 'Python 3', javascript: 'JavaScript (Node.js)', java: 'Java 21', cpp: 'C++20', go: 'Go'};
 const SCORE_LABEL = {1: 'Poor', 2: 'Below expectations', 3: 'Meets expectations', 4: 'Strong', 5: 'Exceptional'};
-const FORMAT_TITLE = {screen: 'Technical screen', design: 'System design', behavioral: 'Behavioural', 'ai-fluency': 'AI fluency'};
+const FORMAT_TITLE = {screen: 'Technical screen', design: 'System design', behavioral: 'Behavioural', 'ai-fluency': 'AI fluency', 'ml-design': 'ML system design', 'ml-screen': 'ML fundamentals screen', 'ml-deep-dive': 'ML project deep dive'};
+// Formats with a notes pane the interviewer reads, and formats set for a role and level.
+const NOTES_FORMATS = new Set(['design', 'ml-design']);
+const ROLE_FORMATS = new Set(['screen', 'behavioral', 'ml-screen']);
 export const typeLabel = m => m.type === 'coding' ? `Coding · ${LANGUAGE_LABEL[m.language] || m.language || ''}` : m.type === 'talk' ? FORMAT_TITLE[m.format] || 'Interview' : 'AI-assisted repo';
 
 // ---------- lobby ----------
@@ -44,19 +47,22 @@ export async function renderMockLobby(root) {
   const codingStart = el('button', {class: 'button primary', onclick: e => start(e.currentTarget, {type: 'coding', language: codingLang.lastChild.value, difficulty: codingDiff.lastChild.value, question: codingQ.lastChild.value || undefined, minutes: Number(codingTime.lastChild.value)})}, 'Start coding interview');
   const fluencyStart = el('button', {class: 'button primary', onclick: e => start(e.currentTarget, {type: 'fluency', language: fluencyLang.lastChild.value, problem: fluencyProblem.lastChild.value || undefined})}, 'Start repo interview');
   // Conversation interviews: technical screen, system design, behavioural and AI fluency.
-  const formatIcon = {screen: 'list', design: 'diff', behavioral: 'user', 'ai-fluency': 'spark'};
-  const talkCards = (options.formats || []).map(f => {
-    const role = select('Role', options.roles.map(r => [r, r]), 'Software engineer', `dg-talk-role`);
+  const formatIcon = {screen: 'list', design: 'diff', behavioral: 'user', 'ai-fluency': 'spark', 'ml-design': 'diff', 'ml-screen': 'list', 'ml-deep-dive': 'book'};
+  const talkCard = f => {
+    const role = select('Role', options.roles.map(r => [r, r]), f.ml ? 'Machine learning engineer' : 'Software engineer', f.ml ? 'dg-talk-role-ml' : 'dg-talk-role');
     const level = select('Level', [['Junior', 'Junior'], ['Mid-level', 'Mid-level'], ['Senior', 'Senior']], 'Mid-level', 'dg-talk-level');
     const time = select('Duration', [20, 25, 30, 45, 60].map(m => [String(m), `${m} minutes`]), String(f.minutes), `dg-talk-minutes-${f.id}`);
-    const fields = f.id === 'screen' || f.id === 'behavioral' ? [role, level, time] : [time];
+    const fields = f.roleBased || ROLE_FORMATS.has(f.id) ? [role, level, time] : [time];
     return el('section', {class: 'mock-card compact'},
       el('div', {class: 'mock-card-head'}, el('div', {class: 'track-icon'}, icon(formatIcon[f.id] || 'chat')), el('div', {}, el('h2', {text: f.title}), el('p', {class: 'muted', text: `${f.minutes} min · voice or text`}))),
       el('p', {class: 'muted small', text: f.blurb}),
       el('p', {class: 'small'}, el('strong', {text: 'Scored on: '}), f.areas.join(', ')),
       el('div', {class: 'field-grid'}, fields),
       el('button', {class: 'button primary', onclick: e => start(e.currentTarget, {type: 'talk', format: f.id, role: role.lastChild.value, level: level.lastChild.value, minutes: Number(time.lastChild.value)})}, `Start ${f.title.toLowerCase()}`));
-  });
+  };
+  const formats = options.formats || [];
+  const talkCards = formats.filter(f => !f.ml).map(talkCard);
+  const mlCards = formats.filter(f => f.ml).map(talkCard);
   root.replaceChildren(
     el('div', {class: 'page-title'}, el('h1', {text: 'Mock interviews'}), el('span', {class: 'title-badge', text: 'AI interviewer'})),
     el('p', {class: 'page-lead', text: 'A realistic interview with an AI interviewer. Talk by text or voice, think out loud, and get a scored report with an overall recommendation when you finish. Then ask the interviewer about the feedback for 15 minutes.'}),
@@ -72,6 +78,8 @@ export async function renderMockLobby(root) {
         el('div', {class: 'field-grid'}, fluencyLang, fluencyProblem), fluencyStart)),
     talkCards.length ? el('div', {class: 'section-heading'}, el('h2', {text: 'More interview types'}), el('span', {text: 'Conversation interviews, by voice or text'})) : el('span'),
     el('div', {class: 'mock-grid four'}, talkCards),
+    mlCards.length ? el('div', {class: 'section-heading'}, el('h2', {text: 'Machine learning interviews'}), el('span', {text: 'ML system design, fundamentals and a project deep dive'})) : el('span'),
+    mlCards.length ? el('div', {class: 'mock-grid four'}, mlCards) : el('span'),
     el('section', {class: 'panel'}, el('h2', {text: 'Previous interviews'}),
       history.length ? el('table', {class: 'mini-table'}, el('thead', {}, el('tr', {}, el('th', {text: 'Interview'}), el('th', {text: 'Type'}), el('th', {text: 'Date'}), el('th', {text: 'Result'}), el('th', {}))),
         el('tbody', {}, history.map(m => el('tr', {},
@@ -263,7 +271,7 @@ export async function openRoom(root, id) {
 function createTalkRoom(root, initial) {
   const id = initial.id;
   let state = initial, skew = initial.serverNow - Date.now(), ended = false, saveTimer = null;
-  const design = initial.format === 'design';
+  const design = NOTES_FORMATS.has(initial.format);
   const notes = design ? el('textarea', {class: 'design-notes', spellcheck: 'false', placeholder: 'Sketch here as you talk: requirements, scale estimates, components, APIs, data model, trade-offs…\n\nClient → Load balancer → API servers → Cache → Database', 'aria-label': 'Design notes'}, initial.notes || '') : null;
   const saveNotes = () => { clearTimeout(saveTimer); if (notes && !ended) api('/api/mock/notes', {id, notes: notes.value}).catch(() => {}); };
   notes?.addEventListener('input', () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveNotes, 1500); });
@@ -275,7 +283,7 @@ function createTalkRoom(root, initial) {
   const timerNode = el('div', {class: 'timer'});
   const top = el('header', {class: 'fs-top'},
     el('a', {class: 'icon-button', href: '#/mock', title: 'Leave (the interview keeps running)', 'aria-label': 'Leave the interview'}, icon('back')),
-    el('div', {class: 'fs-title'}, el('strong', {text: `${FORMAT_TITLE[initial.format]}: ${initial.title}`}), initial.format === 'screen' || initial.format === 'behavioral' ? el('span', {class: 'chip', text: `${initial.level} ${initial.role.toLowerCase()}`}) : null),
+    el('div', {class: 'fs-title'}, el('strong', {text: initial.title && initial.title !== FORMAT_TITLE[initial.format] ? `${FORMAT_TITLE[initial.format] || 'Interview'}: ${initial.title}` : FORMAT_TITLE[initial.format] || initial.title}), ROLE_FORMATS.has(initial.format) ? el('span', {class: 'chip', text: `${initial.level} ${initial.role.toLowerCase()}`}) : null),
     el('span', {class: 'grow'}), timerNode,
     el('button', {class: 'button danger small', onclick: () => panel.end()}, 'End interview'));
   const main = el('div', {class: `talk-main${design ? ' with-notes' : ''}`},
@@ -479,7 +487,7 @@ export async function renderReport(root, id) {
   const facts = state.type === 'coding'
     ? [['Final tests', e.finalTests ? `${e.finalTests.passed}/${e.finalTests.total}` : '—'], ['Runs', e.runs], ['Submissions', e.submissions], ['Hints', e.hints], ['Words to the interviewer', e.candidateWords], ['Minutes', minutes]]
     : state.type === 'talk'
-      ? [['Answers', e.answers], ['Words', e.words], ['Words per answer', e.averageWords], ['Concrete examples', e.examples], ...(state.format === 'design' ? [['Words of notes', e.notesWords]] : []), ['Minutes', minutes]]
+      ? [['Answers', e.answers], ['Words', e.words], ['Words per answer', e.averageWords], ['Concrete examples', e.examples], ...(NOTES_FORMATS.has(state.format) ? [['Words of notes', e.notesWords]] : []), ['Minutes', minutes]]
       : [['Phases passed', `${e.phasesPassed}/3`], ['Prompts to the AI', e.prompts], ['Test runs', e.testRuns], ['AI changes verified', e.aiPastes ? `${e.aiPastesVerified}/${e.aiPastes}` : '—'], ['AI actions declined', e.denials], ['Minutes', minutes]];
   root.replaceChildren(
     el('a', {href: '#/mock', class: 'button link'}, '← Mock interviews'),
@@ -493,7 +501,7 @@ export async function renderReport(root, id) {
     followupOpen ? el('section', {class: 'panel followup'}, el('div', {class: 'panel-title-row'}, el('h2', {text: 'Talk it over with your interviewer'}), el('span', {class: 'muted small', text: `Open for ${Math.ceil(state.followup.remainingMs / 60000)} more minutes`})), followup.root)
       : el('p', {class: 'muted', text: state.followup ? 'The 15-minute follow-up window has closed.' : ''}),
     state.type === 'coding' ? el('details', {class: 'panel'}, el('summary', {}, el('strong', {text: 'Your final code'})), el('pre', {class: 'code-view', text: state.code}))
-      : state.type === 'talk' ? (state.format === 'design' ? el('details', {class: 'panel'}, el('summary', {}, el('strong', {text: 'Your design notes'})), el('pre', {class: 'code-view', text: state.notes || '(none)'})) : el('span'))
+      : state.type === 'talk' ? (NOTES_FORMATS.has(state.format) ? el('details', {class: 'panel'}, el('summary', {}, el('strong', {text: 'Your design notes'})), el('pre', {class: 'code-view', text: state.notes || '(none)'})) : el('span'))
       : el('div', {class: 'feedback-actions'}, el('a', {class: 'button', href: `#/ade/practice/${state.practiceId}/mock/${id}`}, 'Open the codebase')),
     el('details', {class: 'panel'}, el('summary', {}, el('strong', {text: 'Interview transcript'})),
       el('div', {class: 'transcript'}, state.transcript.map(m => el('div', {class: 'item'}, el('small', {text: `${m.role === 'interviewer' ? 'Interviewer' : m.role === 'candidate' ? 'You' : 'Event'} · minute ${Math.round((m.at - state.started) / 60000)}`}), m.hint ? 'Asked for a hint' : m.text)))),

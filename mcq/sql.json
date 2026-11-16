@@ -1,0 +1,79 @@
+[
+  {
+    "id": "sql-having-count",
+    "topic": "SQL",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "Table `orders(id, customer_id, total)`. Which query lists the customers who placed more than three orders?",
+    "options": [
+      "`SELECT customer_id FROM orders WHERE COUNT(*) > 3 GROUP BY customer_id;`",
+      "`SELECT customer_id FROM orders GROUP BY customer_id HAVING COUNT(*) > 3;`",
+      "`SELECT customer_id, COUNT(*) > 3 FROM orders;`",
+      "`SELECT DISTINCT customer_id FROM orders ORDER BY COUNT(*) > 3;`"
+    ],
+    "answer": [1],
+    "explanation": "WHERE filters rows before grouping, so it can't use an aggregate; HAVING filters the groups after GROUP BY.\n\nThe third query has no GROUP BY, so it aggregates the whole table into one row, and ORDER BY sorts results rather than filtering them."
+  },
+  {
+    "id": "sql-null-not-equal",
+    "topic": "SQL",
+    "difficulty": "Easy",
+    "points": 5,
+    "type": "single",
+    "question": "Table `t` has a column `x` with the values 5, 7, NULL and 3. What does this query return?\n\n```sql\nSELECT COUNT(*) FROM t WHERE x <> 5;\n```",
+    "options": ["1", "2", "3", "4"],
+    "answer": [1],
+    "explanation": "Comparing NULL with anything gives UNKNOWN, not TRUE, so the NULL row is filtered out along with the 5. Only 7 and 3 remain: 2 rows.\n\nTo keep NULLs, write `WHERE x <> 5 OR x IS NULL`, or `IS DISTINCT FROM` where the database supports it."
+  },
+  {
+    "id": "sql-dense-rank",
+    "topic": "SQL",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "Table `scores`:\n\n| name | score |\n|------|-------|\n| Ann  | 90    |\n| Bob  | 85    |\n| Cy   | 90    |\n| Di   | 80    |\n\nWhat value does `DENSE_RANK() OVER (ORDER BY score DESC)` give Bob?",
+    "options": ["1", "2", "3", "4"],
+    "answer": [1],
+    "explanation": "Ann and Cy tie for first with rank 1. DENSE_RANK leaves no gaps, so the next distinct score, Bob's 85, gets 2, and Di gets 3.\n\nRANK would skip a number after the tie and give Bob 3, and ROW_NUMBER gives every row a different number regardless of ties."
+  },
+  {
+    "id": "sql-count-star-left-join",
+    "topic": "SQL",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "single",
+    "question": "`customers` has Ann, Bob and Cy. `orders` has two orders for Ann, one for Bob and none for Cy. What is Cy's `order_count` from this query?\n\n```sql\nSELECT c.name, COUNT(*) AS order_count\nFROM customers c\nLEFT JOIN orders o ON o.customer_id = c.id\nGROUP BY c.id, c.name;\n```",
+    "options": ["0", "1", "NULL", "The query fails"],
+    "answer": [1],
+    "explanation": "The LEFT JOIN keeps Cy as one row with NULL order columns, and COUNT(*) counts rows, so Cy gets 1. `COUNT(o.id)` counts only non-NULL values and would give the intended 0.\n\nThis is a common bug in \"orders per customer\" reports."
+  },
+  {
+    "id": "sql-index-predicates-select",
+    "topic": "SQL",
+    "difficulty": "Medium",
+    "points": 10,
+    "type": "multiple",
+    "question": "In MySQL (InnoDB), table `users` has a B-tree index on `last_name`. Which WHERE clauses can use that index to find rows? Select all that apply.",
+    "options": [
+      "`last_name = 'Smith'`",
+      "`last_name LIKE 'Sm%'`",
+      "`last_name LIKE '%ith'`",
+      "`LOWER(last_name) = 'smith'`",
+      "`last_name BETWEEN 'A' AND 'C'`"
+    ],
+    "answer": [0, 1, 4],
+    "explanation": "A B-tree keeps values sorted, so equality, ranges and prefix matches can seek straight to the matching part of the index.\n\nA leading wildcard has no fixed prefix to seek to, and wrapping the column in a function hides it from a plain index; you would need a functional index on `LOWER(last_name)`. In PostgreSQL, a prefix LIKE also needs the C collation or a `text_pattern_ops` index."
+  },
+  {
+    "id": "sql-second-highest",
+    "topic": "SQL",
+    "difficulty": "Hard",
+    "points": 15,
+    "type": "single",
+    "question": "Table `emp` has the salaries 100, 300, 300 and 200. What does this query return?\n\n```sql\nSELECT MAX(salary)\nFROM emp\nWHERE salary < (SELECT MAX(salary) FROM emp);\n```",
+    "options": ["100", "200", "300", "NULL"],
+    "answer": [1],
+    "explanation": "The subquery finds the top salary, 300, and the outer query takes the largest salary below it, 200: the second-highest distinct salary, even though 300 appears twice. If every row had the same salary, nothing would match and MAX would return NULL, which is what \"second highest\" questions usually expect.\n\n`ORDER BY salary DESC LIMIT 1 OFFSET 1` without DISTINCT would wrongly return 300 here."
+  }
+]

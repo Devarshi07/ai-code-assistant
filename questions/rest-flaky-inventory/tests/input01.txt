@@ -1,0 +1,15 @@
+paint
+--- api data ---
+{
+  "per_page": 2,
+  "throttle": "first",
+  "resources": {
+    "stock": [
+      {"sku": "SKU-0001", "category": "paint", "warehouse": "LIS-1", "quantity": 10},
+      {"sku": "SKU-0002", "category": "paint", "warehouse": "OPO-2", "quantity": 6},
+      {"sku": "SKU-0003", "category": "paint", "warehouse": "BRG-1", "quantity": 4},
+      {"sku": "SKU-0004", "category": "paint", "warehouse": "OPO-2", "quantity": -10},
+      {"sku": "SKU-0005", "category": "paint", "warehouse": "BRG-1", "quantity": 6}
+    ]
+  }
+}

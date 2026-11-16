@@ -1,0 +1,14 @@
+CREATE TABLE readings (
+  id INTEGER PRIMARY KEY,
+  device TEXT NOT NULL,
+  status TEXT,
+  recorded_at TEXT NOT NULL
+);
+INSERT INTO readings VALUES
+  (1, 'cam-1', 'offline', '2025-06-01 10:00:00'),
+  (2, 'cam-1', 'online', '2025-06-01 10:05:00'),
+  (3, 'cam-1', 'online', '2025-06-01 10:05:00'),
+  (4, 'cam-2', 'offline', '2025-06-01 09:00:00'),
+  (5, 'cam-2', NULL, '2025-06-01 09:30:00'),
+  (6, 'cam-3', 'online', '2025-06-01 08:00:00'),
+  (7, 'cam-3', 'retired', '2025-06-01 11:00:00');

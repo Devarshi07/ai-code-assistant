@@ -1,0 +1,11 @@
+{
+  "name": "harbour-city-planner",
+  "version": "1.4.0",
+  "private": true,
+  "description": "Journey planning backend of the Harbour City transit app",
+  "type": "module",
+  "scripts": {
+    "start": "node main.ts",
+    "test": "node --test \"tests/*.test.ts\""
+  }
+}

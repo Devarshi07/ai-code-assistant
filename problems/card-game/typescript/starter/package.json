@@ -1,0 +1,10 @@
+{
+  "name": "fifteens",
+  "private": true,
+  "type": "module",
+  "description": "Scoring engine for Fifteens, a casual card game.",
+  "scripts": {
+    "start": "node --experimental-strip-types main.ts",
+    "test": "node --test --experimental-strip-types \"tests/*.test.ts\""
+  }
+}

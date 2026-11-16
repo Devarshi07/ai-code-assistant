@@ -1,0 +1,65 @@
+{
+  "id": "ml-roc-auc",
+  "title": "Ranking Quality",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "kind": "ml",
+  "languages": [
+    "python"
+  ],
+  "skills": [
+    "Machine Learning",
+    "Sorting"
+  ],
+  "summary": "Compute ROC-AUC from scores with ties, fast enough for 200,000 examples.",
+  "statement": "A churn model gives every customer a score between 0 and 1; higher means more likely to leave. To judge how well the scores **rank** customers, compute the area under the ROC curve (ROC-AUC).\n\nROC-AUC equals the probability that a randomly chosen positive example (label `1`) scores higher than a randomly chosen negative example (label `0`), where a tie counts as half:\n\n`AUC = (number of pairs with s_pos > s_neg + 0.5 × number of pairs with s_pos = s_neg) / (P × N)`\n\nover every pair of one positive and one negative example, where `P` and `N` are the numbers of positives and negatives. Scores have at most 3 decimal places, so ties are common.\n\nComparing every pair is too slow for the largest inputs: aim for `O(n log n)`.",
+  "functionDescription": "Complete the **rocAuc** function in the editor below.\n\n**rocAuc** has the following parameters:\n\n- `int labels[n]`: `1` for a positive example, `0` for a negative one\n- `float scores[n]`: the model's scores\n\n**Returns**\n\n- `float`: the ROC-AUC\n\nNumPy is available as `np`.",
+  "inputFormat": "The first line contains an integer `n`.\n\nThe second line contains `n` space-separated labels.\n\nThe third line contains `n` space-separated scores.",
+  "constraints": "- `2 ≤ n ≤ 2 × 10^5`\n- There is at least one positive and at least one negative example.\n- `0 ≤ scores[i] ≤ 1`, with at most 3 decimal places.",
+  "outputFormat": "The template prints the AUC rounded to 6 decimal places.",
+  "samples": [
+    {
+      "input": "5\n1 0 1 0 0\n0.9 0.6 0.4 0.4 0.1\n",
+      "output": "0.750000\n",
+      "explanation": "The positives score `0.9` and `0.4`; the negatives `0.6`, `0.4` and `0.1`. Of the 6 pairs, 4 are ranked correctly (`0.9` beats all three, `0.4` beats `0.1`) and one is a tie: `(4 + 0.5) / 6 = 0.75`."
+    },
+    {
+      "input": "4\n1 0 1 0\n0.5 0.5 0.5 0.5\n",
+      "output": "0.500000\n",
+      "explanation": "Every score is the same, so each of the 4 pairs is a tie and the AUC is `0.5`, no better than chance."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06"
+    },
+    {
+      "file": "07",
+      "weight": 2
+    },
+    {
+      "file": "08",
+      "weight": 2
+    }
+  ]
+}

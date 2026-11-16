@@ -1,0 +1,66 @@
+{
+  "id": "api-catalog-search",
+  "title": "Catalog Search API",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "kind": "api",
+  "languages": [
+    "python",
+    "javascript"
+  ],
+  "skills": [
+    "API Design",
+    "REST APIs"
+  ],
+  "summary": "Build a book catalogue API with filtering, pagination and strict query validation.",
+  "statement": "Build a small library catalogue as a JSON API. Books live in memory: a fresh copy of your app starts for every test case.\n\nA book looks like `{\"id\": 1, \"title\": \"Dune\", \"author\": \"Frank Herbert\", \"year\": 1965, \"tags\": [\"sci-fi\"]}`. Ids start at `1` and go up by one for each new book.\n\n| Method and path | Behaviour |\n| --- | --- |\n| `POST /books` | Body: `title` and `author` (strings, 1 to 200 characters after trimming; store them trimmed), `year` (an integer from 1450 to 2100) and `tags` (optional, default `[]`: at most 10 strings of 1 to 30 characters, stored as given). Returns `201` with the book, or `400` `{\"error\": \"invalid book\"}`. |\n| `GET /books/<id>` | `200` with the book, or `404` `{\"error\": \"book not found\"}`. |\n| `GET /books` | Lists books in id order, filtered and paginated by the query parameters below. Returns `200` with `{\"page\", \"per_page\", \"total\", \"total_pages\", \"data\"}`. |\n\nQuery parameters for `GET /books` (all optional; unknown ones are ignored):\n\n- `author`: keep books whose author equals it exactly.\n- `tag`: keep books whose `tags` contain it.\n- `year_from`, `year_to`: keep books with `year_from ≤ year ≤ year_to`.\n- `page` (default `1`) and `per_page` (default `10`). A `per_page` above `50` is treated as `50`.\n\n`total` counts every matching book, `total_pages` is `total / per_page` rounded up (`0` when nothing matches), and `data` holds that page's books (empty past the last page). `page`, `per_page`, `year_from` and `year_to` must be written with digits only, and `page` and `per_page` must be at least `1`; otherwise answer `400` `{\"error\": \"invalid query\"}`.",
+  "functionDescription": "Complete the web app in the editor. The template already creates the app, the in-memory storage and one handler per endpoint; each handler currently answers `501`.\n\n- **Python:** a Flask 3 app. Read query parameters with `request.args.get(...)` and the body with `request.get_json(silent=True)`.\n- **JavaScript:** an Express 4 app with `express.json()`. Read query parameters from `req.query` and the body from `req.body`.\n\nThe app must listen on `127.0.0.1` at the port in the `PORT` environment variable, as the template does.",
+  "inputFormat": "Each test case is a list of HTTP requests, one JSON object per line, with `method`, `path` and, for requests that send one, `body`. Query strings are already URL-encoded in `path`. The judge starts your app and sends the requests in order.",
+  "constraints": "- At most `150` requests per test case.\n- Strings in the tests are ASCII, and no query parameter is repeated.",
+  "outputFormat": "For each request, the judge prints `<n>. <METHOD> <path> -> <status> <body>`. The body is your JSON with its keys sorted and no spaces, or `-` when it is empty. Your output matches when every status and body matches.",
+  "samples": [
+    {
+      "input": "{\"method\": \"POST\", \"path\": \"/books\", \"body\": {\"title\": \"Dune\", \"author\": \"Frank Herbert\", \"year\": 1965, \"tags\": [\"sci-fi\"]}}\n{\"method\": \"POST\", \"path\": \"/books\", \"body\": {\"title\": \"Emma\", \"author\": \"Jane Austen\", \"year\": 1815, \"tags\": [\"classic\"]}}\n{\"method\": \"POST\", \"path\": \"/books\", \"body\": {\"title\": \"Children of Dune\", \"author\": \"Frank Herbert\", \"year\": 1976, \"tags\": [\"sci-fi\", \"classic\"]}}\n{\"method\": \"GET\", \"path\": \"/books?author=Frank%20Herbert&per_page=1&page=2\"}\n",
+      "output": "1. POST /books -> 201 {\"author\":\"Frank Herbert\",\"id\":1,\"tags\":[\"sci-fi\"],\"title\":\"Dune\",\"year\":1965}\n2. POST /books -> 201 {\"author\":\"Jane Austen\",\"id\":2,\"tags\":[\"classic\"],\"title\":\"Emma\",\"year\":1815}\n3. POST /books -> 201 {\"author\":\"Frank Herbert\",\"id\":3,\"tags\":[\"sci-fi\",\"classic\"],\"title\":\"Children of Dune\",\"year\":1976}\n4. GET /books?author=Frank%20Herbert&per_page=1&page=2 -> 200 {\"data\":[{\"author\":\"Frank Herbert\",\"id\":3,\"tags\":[\"sci-fi\",\"classic\"],\"title\":\"Children of Dune\",\"year\":1976}],\"page\":2,\"per_page\":1,\"total\":2,\"total_pages\":2}\n",
+      "explanation": "Three books are added. Filtering by `author` finds two of them; with `per_page=1`, page 2 holds the second one and `total_pages` is `2`."
+    },
+    {
+      "input": "{\"method\": \"POST\", \"path\": \"/books\", \"body\": {\"title\": \"Old Tale\", \"author\": \"Anon\", \"year\": 1300}}\n{\"method\": \"POST\", \"path\": \"/books\", \"body\": {\"title\": \"Emma\", \"author\": \"Jane Austen\", \"year\": 1815, \"tags\": [\"classic\", \"romance\"]}}\n{\"method\": \"POST\", \"path\": \"/books\", \"body\": {\"title\": \"Dune\", \"author\": \"Frank Herbert\", \"year\": 1965, \"tags\": [\"sci-fi\", \"classic\"]}}\n{\"method\": \"GET\", \"path\": \"/books?tag=classic&year_to=1900\"}\n{\"method\": \"GET\", \"path\": \"/books?page=0\"}\n{\"method\": \"GET\", \"path\": \"/books/9\"}\n",
+      "output": "1. POST /books -> 400 {\"error\":\"invalid book\"}\n2. POST /books -> 201 {\"author\":\"Jane Austen\",\"id\":1,\"tags\":[\"classic\",\"romance\"],\"title\":\"Emma\",\"year\":1815}\n3. POST /books -> 201 {\"author\":\"Frank Herbert\",\"id\":2,\"tags\":[\"sci-fi\",\"classic\"],\"title\":\"Dune\",\"year\":1965}\n4. GET /books?tag=classic&year_to=1900 -> 200 {\"data\":[{\"author\":\"Jane Austen\",\"id\":1,\"tags\":[\"classic\",\"romance\"],\"title\":\"Emma\",\"year\":1815}],\"page\":1,\"per_page\":10,\"total\":1,\"total_pages\":1}\n5. GET /books?page=0 -> 400 {\"error\":\"invalid query\"}\n6. GET /books/9 -> 404 {\"error\":\"book not found\"}\n",
+      "explanation": "A year of `1300` is rejected. `tag=classic` with `year_to=1900` keeps only `Emma`. `page=0` is an invalid query, and book `9` doesn't exist."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06"
+    },
+    {
+      "file": "07",
+      "weight": 2
+    },
+    {
+      "file": "08",
+      "weight": 2
+    }
+  ]
+}

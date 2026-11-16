@@ -6,7 +6,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 export const MCQ_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'mcq');
-export const MCQ_TOPICS = ['Data Structures', 'Algorithms', 'Complexity', 'Databases', 'Operating Systems', 'Networking', 'Concurrency', 'Security', 'Object-Oriented Design', 'System Design', 'Testing', 'Git', 'Web', 'Python', 'JavaScript', 'Java'];
+export const MCQ_TOPICS = ['Data Structures', 'Algorithms', 'Complexity', 'Databases', 'Operating Systems', 'Networking', 'Concurrency', 'Security', 'Object-Oriented Design', 'System Design', 'Testing', 'Git', 'Web', 'Python', 'JavaScript', 'Java', 'Machine Learning', 'Deep Learning', 'LLMs and RAG', 'ML Systems', 'REST APIs', 'SQL'];
 export const MCQ_POINTS = {Easy: 5, Medium: 10, Hard: 15};
 export const SUBJECTIVE_POINTS = {Easy: 10, Medium: 20, Hard: 30};
 

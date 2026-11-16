@@ -1,0 +1,120 @@
+{"method": "DELETE", "path": "/tasks/999"}
+{"method": "PATCH", "path": "/tasks/999", "body": {"title": ""}}
+{"method": "PATCH", "path": "/tasks/999", "body": {"done": false}}
+{"method": "GET", "path": "/tasks"}
+{"method": "PATCH", "path": "/tasks/3", "body": {"done": true}}
+{"method": "GET", "path": "/tasks/11"}
+{"method": "GET", "path": "/tasks/11"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Update docs 3 ", "priority": 2}}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": true}}
+{"method": "DELETE", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "PATCH", "path": "/tasks/5", "body": {"done": true}}
+{"method": "DELETE", "path": "/tasks/999"}
+{"method": "POST", "path": "/tasks", "body": {"title": ""}}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks"}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": "3"}}
+{"method": "PATCH", "path": "/tasks/abc", "body": ["done"]}
+{"method": "GET", "path": "/tasks"}
+{"method": "POST", "path": "/tasks", "body": {"title": ""}}
+{"method": "PATCH", "path": "/tasks/12", "body": {"priority": 7}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Fix login bug 5 ", "priority": 1}}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "DELETE", "path": "/tasks/1"}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": 2.5}}
+{"method": "GET", "path": "/tasks"}
+{"method": "PATCH", "path": "/tasks/999", "body": {"title": ""}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Deploy 2 "}}
+{"method": "DELETE", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks/6"}
+{"method": "PATCH", "path": "/tasks/7", "body": {"priority": 7}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Plan sprint 1 ", "priority": 3}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Fix login bug 2 ", "priority": 2}}
+{"method": "GET", "path": "/tasks"}
+{"method": "DELETE", "path": "/tasks/5"}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks/7"}
+{"method": "PATCH", "path": "/tasks/11", "body": {"owner": "sam"}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 5 "}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 5 "}}
+{"method": "POST", "path": "/tasks", "body": {"title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}}
+{"method": "GET", "path": "/tasks"}
+{"method": "PATCH", "path": "/tasks/999", "body": {"priority": 7}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 1 "}}
+{"method": "PATCH", "path": "/tasks/999", "body": {"priority": 7}}
+{"method": "DELETE", "path": "/tasks/999"}
+{"method": "PATCH", "path": "/tasks/6", "body": {"title": "Renamed", "priority": 9}}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"title": "Plan sprint"}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Write tests 6 "}}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"priority": 1}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Fix login bug 2 "}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Update docs 1 "}}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "PATCH", "path": "/tasks/9", "body": {"title": ""}}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": "3"}}
+{"method": "PATCH", "path": "/tasks/4", "body": {"owner": "sam"}}
+{"method": "POST", "path": "/tasks", "body": ["Write tests"]}
+{"method": "PATCH", "path": "/tasks/999", "body": {"priority": 7}}
+{"method": "PATCH", "path": "/tasks/9", "body": {"priority": 5}}
+{"method": "POST", "path": "/tasks", "body": {"title": "   "}}
+{"method": "GET", "path": "/tasks"}
+{"method": "PATCH", "path": "/tasks/6", "body": {"title": "Plan sprint"}}
+{"method": "GET", "path": "/tasks"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Call vendor 2 ", "priority": 5}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 2 ", "priority": 2}}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"done": false}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Plan sprint 4 ", "priority": 4}}
+{"method": "GET", "path": "/tasks"}
+{"method": "DELETE", "path": "/tasks/999"}
+{"method": "DELETE", "path": "/tasks/abc"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Plan sprint 6 ", "priority": 5}}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "PATCH", "path": "/tasks/999", "body": {"done": "yes"}}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": true}}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": 0}}
+{"method": "DELETE", "path": "/tasks/9"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 1 ", "priority": 3}}
+{"method": "PATCH", "path": "/tasks/6", "body": ["done"]}
+{"method": "DELETE", "path": "/tasks/999"}
+{"method": "GET", "path": "/tasks"}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"done": "yes"}}
+{"method": "GET", "path": "/tasks"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Call vendor 8 "}}
+{"method": "GET", "path": "/tasks/1"}
+{"method": "PATCH", "path": "/tasks/11", "body": {"done": true}}
+{"method": "PATCH", "path": "/tasks/999", "body": ["done"]}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "POST", "path": "/tasks", "body": {"title": 42}}
+{"method": "DELETE", "path": "/tasks/999"}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"title": ""}}
+{"method": "PATCH", "path": "/tasks/999", "body": {"done": false}}
+{"method": "POST", "path": "/tasks", "body": ["Write tests"]}
+{"method": "GET", "path": "/tasks"}
+{"method": "PATCH", "path": "/tasks/abc", "body": {}}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "PATCH", "path": "/tasks/999", "body": {"done": true}}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "PATCH", "path": "/tasks/8", "body": {"owner": "sam"}}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"done": true}}
+{"method": "PATCH", "path": "/tasks/999", "body": {"owner": "sam"}}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"owner": "sam"}}
+{"method": "DELETE", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "DELETE", "path": "/tasks/abc"}
+{"method": "DELETE", "path": "/tasks/999"}
+{"method": "DELETE", "path": "/tasks/11"}
+{"method": "DELETE", "path": "/tasks/4"}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks"}
+{"method": "GET", "path": "/tasks"}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "PATCH", "path": "/tasks/abc", "body": {}}
+{"method": "PATCH", "path": "/tasks/4", "body": {"priority": 5}}
+{"method": "PATCH", "path": "/tasks/999", "body": ["done"]}
+{"method": "DELETE", "path": "/tasks/abc"}
+{"method": "DELETE", "path": "/tasks/3"}

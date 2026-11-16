@@ -1,0 +1,8 @@
+[
+  {"id": "ai-assisted-oa", "title": "AI-assisted assessments and interviews", "summary": "The AI levels and what gets recorded, the first five minutes, the think, plan, prompt-small, verify loop, timing for a 60-minute round, red flags and drills.", "minutes": 6},
+  {"id": "hackerrank-style-oa", "title": "How a timed online assessment works", "summary": "The test flow, Run Code versus Run Tests versus Save & Proceed, what is evaluated when time runs out, verdicts, integrity modes and time management.", "minutes": 6},
+  {"id": "ml-interviews", "title": "Machine learning engineer interviews", "summary": "ML coding from scratch, the fundamentals to explain, a structure for ML system design, LLM and RAG design, and preparing a project deep dive.", "minutes": 5},
+  {"id": "api-and-backend", "title": "API and back-end questions", "summary": "REST client tasks over paginated APIs, build-an-API projects scored by hidden tests, the API design rules worth knowing and common back-end topics.", "minutes": 5},
+  {"id": "sql", "title": "SQL questions", "summary": "A routine for writing correct queries, the join, aggregation and window-function patterns to know, NULL traps and index questions.", "minutes": 4},
+  {"id": "sources", "title": "Further reading", "summary": "The public pages behind these guides: platform documentation on AI-assisted rounds, scoring and integrity, other question formats, and candidate accounts.", "minutes": 3}
+]

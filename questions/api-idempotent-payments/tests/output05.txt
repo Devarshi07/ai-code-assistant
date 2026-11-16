@@ -1,0 +1,9 @@
+1. POST /payments -> 201 {"amount":300,"currency":"EUR","id":"pay_1","status":"captured"}
+2. POST /payments -> 201 {"amount":300,"currency":"EUR","id":"pay_2","status":"captured"}
+3. POST /payments/pay_2/refund -> 200 {"amount":300,"currency":"EUR","id":"pay_2","status":"refunded"}
+4. POST /payments -> 201 {"amount":300,"currency":"EUR","id":"pay_2","status":"captured"}
+5. GET /payments/pay_2 -> 200 {"amount":300,"currency":"EUR","id":"pay_2","status":"refunded"}
+6. POST /payments -> 201 {"amount":50,"currency":"GBP","id":"pay_3","status":"captured"}
+7. POST /payments/pay_3/refund -> 200 {"amount":50,"currency":"GBP","id":"pay_3","status":"refunded"}
+8. POST /payments/pay_3/refund -> 409 {"error":"payment already refunded"}
+9. GET /payments -> 200 {"captured":{"EUR":300},"count":3}

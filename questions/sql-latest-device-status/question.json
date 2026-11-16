@@ -1,0 +1,61 @@
+{
+  "id": "sql-latest-device-status",
+  "title": "Latest Device Status",
+  "difficulty": "Hard",
+  "maxScore": 80,
+  "kind": "sql",
+  "languages": [
+    "sql"
+  ],
+  "skills": [
+    "SQL"
+  ],
+  "summary": "Pick each device's latest reading with a tie-break, skip bad rows and count duplicate deliveries.",
+  "statement": "A fleet of sensors reports its status to a collector. The collector's queue sometimes delivers the same reading more than once, so `readings` contains duplicates: rows with the same `device`, `status` and `recorded_at` but different `id`s. Some readings arrive with no status at all.\n\nFor each device, find its **latest reading**:\n\n- ignore readings whose `status` is NULL;\n- the latest reading has the greatest `recorded_at`;\n- if several readings share that `recorded_at`, the one with the greatest `id` wins.\n\nLeave out devices whose latest status is `retired`, and devices with no readings left after ignoring NULL statuses.\n\nReturn `device`, `status`, `recorded_at` and `copies`: how many of that device's readings have exactly the same `status` and `recorded_at` as its latest reading, the latest one included. Sort by `device`.",
+  "functionDescription": "Write one **SELECT** statement in the editor. Every test case creates this table and fills it with its own rows:\n\n```sql\nCREATE TABLE readings (\n  id INTEGER PRIMARY KEY,\n  device TEXT NOT NULL,\n  status TEXT,\n  recorded_at TEXT NOT NULL\n);\n```\n\n`recorded_at` is written as `YYYY-MM-DD HH:MM:SS`, so comparing it as text compares the times. The query runs on SQLite, which supports window functions and common table expressions.",
+  "inputFormat": "The test input is the SQL that creates and fills the table, as shown in the samples. Hidden test cases use different rows.",
+  "constraints": "- `0 ≤` rows in `readings` `≤ 30000`\n- `status` is NULL or one of `online`, `offline`, `degraded`, `retired`\n- Up to 2000 distinct devices.",
+  "outputFormat": "The first line holds the column names in lower case, separated by tabs: `device`, `status`, `recorded_at`, `copies`. Each following line is one row, with values separated by tabs, sorted by `device`.",
+  "samples": [
+    {
+      "input": "CREATE TABLE readings (\n  id INTEGER PRIMARY KEY,\n  device TEXT NOT NULL,\n  status TEXT,\n  recorded_at TEXT NOT NULL\n);\nINSERT INTO readings VALUES\n  (1, 'cam-1', 'offline', '2025-06-01 10:00:00'),\n  (2, 'cam-1', 'online', '2025-06-01 10:05:00'),\n  (3, 'cam-1', 'online', '2025-06-01 10:05:00'),\n  (4, 'cam-2', 'offline', '2025-06-01 09:00:00'),\n  (5, 'cam-2', NULL, '2025-06-01 09:30:00'),\n  (6, 'cam-3', 'online', '2025-06-01 08:00:00'),\n  (7, 'cam-3', 'retired', '2025-06-01 11:00:00');\n",
+      "output": "device\tstatus\trecorded_at\tcopies\ncam-1\tonline\t2025-06-01 10:05:00\t2\ncam-2\toffline\t2025-06-01 09:00:00\t1\n",
+      "explanation": "`cam-1`'s latest reading is `online` at 10:05, delivered twice (ids `2` and `3`), so `copies` is `2`. `cam-2`'s newest row has no status, so its latest reading is `offline` at 09:00. `cam-3` is retired, so it is left out."
+    },
+    {
+      "input": "CREATE TABLE readings (\n  id INTEGER PRIMARY KEY,\n  device TEXT NOT NULL,\n  status TEXT,\n  recorded_at TEXT NOT NULL\n);\nINSERT INTO readings VALUES\n  (10, 'gate', 'online', '2025-06-02 11:00:00'),\n  (11, 'gate', 'online', '2025-06-02 12:00:00'),\n  (12, 'gate', 'degraded', '2025-06-02 12:00:00'),\n  (13, 'vent', NULL, '2025-06-02 12:30:00'),\n  (14, 'vent', NULL, '2025-06-02 12:40:00');\n",
+      "output": "device\tstatus\trecorded_at\tcopies\ngate\tdegraded\t2025-06-02 12:00:00\t1\n",
+      "explanation": "Both of `gate`'s readings at 12:00 are the latest; id `12` beats id `11`, so the status is `degraded`, and only that one reading matches it. `vent` has only NULL statuses, so it is left out."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06",
+      "weight": 2
+    },
+    {
+      "file": "07",
+      "weight": 2
+    }
+  ]
+}

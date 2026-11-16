@@ -1,0 +1,26 @@
+CREATE TABLE instructors (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL
+);
+CREATE TABLE classes (
+  id INTEGER PRIMARY KEY,
+  instructor_id INTEGER NOT NULL REFERENCES instructors(id),
+  held_on TEXT NOT NULL,
+  attendees INTEGER NOT NULL
+);
+INSERT INTO instructors VALUES
+  (1, 'Noor'),
+  (2, 'Raj');
+INSERT INTO classes VALUES
+  (1, 2, '2025-08-02', 12),
+  (2, 1, '2025-08-03', 13),
+  (3, 2, '2025-08-04', 11),
+  (4, 1, '2025-08-05', 12),
+  (5, 2, '2025-08-06', 13),
+  (6, 1, '2025-08-07', 11),
+  (7, 2, '2025-08-08', 12),
+  (8, 1, '2025-08-09', 13),
+  (9, 2, '2025-08-01', 11),
+  (10, 1, '2025-08-02', 12),
+  (11, 2, '2025-08-03', 13),
+  (12, 1, '2025-08-04', 11);

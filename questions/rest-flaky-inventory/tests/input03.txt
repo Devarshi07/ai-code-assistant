@@ -1,0 +1,13 @@
+power tools
+--- api data ---
+{
+  "per_page": 5,
+  "throttle": "first",
+  "resources": {
+    "stock": [
+      {"sku": "SKU-0001", "category": "power tools", "warehouse": "MAD-7", "quantity": -3},
+      {"sku": "SKU-0002", "category": "power tools", "warehouse": "MAD-7", "quantity": 3},
+      {"sku": "SKU-0003", "category": "power tools", "warehouse": "VAL-2", "quantity": -1}
+    ]
+  }
+}

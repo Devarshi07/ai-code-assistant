@@ -1,0 +1,9 @@
+CREATE TABLE sales (
+  id INTEGER PRIMARY KEY,
+  region TEXT NOT NULL,
+  rep TEXT NOT NULL,
+  amount INTEGER NOT NULL,
+  sold_on TEXT NOT NULL
+);
+INSERT INTO sales VALUES
+  (1, 'North', 'Solo', 42, '2025-01-02');

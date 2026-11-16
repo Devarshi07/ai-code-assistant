@@ -1,0 +1,20 @@
+CREATE TABLE instructors (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL
+);
+CREATE TABLE classes (
+  id INTEGER PRIMARY KEY,
+  instructor_id INTEGER NOT NULL REFERENCES instructors(id),
+  held_on TEXT NOT NULL,
+  attendees INTEGER NOT NULL
+);
+INSERT INTO instructors VALUES
+  (1, 'Sam'),
+  (2, 'Sam');
+INSERT INTO classes VALUES
+  (1, 1, '2025-03-01', 14),
+  (2, 1, '2025-03-08', 12),
+  (3, 1, '2025-03-15', 13),
+  (4, 2, '2025-03-02', 9),
+  (5, 2, '2025-03-09', 10),
+  (6, 2, '2025-03-16', 11);

@@ -1,0 +1,14 @@
+Science Fiction
+2030
+2
+--- api data ---
+{
+  "per_page": 3,
+  "resources": {
+    "movies": [
+      {"id": 1, "title": "Iron Moon", "genre": "Science Fiction", "year": 2029, "rating": 9.9},
+      {"id": 2, "title": "Zero Signal", "genre": "Science Fiction", "year": 2030, "rating": 1.0},
+      {"id": 3, "title": "Echo", "genre": "Science Fiction", "year": 2030, "rating": 1.0}
+    ]
+  }
+}

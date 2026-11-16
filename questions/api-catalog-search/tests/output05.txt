@@ -1,0 +1,7 @@
+1. POST /books -> 201 {"author":"Jane Austen","id":1,"tags":[],"title":"A","year":1811}
+2. POST /books -> 201 {"author":"jane austen","id":2,"tags":[],"title":"B","year":1813}
+3. GET /books?author=jane%20austen -> 200 {"data":[{"author":"jane austen","id":2,"tags":[],"title":"B","year":1813}],"page":1,"per_page":10,"total":1,"total_pages":1}
+4. GET /books?year_from=1812&year_to=1811 -> 200 {"data":[],"page":1,"per_page":10,"total":0,"total_pages":0}
+5. GET /books?year_from=abc -> 400 {"error":"invalid query"}
+6. GET /books?year_to=-1 -> 400 {"error":"invalid query"}
+7. GET /books?sort=title&page=1 -> 200 {"data":[{"author":"Jane Austen","id":1,"tags":[],"title":"A","year":1811},{"author":"jane austen","id":2,"tags":[],"title":"B","year":1813}],"page":1,"per_page":10,"total":2,"total_pages":1}

@@ -1,0 +1,7 @@
+1. POST /payments -> 400 {"error":"missing idempotency key"}
+2. POST /payments -> 201 {"amount":500,"currency":"GBP","id":"pay_1","status":"captured"}
+3. POST /payments/pay_1/refund -> 200 {"amount":500,"currency":"GBP","id":"pay_1","status":"refunded"}
+4. POST /payments -> 201 {"amount":500,"currency":"GBP","id":"pay_1","status":"captured"}
+5. GET /payments/pay_1 -> 200 {"amount":500,"currency":"GBP","id":"pay_1","status":"refunded"}
+6. POST /payments/pay_1/refund -> 409 {"error":"payment already refunded"}
+7. GET /payments -> 200 {"captured":{},"count":1}

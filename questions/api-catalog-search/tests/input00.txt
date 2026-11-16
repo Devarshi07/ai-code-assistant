@@ -1,0 +1,4 @@
+{"method": "POST", "path": "/books", "body": {"title": "Dune", "author": "Frank Herbert", "year": 1965, "tags": ["sci-fi"]}}
+{"method": "POST", "path": "/books", "body": {"title": "Emma", "author": "Jane Austen", "year": 1815, "tags": ["classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": "Children of Dune", "author": "Frank Herbert", "year": 1976, "tags": ["sci-fi", "classic"]}}
+{"method": "GET", "path": "/books?author=Frank%20Herbert&per_page=1&page=2"}

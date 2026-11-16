@@ -1,0 +1,4 @@
+{"method": "POST", "path": "/tasks", "body": {"title": "Write tests", "priority": 2}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Ship it  "}}
+{"method": "GET", "path": "/tasks/2"}
+{"method": "GET", "path": "/tasks"}

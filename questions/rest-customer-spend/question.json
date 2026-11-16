@@ -1,0 +1,63 @@
+{
+  "id": "rest-customer-spend",
+  "title": "Customer Spend",
+  "difficulty": "Easy",
+  "maxScore": 30,
+  "kind": "rest",
+  "languages": [
+    "python",
+    "javascript"
+  ],
+  "skills": [
+    "REST APIs",
+    "Implementation"
+  ],
+  "summary": "Walk every page of an orders API and add up one customer's paid orders.",
+  "statement": "An online shop exposes its orders through a REST API that returns results one page at a time. Given a customer's name, return the total amount that customer has paid: the sum of `amount` over **all** of their orders whose `status` is `paid`.\n\nFetch the orders with:\n\n```\nGET {API_BASE_URL}/api/orders?customer=<name>&page=<n>\n```\n\nThe response is JSON:\n\n```json\n{\n  \"page\": 1,\n  \"per_page\": 3,\n  \"total\": 4,\n  \"total_pages\": 2,\n  \"data\": [\n    {\"id\": 1, \"customer\": \"Ana Lima\", \"amount\": 120, \"status\": \"paid\"}\n  ]\n}\n```\n\n- `customer` keeps only that customer's orders (exact match). Encode the name for the URL: names can contain spaces, apostrophes and accents.\n- Pages start at `1`, and `total_pages` is `0` when nothing matches.\n- `status` is `paid`, `refunded` or `pending`.",
+  "functionDescription": "Complete the **totalPaid** function in the editor below.\n\n**totalPaid** has the following parameter:\n\n- `string customer`: the customer's name\n\n**Returns**\n\n- `int`: the sum of `amount` over the customer's paid orders, or `0` if there are none\n\nThe API's address is in the `API_BASE_URL` environment variable; the template reads it into `BASE_URL`. In Python use `urllib.request` and `json`; in JavaScript use `fetch` (the function is `async`).",
+  "inputFormat": "The first line contains the customer's name.\n\nIn the samples, the lines after `--- api data ---` show the orders that test's API serves. Your program doesn't receive them: it reads only the first line and must call the API.",
+  "constraints": "- The API holds at most `2000` orders.\n- `1 ≤ per_page ≤ 10`\n- `1 ≤ amount ≤ 10^4`\n- Names have 1 to 40 characters.",
+  "outputFormat": "Print the total as a single integer.",
+  "samples": [
+    {
+      "input": "Ana Lima\n--- api data ---\n{\n  \"per_page\": 3,\n  \"resources\": {\n    \"orders\": [\n      {\"id\": 1, \"customer\": \"Ana Lima\", \"amount\": 120, \"status\": \"paid\"},\n      {\"id\": 2, \"customer\": \"Rui Gomes\", \"amount\": 999, \"status\": \"paid\"},\n      {\"id\": 3, \"customer\": \"Ana Lima\", \"amount\": 40, \"status\": \"refunded\"},\n      {\"id\": 4, \"customer\": \"Ana Lima\", \"amount\": 80, \"status\": \"paid\"},\n      {\"id\": 5, \"customer\": \"Marta Sousa\", \"amount\": 60, \"status\": \"paid\"},\n      {\"id\": 6, \"customer\": \"Ana Lima\", \"amount\": 15, \"status\": \"pending\"}\n    ]\n  }\n}\n",
+      "output": "200\n",
+      "explanation": "Ana Lima has four orders over two pages of three: `120` and `80` are paid, `40` was refunded and `15` is pending. `120 + 80 = 200`. The other customers' orders don't count."
+    },
+    {
+      "input": "Zoë O'Neil\n--- api data ---\n{\n  \"per_page\": 2,\n  \"resources\": {\n    \"orders\": [\n      {\"id\": 1, \"customer\": \"Zoë O'Neil\", \"amount\": 30, \"status\": \"paid\"},\n      {\"id\": 2, \"customer\": \"Zoë O'Neil\", \"amount\": 10, \"status\": \"refunded\"},\n      {\"id\": 3, \"customer\": \"Li Wei\", \"amount\": 70, \"status\": \"paid\"},\n      {\"id\": 4, \"customer\": \"Zoë O'Neil\", \"amount\": 45, \"status\": \"paid\"},\n      {\"id\": 5, \"customer\": \"Zoë O'Neil\", \"amount\": 20, \"status\": \"pending\"},\n      {\"id\": 6, \"customer\": \"Zoë O'Neil\", \"amount\": 5, \"status\": \"paid\"}\n    ]\n  }\n}\n",
+      "output": "80\n",
+      "explanation": "The name must be encoded in the URL (`Zo%C3%AB+O%27Neil`). Her orders span three pages of two; the paid ones add up to `30 + 45 + 5 = 80`."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06",
+      "weight": 2
+    },
+    {
+      "file": "07",
+      "weight": 2
+    }
+  ]
+}

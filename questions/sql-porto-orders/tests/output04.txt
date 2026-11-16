@@ -1,0 +1,6 @@
+order_id	customer_name	total
+1	Pedro O'Neill	25
+2	Pedro O'Neill	25
+3	Pedro O'Neill	25
+4	Pedro O'Neill	25
+5	Pedro O'Neill	25

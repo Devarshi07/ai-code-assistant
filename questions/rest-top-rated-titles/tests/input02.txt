@@ -1,0 +1,12 @@
+Documentary
+2000
+3
+--- api data ---
+{
+  "per_page": 5,
+  "resources": {
+    "movies": [
+      {"id": 1, "title": "Night Train", "genre": "Drama", "year": 2019, "rating": 8.1}
+    ]
+  }
+}

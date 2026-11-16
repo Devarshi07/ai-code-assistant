@@ -179,5 +179,126 @@
       "Notes the trade-offs: no jumping to an arbitrary page number, cursors tied to a sort order and filters, and handling of invalid cursors"
     ],
     "sampleAnswer": "Offset pagination runs `ORDER BY created_at DESC LIMIT 50 OFFSET 100000`. The database still walks past the 100,000 skipped rows, so deep pages get slower and slower. Offsets also shift under writes: if three orders arrive while a client reads page 1, page 2 starts three rows earlier and repeats items, and deletions make it skip items. Keyset pagination remembers where the last page ended. With an index on `(created_at DESC, id DESC)`, the next page is `WHERE (created_at, id) < (:ts, :id) ORDER BY created_at DESC, id DESC LIMIT 50`, an index seek that costs the same at any depth. Including `id` makes the key unique so ties aren't lost, and new orders don't disturb later pages because they sort before the cursor. The API is `GET /orders?limit=50&cursor=...`, returning `{\"data\": [...], \"next_cursor\": \"...\"}`; the cursor is an opaque base64 encoding of the last `(created_at, id)` plus the filters, and `null` on the last page. I'd cap `limit` at 200, return `400` for a malformed cursor, and skip exact totals. The cost: clients can't jump to page 37."
+  },
+  {
+    "id": "sub-ml-leakage-churn",
+    "topic": "Machine Learning",
+    "difficulty": "Medium",
+    "points": 20,
+    "question": "Your churn model scored 0.97 ROC-AUC offline but performs barely better than random after launch. Explain how you would check whether data leakage caused this, and how you would rebuild the training set so it can't happen again.",
+    "rubric": [
+      "Suspects target leakage and looks for features that are only known after the outcome, such as a cancellation reason, an account-closed flag or usage aggregated past the prediction date",
+      "Checks feature importance or ablations: one feature carrying most of the signal is a warning sign",
+      "Compares offline feature values with what the online service actually has at prediction time",
+      "Builds features point-in-time: each row uses only data available at its prediction date",
+      "Splits by time (train on earlier periods, validate on later ones) instead of randomly"
+    ],
+    "sampleAnswer": "An offline AUC of 0.97 for churn is suspicious, so I'd start by hunting for target leakage. I'd rank features by importance and ablate the top ones: if dropping one feature collapses the AUC, I'd trace how it is computed. Typical culprits are fields written after the customer churns, like a cancellation reason or a \"downgrade requested\" flag, or usage aggregated over a window that runs past the prediction date. I'd also log what the online service sends at prediction time and compare it with the training values for the same customers; differences point to features that get filled in later. To rebuild the set, each row gets a snapshot date, every feature is computed only from events before that date (a point-in-time join), and the label covers the following 30 days. Validation uses a time-based split, training on earlier months and testing on later ones, so the offline number reflects what the model will face."
+  },
+  {
+    "id": "sub-ml-imbalanced-metrics",
+    "topic": "Machine Learning",
+    "difficulty": "Easy",
+    "points": 10,
+    "question": "Fraud is 0.2% of transactions. Explain why accuracy is a poor metric for a fraud model, and describe the metrics and the threshold choice you would use instead.",
+    "rubric": [
+      "Explains that predicting \"not fraud\" for everything already gives 99.8% accuracy, so accuracy hides a useless model",
+      "Uses class-specific metrics: precision and recall on the fraud class, or the precision-recall curve and its area",
+      "Chooses the threshold from business costs (a missed fraud versus a false alarm) or from analyst review capacity",
+      "Evaluates on data with the real class balance, or reports results at a fixed alert volume"
+    ],
+    "sampleAnswer": "With 0.2% fraud, a model that never flags anything scores 99.8% accuracy while catching nothing, so accuracy can't tell a useful model from a useless one. I'd report precision and recall for the fraud class: precision is the share of alerts that are real fraud, and recall is the share of fraud we catch. Because the model outputs scores, I'd look at the whole precision-recall curve and its area, which, unlike ROC-AUC, shows how many false alarms come with each catch when positives are rare. The threshold is a business decision. If analysts can review 500 alerts a day, I'd pick the threshold that produces about 500 alerts and report precision and recall there; otherwise I'd weigh the average loss from a missed fraud against the cost of reviewing a false alarm. All of this is measured on a test set with the real class balance, taken from a later period than the training data."
+  },
+  {
+    "id": "sub-dl-overfitting-plan",
+    "topic": "Deep Learning",
+    "difficulty": "Medium",
+    "points": 20,
+    "question": "Your image classifier reaches 99% training accuracy but only 70% validation accuracy. Walk through how you would diagnose the problem and what you would change, in order.",
+    "rubric": [
+      "Identifies overfitting from the large train-validation gap, after first ruling out data problems such as leakage between splits, label noise or a distribution difference between the sets",
+      "Proposes data-side fixes: more data, data augmentation, or transfer learning from a pretrained model",
+      "Proposes regularization: weight decay, dropout, early stopping on validation loss",
+      "Considers reducing model capacity or training time",
+      "Changes one thing at a time against a fixed validation set, ideally with error analysis on misclassified images"
+    ],
+    "sampleAnswer": "A 29-point gap says the model is memorizing the training set. Before tuning, I'd rule out data issues: check that validation images come from the same distribution (same cameras, classes and preprocessing), look for near-duplicates across splits, and inspect misclassified validation images for label errors. If the data is sound, I'd attack overfitting roughly in order of payoff. First, start from a pretrained backbone and fine-tune it, which usually helps most on small datasets. Second, add augmentation that fits the domain, such as crops, flips and color jitter. Third, add regularization: weight decay, dropout before the classifier head, and early stopping on validation loss. If the gap remains, I'd try a smaller model or fewer epochs. I'd change one thing at a time against a fixed validation set, and break errors down by class to see whether particular classes need more data."
+  },
+  {
+    "id": "sub-dl-attention-explain",
+    "topic": "Deep Learning",
+    "difficulty": "Medium",
+    "points": 20,
+    "question": "Explain scaled dot-product attention to a teammate who knows basic neural networks: what queries, keys and values are, why the scores are scaled, and what a causal mask does.",
+    "rubric": [
+      "Each token is projected into a query, a key and a value, and a token's query is compared with every key to score relevance",
+      "The scores pass through a softmax to become weights, and the output is the weighted sum of the values",
+      "Dividing by the square root of the key dimension keeps scores from growing with dimension, which would saturate the softmax and shrink its gradients",
+      "A causal mask blocks attention to later positions, so next-token prediction can't see the answer",
+      "Mentions a relevant detail such as multiple heads or the quadratic cost in sequence length"
+    ],
+    "sampleAnswer": "Attention lets each token build its representation by looking at the other tokens. Every token is projected three ways: a query (what am I looking for), a key (what do I contain) and a value (what I pass on). For one token, we take the dot product of its query with every key to get relevance scores, run them through a softmax so they become weights that sum to one, and output the weighted sum of the values. The scores are divided by the square root of the key dimension because dot products grow with dimension; without scaling, the softmax becomes almost one-hot and its gradients vanish. In a decoder that predicts the next token, a causal mask sets the scores for later positions to minus infinity, so each token sees only itself and earlier tokens and can't peek at the answer. In practice several heads run in parallel with different projections, and the cost grows quadratically with sequence length."
+  },
+  {
+    "id": "sub-rag-wrong-answer",
+    "topic": "LLMs and RAG",
+    "difficulty": "Hard",
+    "points": 30,
+    "question": "Users report that a RAG support assistant gives wrong answers even though the right document is in the knowledge base. How would you find out whether retrieval or generation is at fault, and what would you change in each case?",
+    "rubric": [
+      "Builds an evaluation set of real questions labelled with the passages that answer them",
+      "Measures retrieval on its own, for example recall@k of the labelled passage, before judging the generated answer",
+      "Retrieval fixes: chunking by structure with overlap, hybrid keyword and vector search, a reranker, metadata filters or query rewriting",
+      "Generation fixes: a prompt that requires answering from the context with citations, fewer but better chunks, allowing \"I don't know\", or a stronger model",
+      "Checks groundedness: every claim in an answer should be supported by a retrieved passage",
+      "Reruns the evaluation after each change to confirm the gain and catch regressions"
+    ],
+    "sampleAnswer": "First I'd turn the reports into an evaluation set: 100 to 200 real questions, each labelled with the passage that answers it. Then I'd test the two halves separately. For retrieval, I'd measure recall@k: is the labelled passage in the top five chunks? If not, retrieval is at fault. Fixed-size chunks may split the answer from its context, so I'd chunk by headings with some overlap; exact terms like product codes may need hybrid search combining BM25 with embeddings; a reranker can promote the right chunk; metadata filters can limit results to the right product or version. If recall is high but answers are still wrong, generation is at fault. I'd check groundedness, whether each claim is supported by the retrieved text, then tighten the prompt to answer only from the context with citations, pass fewer but better chunks, and let the model say it doesn't know. After each change I'd rerun the same evaluation, so fixes are measured and regressions show up."
+  },
+  {
+    "id": "sub-llm-evals-guardrails",
+    "topic": "LLMs and RAG",
+    "difficulty": "Medium",
+    "points": 20,
+    "question": "You are launching an LLM feature that summarizes customer support tickets for agents. Describe how you would evaluate its quality before launch and which guardrails you would add.",
+    "rubric": [
+      "Defines quality criteria such as faithfulness (no invented facts), coverage of the key issue and next action, and length or format",
+      "Builds an evaluation set of real tickets, including hard cases, with reference summaries or rubric-based human ratings",
+      "Uses automatic checks where they fit (for example an LLM judge calibrated against human ratings) alongside human review",
+      "Adds guardrails: personal-data handling, treating ticket text as untrusted input (prompt injection), output format and length validation, and a fallback when the model fails",
+      "Plans monitoring after launch, such as agent feedback and sampled reviews"
+    ],
+    "sampleAnswer": "I'd start by defining a good summary: faithful (nothing that isn't in the ticket), complete (the customer's problem, what was tried and the next action), and short enough to read in ten seconds. Then I'd collect a few hundred real tickets across products and languages, including long threads, angry customers and tickets with pasted logs, and have experienced agents rate summaries against that rubric. An LLM judge can scale the evaluation once it agrees with the human ratings on a sample, but I'd keep human spot checks. For guardrails, I'd mask personal data before it reaches the model if policy requires it, treat ticket text as untrusted so instructions inside a ticket can't change the behaviour, validate the output format and length, and fall back to showing the first message when the model errors or times out. After launch I'd add a thumbs-up and thumbs-down for agents and review a weekly sample to catch drift."
+  },
+  {
+    "id": "sub-mls-drift-monitoring",
+    "topic": "ML Systems",
+    "difficulty": "Medium",
+    "points": 20,
+    "question": "A credit-risk model's labels (whether a loan defaults) arrive about 60 days after each prediction. How would you monitor the model in production, and how would you decide when to retrain it?",
+    "rubric": [
+      "Monitors leading indicators that need no labels: input feature drift, prediction score drift and data quality (missing or out-of-range values)",
+      "Tracks real performance, such as AUC or calibration, by prediction cohort once labels mature",
+      "Sets thresholds and alerts, and investigates before acting (an upstream data bug versus a real population change)",
+      "Retrains on a schedule and on triggers, and promotes a new model only after it beats the current one on recent labelled data",
+      "Mentions a credit-specific issue such as the feedback loop from approval decisions or fairness checks"
+    ],
+    "sampleAnswer": "Because labels lag by two months, I'd rely on leading indicators day to day. I'd track each important feature's distribution against the training data with a drift score such as PSI, the distribution of predicted default probabilities, approval rates, and data quality: null rates, out-of-range values and schema changes. A sudden jump usually means an upstream bug, so alerts go to someone who checks the pipeline before anyone retrains. As labels mature, I'd compute performance by monthly cohort: AUC, and calibration, since prices and limits are set from the probabilities. Retraining happens on a schedule, say quarterly, and when drift or cohort performance crosses agreed thresholds. A candidate must beat the current model on the most recent labelled cohorts and pass fairness checks before promotion. I'd also watch the feedback loop: outcomes exist only for approved applicants, so the training data shifts with the model's own decisions."
+  },
+  {
+    "id": "sub-mls-realtime-serving",
+    "topic": "ML Systems",
+    "difficulty": "Hard",
+    "points": 30,
+    "question": "Design the serving path for a model that must score card transactions for fraud within 50 ms at the 99th percentile. Cover features, model serving, and what happens when something fails.",
+    "rubric": [
+      "Splits the latency budget across steps (network, feature lookup, inference) and keeps the critical path short",
+      "Uses precomputed and streaming-aggregated features (for example counts per card over recent windows) in a low-latency store, with the same definitions as training",
+      "Serves a model that fits the budget, such as gradient-boosted trees or a small network, on an optimized runtime",
+      "Defines fallbacks: timeouts, defaults or rules when features or the model are unavailable, with a reasoned fail-open or fail-closed choice",
+      "Logs features and predictions for monitoring and retraining, and rolls out new models in shadow or as a canary",
+      "Considers scale and reliability: replicas across zones and load testing at peak volume"
+    ],
+    "sampleAnswer": "I'd budget the 50 ms as roughly 10 for the network and request handling, 15 for features and 15 for inference, leaving headroom. Static features, such as account age and merchant risk, are precomputed in batch. Velocity features, such as transactions per card in the last minute and hour, are maintained by a stream processor in an in-memory key-value store. Both use the training pipeline's definitions through a feature store, to avoid skew. The model is gradient-boosted trees, which score in about a millisecond on a CPU, served by stateless replicas in several zones and load-tested at peak volume. Every step has a timeout. If features are slow, we score with defaults for the missing ones; if the model is down, a rules engine decides, approving small amounts and sending large ones to review, a deliberate fail-open versus fail-closed choice. Every request logs its features, score and decision. New models run in shadow first, then as a canary."
   }
 ]

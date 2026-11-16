@@ -1,0 +1,6 @@
+region	rep	total	sales_rank
+East	Ana	900	1
+East	Jon	800	2
+West	Ana	100	1
+West	Gil	50	2
+West	Hal	50	2

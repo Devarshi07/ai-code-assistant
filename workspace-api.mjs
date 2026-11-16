@@ -6,10 +6,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {execFile} from 'node:child_process';
-import {getProblem, overlay, readTree, problemFor} from './problems.mjs';
-import {readPractice, loadPractice, mutate, assertWritable, testTargets, recordRun} from './practice.mjs';
+import {getProblem, overlay, readTree, problemFor, LANGUAGES, isStack} from './problems.mjs';
+import {ensureStackImage, runStack, stackCommand} from './stack-runner.mjs';
+import {readPractice, loadPractice, mutate, assertWritable, testTargets, recordRun, baselineFiles} from './practice.mjs';
 import {diffStats} from './practice-review.mjs';
-import {runPython, ensurePythonImage} from './sandbox.mjs';
+import {runPython, ensurePythonImage, pythonSpec} from './sandbox.mjs';
+import {RESET_WORK} from './warm-sandbox.mjs';
 import {runtimes} from './runtimes.mjs';
 import {challenges} from './challenges.mjs';
 import {exclusive} from './locks.mjs';
@@ -30,7 +32,7 @@ export function recordRepoEvidence(dir, event) {
   }).catch(() => {});
 }
 
-export function workspaceApi({SESSIONS, run, listFiles, repoSession, runRepo, job}) {
+export function workspaceApi({SESSIONS, run, listFiles, repoSession, runRepo, job, pool = null}) {
   const baselineCache = new Map();
 
   async function openPractice(id) {
@@ -74,29 +76,45 @@ export function workspaceApi({SESSIONS, run, listFiles, repoSession, runRepo, jo
         return mutate(dir, problem, async st => { assertWritable(st, name); await fs.rm(path.join(root, ...name.split('/')), {force: true}); st.events.push({type: 'delete', path: name, at: Date.now(), phase: st.unlocked}); });
       },
       async baseline() {
-        const key = `practice:${id}:${state.unlocked}`;
-        if (!baselineCache.has(key)) {
-          const files = {...await overlay(problem, state.language, 'starter')};
-          for (let n = 2; n <= state.unlocked; n++) Object.assign(files, await overlay(problem, state.language, `phase${n}`));
-          baselineCache.set(key, files);
-        }
+        // Per language and phase: after a language switch the starting point changes.
+        const key = `practice:${id}:${state.language}:${state.unlocked}:${state.base?.solved || 0}`;
+        if (!baselineCache.has(key)) baselineCache.set(key, await baselineFiles(problem, state));
         return baselineCache.get(key);
       },
       record: event => mutate(dir, problem, st => { st.events.push({...event, at: Date.now(), phase: st.unlocked}); }).catch(() => {}),
       async runTests(progress = () => {}) {
-        if (state.language !== 'python') return {client: true};
-        progress('Running the phase tests in the Python sandbox…');
-        await ensurePythonImage(run, progress);
+        const lang = LANGUAGES[state.language];
+        if (lang.runner === 'browser') return {client: true};
         const names = await listFiles(root);
         const targets = testTargets(state, names);
-        const result = await runPython(run, {sourceDir: root, overlayDir: path.join(dir, 'canonical'), targets});
+        const options = {sourceDir: root, overlayDir: path.join(dir, 'canonical'), targets, pool, key: `practice:${id}`};
+        let result;
+        if (isStack(state.language)) {
+          progress(`Running the phase tests in the ${lang.label} environment…`);
+          await ensureStackImage(run, state.language, progress);
+          result = await runStack(run, {...options, language: state.language});
+        } else {
+          progress('Running the phase tests in the Python sandbox…');
+          await ensurePythonImage(run, progress);
+          result = await runPython(run, options);
+        }
         const recorded = await recordRun(dir, problem, {target: 'tests', ...result});
         return {text: formatResults(result.results, result.output), summary: recorded.summary, results: result.results};
       },
       async terminal(command, progress = () => {}) {
-        const image = state.language === 'python' ? 'python:3.12-slim' : 'node:22-alpine';
-        if (image.startsWith('python')) await ensurePythonImage(run, progress);
-        return sandboxCommand({image, sourceDir: root, overlayDir: path.join(dir, 'canonical'), command, progress});
+        const canonical = path.join(dir, 'canonical');
+        if (isStack(state.language)) {
+          if (typeof command !== 'string' || !command.trim() || command.length > 4000) throw new Error('Enter a command.');
+          if (!pool) throw new Error('The terminal needs the sandbox pool.');
+          await ensureStackImage(run, state.language, progress);
+          progress(`Running in the ${LANGUAGES[state.language].label} environment…`);
+          return stackCommand(pool, {language: state.language, key: `practice:${id}`, sourceDir: root, overlayDir: canonical, command});
+        }
+        if (state.language === 'python') {
+          await ensurePythonImage(run, progress);
+          return warmCommand(pythonSpec(`practice:${id}`, root, canonical), command, progress);
+        }
+        return warmCommand({key: `practice-js:${id}`, image: 'node:22-alpine', mounts: [{source: root, target: '/candidate'}, {source: canonical, target: '/canonical'}]}, command, progress, true);
       }
     };
   }
@@ -153,9 +171,13 @@ export function workspaceApi({SESSIONS, run, listFiles, repoSession, runRepo, jo
         return {text: result.output || '(no output)', code: result.code, benchmark: result.benchmark, timedOut: result.timedOut};
       },
       async terminal(command, progress = () => {}) {
+        // Real-world tasks keep a fresh container per command: their environment lives in the image's /testbed.
         if (s.meta.benchmark) return sandboxCommand({image: s.meta.image, sourceDir: root, command, progress, testbed: true});
-        const runtime = runtimes[s.meta.runtime] || runtimes.node;
-        return sandboxCommand({image: s.meta.testImage || runtime.image, sourceDir: root, command, progress});
+        const fresh = await repoSession(id);
+        const runtime = runtimes[fresh.meta.runtime] || runtimes.node;
+        const image = fresh.meta.testImage || runtime.image;
+        await ensureImage(image, progress);
+        return warmCommand({key: `repo:${id}`, image, mounts: [{source: root, target: '/candidate'}]}, command, progress);
       }
     };
   }
@@ -194,16 +216,34 @@ export function workspaceApi({SESSIONS, run, listFiles, repoSession, runRepo, jo
     return (await ws.baseline())[name] ?? null;
   }
 
-  // Runs one shell command against a disposable copy of the workspace.
-  async function sandboxCommand({image, sourceDir, overlayDir, command, progress, testbed = false}) {
-    if (typeof command !== 'string' || !command.trim() || command.length > 4000) throw new Error('Enter a command.');
-    progress?.(`Running in ${image}…`);
+  // Images that are known to be present, so each command doesn't ask Docker again.
+  const readyImages = new Map();
+  async function ensureImage(image, progress) {
+    if (Date.now() - (readyImages.get(image) || 0) < 600000) return;
     const exists = await run('docker', ['image', 'inspect', image], {timeout: 10000});
     if (exists.code !== 0) {
       progress?.(`Downloading ${image}. This happens once…`);
       const pulled = await run('docker', ['pull', image], {timeout: 1800000});
       if (pulled.code !== 0) throw new Error('Could not prepare the sandbox: ' + pulled.output.slice(-300));
     }
+    readyImages.set(image, Date.now());
+  }
+
+  // Runs one shell command on a fresh copy of the workspace in the session's
+  // warm container. Without a pool, it starts a disposable container instead.
+  async function warmCommand(spec, command, progress, withCanonical = spec.mounts.some(m => m.target === '/canonical')) {
+    if (typeof command !== 'string' || !command.trim() || command.length > 4000) throw new Error('Enter a command.');
+    if (!pool) return sandboxCommand({image: spec.image, sourceDir: spec.mounts[0].source, overlayDir: withCanonical ? spec.mounts.find(m => m.target === '/canonical')?.source : undefined, command, progress});
+    progress?.(`Running in ${spec.image}…`);
+    const result = await pool.exec(spec, `${RESET_WORK}; cp -a /candidate/. /work/${withCanonical ? ' && cp -a /canonical/. /work/' : ''} && cd /work && ${command}`, {timeout: 120000});
+    return {output: result.output.slice(-100000), code: result.code, timedOut: result.timedOut, ms: result.ms};
+  }
+
+  // Runs one shell command against a disposable copy of the workspace.
+  async function sandboxCommand({image, sourceDir, overlayDir, command, progress, testbed = false}) {
+    if (typeof command !== 'string' || !command.trim() || command.length > 4000) throw new Error('Enter a command.');
+    progress?.(`Running in ${image}…`);
+    await ensureImage(image, progress);
     const name = `dg-term-${randomUUID()}`;
     const mounts = ['--mount', `type=bind,source=${sourceDir},target=/candidate,readonly`];
     if (overlayDir) mounts.push('--mount', `type=bind,source=${overlayDir},target=/canonical,readonly`);

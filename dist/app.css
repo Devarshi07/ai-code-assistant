@@ -177,7 +177,7 @@ body.fs-open > .topbar, body.fs-open > .shell { display: none; }
 .menu-check.small { padding: 0; font-size: .78rem; color: var(--text-2); }
 
 /* ---------- the AI assistant ---------- */
-.assistant { display: flex; flex-direction: column; min-height: 0; height: 100%; background: var(--surface); position: relative; }
+.assistant:not(.msg) { display: flex; flex-direction: column; min-height: 0; height: 100%; background: var(--surface); position: relative; }
 .chat-head { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 8px 0 14px; border-bottom: 1px solid var(--border); flex: none; min-width: 0; }
 .chat-head > .icon { color: var(--accent); }
 .chat-title { font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -192,6 +192,8 @@ body.fs-open > .topbar, body.fs-open > .shell { display: none; }
 .assistant .msg.user .chip { background: var(--surface); }
 .assistant .msg.user .chip .icon { width: 12px; height: 12px; }
 .msg-meta { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 6px; font-size: .74rem; color: var(--muted); white-space: normal; }
+.msg-meta.guard-note { justify-content: flex-start; gap: 6px; }
+.msg-meta.guard-note .icon { width: 13px; height: 13px; }
 .mode-tag { font-weight: 700; letter-spacing: .03em; text-transform: uppercase; font-size: .66rem; padding: 1px 6px; border-radius: 4px; background: var(--surface); color: var(--text-2); }
 .mode-tag.agent { color: var(--accent-strong); }
 .mode-tag.plan { color: var(--warning); }

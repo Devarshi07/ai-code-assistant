@@ -1,0 +1,120 @@
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 3 ", "priority": 1}}
+{"method": "PATCH", "path": "/tasks/11", "body": {}}
+{"method": "GET", "path": "/tasks/9"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Write tests 8 "}}
+{"method": "GET", "path": "/tasks/6"}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"done": false}}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"owner": "sam"}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Fix login bug 3 ", "priority": 4}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 7 ", "priority": 3}}
+{"method": "PATCH", "path": "/tasks/999", "body": {}}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Update docs 3 ", "priority": 2}}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"priority": 1}}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"priority": 7}}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks/3"}
+{"method": "PATCH", "path": "/tasks/9", "body": {"title": ""}}
+{"method": "PATCH", "path": "/tasks/10", "body": {"done": "yes"}}
+{"method": "DELETE", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"done": false}}
+{"method": "GET", "path": "/tasks"}
+{"method": "DELETE", "path": "/tasks/10"}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "DELETE", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks"}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": 2.5}}
+{"method": "DELETE", "path": "/tasks/1"}
+{"method": "PATCH", "path": "/tasks/999", "body": {"priority": 7}}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"title": "Renamed", "priority": 9}}
+{"method": "PATCH", "path": "/tasks/7", "body": {"priority": 7}}
+{"method": "GET", "path": "/tasks/8"}
+{"method": "GET", "path": "/tasks"}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"title": "Renamed", "priority": 9}}
+{"method": "GET", "path": "/tasks"}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": 6}}
+{"method": "DELETE", "path": "/tasks/10"}
+{"method": "GET", "path": "/tasks/9"}
+{"method": "DELETE", "path": "/tasks/999"}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Write tests 2 "}}
+{"method": "GET", "path": "/tasks/1"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Plan sprint 2 ", "priority": 1}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 9 "}}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "PATCH", "path": "/tasks/999", "body": {"title": "Call vendor"}}
+{"method": "PATCH", "path": "/tasks/8", "body": {"priority": 3}}
+{"method": "PATCH", "path": "/tasks/5", "body": {}}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"owner": "sam"}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Fix login bug 8 "}}
+{"method": "GET", "path": "/tasks"}
+{"method": "GET", "path": "/tasks/2"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 3 ", "priority": 2}}
+{"method": "GET", "path": "/tasks"}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Deploy 3 "}}
+{"method": "GET", "path": "/tasks"}
+{"method": "PATCH", "path": "/tasks/999", "body": {"priority": 7}}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": 6}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Deploy 6 ", "priority": 3}}
+{"method": "POST", "path": "/tasks", "body": {"priority": 2}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Update docs 3 ", "priority": 5}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Fix login bug 8 ", "priority": 2}}
+{"method": "PATCH", "path": "/tasks/999", "body": {"title": "Renamed", "priority": 9}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Plan sprint 3 ", "priority": 3}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 1 ", "priority": 1}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Call vendor 7 "}}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "DELETE", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks/6"}
+{"method": "POST", "path": "/tasks", "body": ["Write tests"]}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Deploy 6 ", "priority": 1}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Update docs 7 ", "priority": 5}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Deploy 5 ", "priority": 4}}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": "3"}}
+{"method": "PATCH", "path": "/tasks/5", "body": {}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Write tests 5 "}}
+{"method": "PATCH", "path": "/tasks/abc", "body": {"title": ""}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Call vendor 9 ", "priority": 5}}
+{"method": "GET", "path": "/tasks"}
+{"method": "GET", "path": "/tasks"}
+{"method": "GET", "path": "/tasks"}
+{"method": "DELETE", "path": "/tasks/6"}
+{"method": "GET", "path": "/tasks"}
+{"method": "DELETE", "path": "/tasks/1"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 3 ", "priority": 2}}
+{"method": "GET", "path": "/tasks/9"}
+{"method": "DELETE", "path": "/tasks/2"}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "POST", "path": "/tasks", "body": {"title": 42}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Call vendor 6 "}}
+{"method": "GET", "path": "/tasks/7"}
+{"method": "PATCH", "path": "/tasks/999", "body": {}}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": true}}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "PATCH", "path": "/tasks/7", "body": ["done"]}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "GET", "path": "/tasks/2"}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Review PR 2 ", "priority": 2}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Plan sprint 5 "}}
+{"method": "GET", "path": "/tasks/999"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Write tests 5 ", "priority": 5}}
+{"method": "DELETE", "path": "/tasks/5"}
+{"method": "PATCH", "path": "/tasks/999", "body": {"title": ""}}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": true}}
+{"method": "POST", "path": "/tasks", "body": ["Write tests"]}
+{"method": "GET", "path": "/tasks"}
+{"method": "PATCH", "path": "/tasks/abc", "body": {}}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Deploy 6 "}}
+{"method": "DELETE", "path": "/tasks/999"}
+{"method": "POST", "path": "/tasks", "body": {"title": "  Update docs 7 "}}
+{"method": "DELETE", "path": "/tasks/999"}
+{"method": "GET", "path": "/tasks/999"}

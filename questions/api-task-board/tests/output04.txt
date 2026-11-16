@@ -1,0 +1,7 @@
+1. POST /tasks -> 201 {"done":false,"id":1,"priority":3,"title":"A"}
+2. POST /tasks -> 201 {"done":false,"id":2,"priority":3,"title":"B"}
+3. DELETE /tasks/1 -> 204 -
+4. DELETE /tasks/1 -> 404 {"error":"task not found"}
+5. POST /tasks -> 201 {"done":false,"id":3,"priority":3,"title":"C"}
+6. GET /tasks -> 200 {"tasks":[{"done":false,"id":2,"priority":3,"title":"B"},{"done":false,"id":3,"priority":3,"title":"C"}]}
+7. GET /tasks/3 -> 200 {"done":false,"id":3,"priority":3,"title":"C"}

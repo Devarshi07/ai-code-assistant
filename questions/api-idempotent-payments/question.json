@@ -1,0 +1,67 @@
+{
+  "id": "api-idempotent-payments",
+  "title": "Idempotent Payments API",
+  "difficulty": "Hard",
+  "maxScore": 80,
+  "kind": "api",
+  "languages": [
+    "python",
+    "javascript"
+  ],
+  "skills": [
+    "API Design",
+    "REST APIs",
+    "Hash Tables"
+  ],
+  "summary": "Make payment creation safe to retry with an Idempotency-Key header, plus refunds and totals.",
+  "statement": "Clients of a payments API retry requests when the network drops, so creating a payment must be **idempotent**: sending the same request twice must not charge twice. Clients send an `Idempotency-Key` header with every `POST /payments`. Build the API in memory: a fresh copy of your app starts for every test case.\n\nA payment looks like `{\"id\": \"pay_1\", \"amount\": 1250, \"currency\": \"EUR\", \"status\": \"captured\"}`. Ids are `pay_1`, `pay_2`, … in creation order. A valid body has an integer `amount` of at least `1` (`true` is not an integer) and a `currency` of `USD`, `EUR` or `GBP`.\n\n**`POST /payments`**, checked in this order:\n\n1. No `Idempotency-Key` header, or an empty one: `400` `{\"error\": \"missing idempotency key\"}`.\n2. A key longer than 64 characters: `400` `{\"error\": \"invalid idempotency key\"}`.\n3. A key that created a payment before: if this body has the same `amount` and `currency` as that first request, answer exactly what the first request got (same status and body, even if the payment was refunded since) and create nothing. Otherwise: `409` `{\"error\": \"idempotency key reused with a different payment\"}`.\n4. An invalid body: `400` `{\"error\": \"invalid payment\"}`. Nothing is stored, so the key can still be used.\n5. Otherwise create the payment with status `captured` and answer `201` with it.\n\n| Method and path | Behaviour |\n| --- | --- |\n| `GET /payments/<id>` | `200` with the payment as it is now, or `404` `{\"error\": \"payment not found\"}`. |\n| `POST /payments/<id>/refund` | Unknown payment: `404` as above. Already refunded: `409` `{\"error\": \"payment already refunded\"}`. Otherwise set its status to `refunded` and answer `200` with it. |\n| `GET /payments` | `200` `{\"count\": <number of payments>, \"captured\": {...}}`, where `captured` maps each currency to the sum of the amounts of its payments that are still `captured`. Leave out currencies with no captured payment. |",
+  "functionDescription": "Complete the web app in the editor. The template already creates the app, the in-memory storage and one handler per endpoint; each handler currently answers `501`.\n\n- **Python:** a Flask 3 app. Read the header with `request.headers.get('Idempotency-Key')` and the body with `request.get_json(silent=True)`.\n- **JavaScript:** an Express 4 app with `express.json()`. Read the header with `req.get('Idempotency-Key')` and the body from `req.body`.\n\nThe app must listen on `127.0.0.1` at the port in the `PORT` environment variable, as the template does.",
+  "inputFormat": "Each test case is a list of HTTP requests, one JSON object per line, with `method`, `path`, and optionally `headers` and `body`. The judge starts your app and sends the requests in order.",
+  "constraints": "- At most `150` requests per test case.\n- Keys are ASCII. Bodies, when present, are JSON objects or arrays.",
+  "outputFormat": "For each request, the judge prints `<n>. <METHOD> <path> -> <status> <body>`. The body is your JSON with its keys sorted and no spaces, or `-` when it is empty. Your output matches when every status and body matches.",
+  "samples": [
+    {
+      "input": "{\"method\": \"POST\", \"path\": \"/payments\", \"body\": {\"amount\": 1250, \"currency\": \"EUR\"}, \"headers\": {\"Idempotency-Key\": \"k1\"}}\n{\"method\": \"POST\", \"path\": \"/payments\", \"body\": {\"amount\": 1250, \"currency\": \"EUR\"}, \"headers\": {\"Idempotency-Key\": \"k1\"}}\n{\"method\": \"GET\", \"path\": \"/payments\"}\n{\"method\": \"POST\", \"path\": \"/payments\", \"body\": {\"amount\": 999, \"currency\": \"EUR\"}, \"headers\": {\"Idempotency-Key\": \"k1\"}}\n{\"method\": \"POST\", \"path\": \"/payments\", \"body\": {\"amount\": 999, \"currency\": \"USD\"}, \"headers\": {\"Idempotency-Key\": \"k2\"}}\n{\"method\": \"GET\", \"path\": \"/payments\"}\n",
+      "output": "1. POST /payments -> 201 {\"amount\":1250,\"currency\":\"EUR\",\"id\":\"pay_1\",\"status\":\"captured\"}\n2. POST /payments -> 201 {\"amount\":1250,\"currency\":\"EUR\",\"id\":\"pay_1\",\"status\":\"captured\"}\n3. GET /payments -> 200 {\"captured\":{\"EUR\":1250},\"count\":1}\n4. POST /payments -> 409 {\"error\":\"idempotency key reused with a different payment\"}\n5. POST /payments -> 201 {\"amount\":999,\"currency\":\"USD\",\"id\":\"pay_2\",\"status\":\"captured\"}\n6. GET /payments -> 200 {\"captured\":{\"EUR\":1250,\"USD\":999},\"count\":2}\n",
+      "explanation": "The second request repeats key `k1` with the same body, so it gets the first answer again and no new payment is made: `count` is `1`. Reusing `k1` for a different amount is a `409`."
+    },
+    {
+      "input": "{\"method\": \"POST\", \"path\": \"/payments\", \"body\": {\"amount\": 500, \"currency\": \"GBP\"}}\n{\"method\": \"POST\", \"path\": \"/payments\", \"body\": {\"amount\": 500, \"currency\": \"GBP\"}, \"headers\": {\"Idempotency-Key\": \"k7\"}}\n{\"method\": \"POST\", \"path\": \"/payments/pay_1/refund\"}\n{\"method\": \"POST\", \"path\": \"/payments\", \"body\": {\"amount\": 500, \"currency\": \"GBP\"}, \"headers\": {\"Idempotency-Key\": \"k7\"}}\n{\"method\": \"GET\", \"path\": \"/payments/pay_1\"}\n{\"method\": \"POST\", \"path\": \"/payments/pay_1/refund\"}\n{\"method\": \"GET\", \"path\": \"/payments\"}\n",
+      "output": "1. POST /payments -> 400 {\"error\":\"missing idempotency key\"}\n2. POST /payments -> 201 {\"amount\":500,\"currency\":\"GBP\",\"id\":\"pay_1\",\"status\":\"captured\"}\n3. POST /payments/pay_1/refund -> 200 {\"amount\":500,\"currency\":\"GBP\",\"id\":\"pay_1\",\"status\":\"refunded\"}\n4. POST /payments -> 201 {\"amount\":500,\"currency\":\"GBP\",\"id\":\"pay_1\",\"status\":\"captured\"}\n5. GET /payments/pay_1 -> 200 {\"amount\":500,\"currency\":\"GBP\",\"id\":\"pay_1\",\"status\":\"refunded\"}\n6. POST /payments/pay_1/refund -> 409 {\"error\":\"payment already refunded\"}\n7. GET /payments -> 200 {\"captured\":{},\"count\":1}\n",
+      "explanation": "A missing key is rejected before anything else. After the refund, replaying `k7` still returns the original `captured` answer, while `GET /payments/pay_1` shows the refund, and nothing is captured any more."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06"
+    },
+    {
+      "file": "07",
+      "weight": 2
+    },
+    {
+      "file": "08",
+      "weight": 2
+    }
+  ]
+}

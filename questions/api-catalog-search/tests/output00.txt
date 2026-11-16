@@ -1,0 +1,4 @@
+1. POST /books -> 201 {"author":"Frank Herbert","id":1,"tags":["sci-fi"],"title":"Dune","year":1965}
+2. POST /books -> 201 {"author":"Jane Austen","id":2,"tags":["classic"],"title":"Emma","year":1815}
+3. POST /books -> 201 {"author":"Frank Herbert","id":3,"tags":["sci-fi","classic"],"title":"Children of Dune","year":1976}
+4. GET /books?author=Frank%20Herbert&per_page=1&page=2 -> 200 {"data":[{"author":"Frank Herbert","id":3,"tags":["sci-fi","classic"],"title":"Children of Dune","year":1976}],"page":2,"per_page":1,"total":2,"total_pages":2}

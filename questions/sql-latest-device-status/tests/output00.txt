@@ -1,0 +1,3 @@
+device	status	recorded_at	copies
+cam-1	online	2025-06-01 10:05:00	2
+cam-2	offline	2025-06-01 09:00:00	1

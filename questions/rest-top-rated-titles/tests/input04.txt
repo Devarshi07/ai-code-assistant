@@ -1,0 +1,41 @@
+Drama
+1950
+50
+--- api data ---
+{
+  "per_page": 1,
+  "resources": {
+    "movies": [
+      {"id": 1, "title": "Storm Storm 83", "genre": "Drama", "year": 1963, "rating": 8.6},
+      {"id": 2, "title": "Zero Garden 74", "genre": "Documentary", "year": 2012, "rating": 5.5},
+      {"id": 3, "title": "Signal river 1", "genre": "Documentary", "year": 1964, "rating": 6.1},
+      {"id": 4, "title": "Hour Signal 2", "genre": "Drama", "year": 2012, "rating": 8.1},
+      {"id": 5, "title": "Iron Echo 45", "genre": "Comedy", "year": 1995, "rating": 9.8},
+      {"id": 6, "title": "Storm Blue 93", "genre": "drama", "year": 2021, "rating": 3.4},
+      {"id": 7, "title": "Signal Atlas 83", "genre": "Horror", "year": 2023, "rating": 7.0},
+      {"id": 8, "title": "Moon Moon 60", "genre": "Drama", "year": 2001, "rating": 4.2},
+      {"id": 9, "title": "quiet Hour 55", "genre": "Documentary", "year": 2026, "rating": 5.1},
+      {"id": 10, "title": "Storm Echo 54", "genre": "Science Fiction", "year": 2011, "rating": 5.6},
+      {"id": 11, "title": "river Atlas 7", "genre": "Drama", "year": 2016, "rating": 9.6},
+      {"id": 12, "title": "Garden quiet 19", "genre": "Drama", "year": 1979, "rating": 4.8},
+      {"id": 13, "title": "Signal quiet 92", "genre": "Drama", "year": 2019, "rating": 9.3},
+      {"id": 14, "title": "Iron Last 71", "genre": "Drama", "year": 2014, "rating": 8.0},
+      {"id": 15, "title": "Garden Glass 38", "genre": "Science Fiction", "year": 1951, "rating": 8.3},
+      {"id": 16, "title": "Signal Storm 63", "genre": "Drama", "year": 1975, "rating": 3.6},
+      {"id": 17, "title": "quiet Signal 66", "genre": "Drama", "year": 2013, "rating": 7.7},
+      {"id": 18, "title": "Train Last 41", "genre": "Documentary", "year": 1962, "rating": 4.6},
+      {"id": 19, "title": "Storm Echo 58", "genre": "drama", "year": 1973, "rating": 9.2},
+      {"id": 20, "title": "quiet Blue 84", "genre": "drama", "year": 2013, "rating": 2.7},
+      {"id": 21, "title": "Glass Garden 19", "genre": "Drama", "year": 1951, "rating": 4.5},
+      {"id": 22, "title": "Signal Zero 11", "genre": "Drama", "year": 1975, "rating": 6.1},
+      {"id": 23, "title": "Train Zero 35", "genre": "Drama", "year": 1995, "rating": 6.7},
+      {"id": 24, "title": "paper quiet 89", "genre": "Drama", "year": 1967, "rating": 7.2},
+      {"id": 25, "title": "Atlas Storm 38", "genre": "Science Fiction", "year": 1970, "rating": 0.8},
+      {"id": 26, "title": "Last Storm 53", "genre": "Documentary", "year": 1969, "rating": 3.9},
+      {"id": 27, "title": "Iron Night 14", "genre": "Comedy", "year": 1959, "rating": 3.9},
+      {"id": 28, "title": "Moon Moon 99", "genre": "Drama", "year": 1953, "rating": 9.5},
+      {"id": 29, "title": "Last Signal 42", "genre": "Horror", "year": 2013, "rating": 9.1},
+      {"id": 30, "title": "Harbor Atlas 76", "genre": "Documentary", "year": 2005, "rating": 5.2}
+    ]
+  }
+}

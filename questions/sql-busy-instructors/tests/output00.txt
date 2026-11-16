@@ -1,0 +1,2 @@
+instructor	classes	avg_attendees
+Lea	3	12.3

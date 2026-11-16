@@ -1,0 +1,64 @@
+{
+  "id": "rest-flaky-inventory",
+  "title": "Flaky Inventory API",
+  "difficulty": "Hard",
+  "maxScore": 80,
+  "kind": "rest",
+  "languages": [
+    "python",
+    "javascript"
+  ],
+  "skills": [
+    "REST APIs",
+    "Hash Tables",
+    "Sorting"
+  ],
+  "summary": "Survive a rate-limited API with retries, then total a category's stock per warehouse.",
+  "statement": "A retailer's stock API is rate limited. Given a product category, report how much stock of that category each warehouse holds.\n\nFetch the stock records with:\n\n```\nGET {API_BASE_URL}/api/stock?category=<category>&page=<n>\n```\n\nA successful response has status `200` and this JSON:\n\n```json\n{\n  \"page\": 1,\n  \"per_page\": 3,\n  \"total\": 5,\n  \"total_pages\": 2,\n  \"data\": [\n    {\"sku\": \"DR-100\", \"category\": \"drills\", \"warehouse\": \"LIS-1\", \"quantity\": 12}\n  ]\n}\n```\n\n**Rate limiting.** The first request for any URL is answered with status `429 Too Many Requests`, a JSON error body and a `Retry-After` header holding the number of seconds to wait (always `0` in the tests). Wait that long, then send the same request again. Make at most 5 attempts per URL.\n\nAdd up `quantity` per `warehouse` over **all** pages. Quantities can be negative (returns), and warehouses whose total is `0` or less are left out. Sort the warehouses by total (highest first), breaking ties by warehouse name in plain character order. If no warehouse has a positive total, print `NONE`.\n\n- `category` keeps only that category (exact match). Encode it for the URL.\n- Pages start at `1`, and `total_pages` is `0` when nothing matches.",
+  "functionDescription": "Complete the **stockByWarehouse** function in the editor below.\n\n**stockByWarehouse** has the following parameter:\n\n- `string category`: the category to total\n\n**Returns**\n\n- a list of `[warehouse, total]` pairs, in the order described above\n\nThe API's address is in the `API_BASE_URL` environment variable; the template reads it into `BASE_URL`. In Python, `urllib.request.urlopen` raises `urllib.error.HTTPError` for a 429, and the error's `headers` hold `Retry-After`. In JavaScript, `fetch` resolves with `status` 429 and the header is in `response.headers`.",
+  "inputFormat": "The first line contains the category.\n\nIn the samples, the lines after `--- api data ---` show the records that test's API serves. Your program doesn't receive them on stdin.",
+  "constraints": "- The API holds at most `1000` records.\n- `1 ≤ per_page ≤ 10`\n- `-500 ≤ quantity ≤ 500`\n- Warehouse names are ASCII without spaces.",
+  "outputFormat": "Print one line per warehouse, `<warehouse> <total>`, or `NONE`.",
+  "samples": [
+    {
+      "input": "drills\n--- api data ---\n{\n  \"per_page\": 3,\n  \"throttle\": \"first\",\n  \"resources\": {\n    \"stock\": [\n      {\"sku\": \"SKU-0001\", \"category\": \"drills\", \"warehouse\": \"LIS-1\", \"quantity\": 12},\n      {\"sku\": \"SKU-0002\", \"category\": \"drills\", \"warehouse\": \"OPO-2\", \"quantity\": 20},\n      {\"sku\": \"SKU-0003\", \"category\": \"saws\", \"warehouse\": \"FAO-3\", \"quantity\": 7},\n      {\"sku\": \"SKU-0004\", \"category\": \"drills\", \"warehouse\": \"LIS-1\", \"quantity\": 30},\n      {\"sku\": \"SKU-0005\", \"category\": \"drills\", \"warehouse\": \"OPO-2\", \"quantity\": -5}\n    ]\n  }\n}\n",
+      "output": "LIS-1 42\nOPO-2 15\n",
+      "explanation": "Every page is refused once with a 429, then served on the retry. `LIS-1` holds `12 + 30 = 42` drills and `OPO-2` holds `20 - 5 = 15`. The saw in `FAO-3` is another category."
+    },
+    {
+      "input": "paint\n--- api data ---\n{\n  \"per_page\": 2,\n  \"throttle\": \"first\",\n  \"resources\": {\n    \"stock\": [\n      {\"sku\": \"SKU-0001\", \"category\": \"paint\", \"warehouse\": \"LIS-1\", \"quantity\": 10},\n      {\"sku\": \"SKU-0002\", \"category\": \"paint\", \"warehouse\": \"OPO-2\", \"quantity\": 6},\n      {\"sku\": \"SKU-0003\", \"category\": \"paint\", \"warehouse\": \"BRG-1\", \"quantity\": 4},\n      {\"sku\": \"SKU-0004\", \"category\": \"paint\", \"warehouse\": \"OPO-2\", \"quantity\": -10},\n      {\"sku\": \"SKU-0005\", \"category\": \"paint\", \"warehouse\": \"BRG-1\", \"quantity\": 6}\n    ]\n  }\n}\n",
+      "output": "BRG-1 10\nLIS-1 10\n",
+      "explanation": "`BRG-1` and `LIS-1` both total `10`, so they are ordered by name. `OPO-2`'s returns bring it to `-4`, so it is left out."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06",
+      "weight": 2
+    },
+    {
+      "file": "07",
+      "weight": 2
+    }
+  ]
+}

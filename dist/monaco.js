@@ -16,7 +16,7 @@ const EXTENSION_LANGUAGES = {
 const FILE_LANGUAGES = {dockerfile: 'dockerfile', makefile: 'shell', gemfile: 'ruby', rakefile: 'ruby'};
 
 // Language ids used by coding questions map onto Monaco ids.
-export const CODE_LANGUAGES = {python: 'python', javascript: 'javascript', java: 'java', cpp: 'cpp', go: 'go'};
+export const CODE_LANGUAGES = {python: 'python', javascript: 'javascript', java: 'java', cpp: 'cpp', go: 'go', sql: 'sql'};
 
 export function monacoLanguage(name = '') {
   const base = String(name).split('/').pop().toLowerCase();

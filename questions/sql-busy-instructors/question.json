@@ -1,0 +1,62 @@
+{
+  "id": "sql-busy-instructors",
+  "title": "Busy Instructors",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "kind": "sql",
+  "languages": [
+    "sql"
+  ],
+  "skills": [
+    "SQL"
+  ],
+  "ordered": false,
+  "summary": "Group classes by instructor and keep the busy, well-attended ones from 2025.",
+  "statement": "A climbing gym schedules group classes, each led by one instructor. For its 2025 review it wants to know which instructors were both busy and popular.\n\nConsider only classes held in **2025** (`held_on` from `2025-01-01` to `2025-12-31`). Return every instructor who taught **at least 3** of those classes with an **average attendance of at least 12** people per class.\n\nFor each such instructor return `instructor` (their name), `classes` (the number of 2025 classes they taught) and `avg_attendees` (their average attendance, rounded to 1 decimal place with SQLite's `ROUND`). Compare the unrounded average with 12.\n\nTwo instructors can share a name: they are different people, identified by `id`.",
+  "functionDescription": "Write one **SELECT** statement in the editor. Every test case creates these tables and fills them with its own rows:\n\n```sql\nCREATE TABLE instructors (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL\n);\nCREATE TABLE classes (\n  id INTEGER PRIMARY KEY,\n  instructor_id INTEGER NOT NULL REFERENCES instructors(id),\n  held_on TEXT NOT NULL,\n  attendees INTEGER NOT NULL\n);\n```\n\n`held_on` is a date written as `YYYY-MM-DD`. The query runs on SQLite.",
+  "inputFormat": "The test input is the SQL that creates and fills the tables, as shown in the samples. Hidden test cases use different rows.",
+  "constraints": "- `0 ≤` rows in `instructors` `≤ 500`\n- `0 ≤` rows in `classes` `≤ 20000`\n- `0 ≤ attendees ≤ 40`\n- Dates range from `2023-01-01` to `2026-12-31`.",
+  "outputFormat": "The first line holds the column names in lower case, separated by tabs: `instructor`, `classes`, `avg_attendees`. Each following line is one row, with values separated by tabs. Rows may come in any order: they are sorted before comparison.",
+  "samples": [
+    {
+      "input": "CREATE TABLE instructors (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL\n);\nCREATE TABLE classes (\n  id INTEGER PRIMARY KEY,\n  instructor_id INTEGER NOT NULL REFERENCES instructors(id),\n  held_on TEXT NOT NULL,\n  attendees INTEGER NOT NULL\n);\nINSERT INTO instructors VALUES\n  (1, 'Lea'),\n  (2, 'Omar'),\n  (3, 'Kai');\nINSERT INTO classes VALUES\n  (1, 1, '2025-02-03', 12),\n  (2, 1, '2025-03-10', 15),\n  (3, 1, '2025-11-30', 10),\n  (4, 2, '2025-01-15', 11),\n  (5, 2, '2025-04-01', 11),\n  (6, 2, '2025-06-21', 11),\n  (7, 3, '2024-12-30', 30),\n  (8, 3, '2025-05-05', 20),\n  (9, 3, '2025-05-12', 18);\n",
+      "output": "instructor\tclasses\tavg_attendees\nLea\t3\t12.3\n",
+      "explanation": "Lea taught three 2025 classes averaging `(12 + 15 + 10) / 3 = 12.33…`, shown as `12.3`. Omar taught three 2025 classes too, but his average is `11`. Kai's 2024 class doesn't count, which leaves him with two 2025 classes."
+    },
+    {
+      "input": "CREATE TABLE instructors (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL\n);\nCREATE TABLE classes (\n  id INTEGER PRIMARY KEY,\n  instructor_id INTEGER NOT NULL REFERENCES instructors(id),\n  held_on TEXT NOT NULL,\n  attendees INTEGER NOT NULL\n);\nINSERT INTO instructors VALUES\n  (1, 'Sam'),\n  (2, 'Sam');\nINSERT INTO classes VALUES\n  (1, 1, '2025-03-01', 14),\n  (2, 1, '2025-03-08', 12),\n  (3, 1, '2025-03-15', 13),\n  (4, 2, '2025-03-02', 9),\n  (5, 2, '2025-03-09', 10),\n  (6, 2, '2025-03-16', 11);\n",
+      "output": "instructor\tclasses\tavg_attendees\nSam\t3\t13\n",
+      "explanation": "Both instructors are called Sam. Each one taught three classes; only the first Sam's average reaches 12. Grouping by name would merge them into one row with six classes."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06",
+      "weight": 2
+    },
+    {
+      "file": "07",
+      "weight": 2
+    }
+  ]
+}

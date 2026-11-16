@@ -1,0 +1,150 @@
+{"method": "POST", "path": "/books", "body": {"title": "", "author": "Y", "year": 2000}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 245 ", "author": "Jane Austen", "year": 1535, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 1300}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 247 ", "author": "Ursula Le Guin", "year": 1500, "tags": ["sci-fi", "classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 1300}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 400 ", "author": "Frank Herbert", "year": 1903, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 505 ", "author": "Ursula Le Guin", "year": 1795, "tags": ["classic", "award"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 46 ", "author": "Ursula Le Guin", "year": 1591, "tags": ["short-stories", "sci-fi", "award"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 795 ", "author": "Ted Chiang", "year": 1910, "tags": ["sci-fi", "romance", "short-stories"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 178 ", "author": "Ted Chiang", "year": 2083, "tags": ["classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 521 ", "author": "Ursula Le Guin", "year": 1644, "tags": ["short-stories"]}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "   ", "year": 2000}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 701 ", "author": "Ursula Le Guin", "year": 1974, "tags": ["sci-fi", "romance", "space"]}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 2000, "tags": [1]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 609 ", "author": "Ted Chiang", "year": 1558, "tags": ["short-stories", "sci-fi"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 483 ", "author": "Jane Austen", "year": 1771, "tags": ["award", "romance"]}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 2000, "tags": ["t", "t", "t", "t", "t", "t", "t", "t", "t", "t", "t"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 236 ", "author": "Jane Austen", "year": 1548, "tags": ["short-stories", "space", "classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 834 ", "author": "Jane Austen", "year": 2045, "tags": ["classic", "romance", "sci-fi"]}}
+{"method": "POST", "path": "/books", "body": {"title": "", "author": "Y", "year": 2000}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 916 ", "author": "jane austen", "year": 1614, "tags": ["romance", "classic", "short-stories"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 156 ", "author": "Ted Chiang", "year": 1624, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 880 ", "author": "Ted Chiang", "year": 1628, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 915 ", "author": "jane austen", "year": 1587, "tags": ["classic", "space"]}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 2000, "tags": "sci-fi"}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "   ", "year": 2000}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 968 ", "author": "Octavia Butler", "year": 1475, "tags": ["sci-fi", "short-stories"]}}
+{"method": "POST", "path": "/books", "body": ["Dune"]}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y"}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 569 ", "author": "Octavia Butler", "year": 1461, "tags": ["sci-fi", "romance"]}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y"}}
+{"method": "POST", "path": "/books", "body": {"title": "", "author": "Y", "year": 2000}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 768 ", "author": "jane austen", "year": 1596, "tags": ["classic", "short-stories"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 911 ", "author": "jane austen", "year": 1897, "tags": ["space"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 964 ", "author": "Frank Herbert", "year": 1929, "tags": ["space", "sci-fi", "classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 2000, "tags": [1]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 112 ", "author": "Frank Herbert", "year": 1546, "tags": ["award"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 412 ", "author": "Ursula Le Guin", "year": 1916, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "   ", "year": 2000}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 415 ", "author": "jane austen", "year": 2043, "tags": ["award", "romance", "classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 130 ", "author": "Octavia Butler", "year": 1752, "tags": ["romance", "space", "sci-fi"]}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 2000, "tags": [""]}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 1300}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 899 ", "author": "jane austen", "year": 1946, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 941 ", "author": "Octavia Butler", "year": 1524, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 930 ", "author": "Jane Austen", "year": 1681, "tags": ["space"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 428 ", "author": "Jane Austen", "year": 2017, "tags": ["sci-fi", "award"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 672 ", "author": "Octavia Butler", "year": 2008, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 333 ", "author": "Jane Austen", "year": 1672, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 43 ", "author": "Frank Herbert", "year": 2092, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 2000, "tags": [""]}}
+{"method": "POST", "path": "/books", "body": {"title": "", "author": "Y", "year": 2000}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 163 ", "author": "Ursula Le Guin", "year": 1826, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y"}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 616 ", "author": "jane austen", "year": 1706, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 217 ", "author": "Jane Austen", "year": 1568, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 137 ", "author": "Frank Herbert", "year": 1971, "tags": ["space", "sci-fi", "classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 136 ", "author": "jane austen", "year": 1566, "tags": ["classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 222 ", "author": "jane austen", "year": 1984, "tags": ["classic", "short-stories", "award"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 48 ", "author": "Jane Austen", "year": 1462, "tags": ["romance", "classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 397 ", "author": "Ted Chiang", "year": 1782, "tags": ["space", "classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 775 ", "author": "Octavia Butler", "year": 1890, "tags": ["sci-fi", "classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 920 ", "author": "jane austen", "year": 1951, "tags": ["romance", "short-stories"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 41 ", "author": "Jane Austen", "year": 1928, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 234 ", "author": "Octavia Butler", "year": 1502, "tags": ["romance", "sci-fi"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 404 ", "author": "Jane Austen", "year": 1914, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 50 ", "author": "Jane Austen", "year": 1887, "tags": ["space", "classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 522 ", "author": "Octavia Butler", "year": 2066, "tags": ["short-stories"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 496 ", "author": "Octavia Butler", "year": 1561, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 945 ", "author": "Ted Chiang", "year": 1860, "tags": ["romance", "space"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 613 ", "author": "Jane Austen", "year": 1495, "tags": ["short-stories"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 321 ", "author": "Octavia Butler", "year": 2002, "tags": ["classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 399 ", "author": "jane austen", "year": 1454, "tags": ["romance", "short-stories", "award"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 419 ", "author": "jane austen", "year": 1759, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 537 ", "author": "Frank Herbert", "year": 1495, "tags": ["award"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 826 ", "author": "Frank Herbert", "year": 1484, "tags": ["short-stories", "award", "romance"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 934 ", "author": "jane austen", "year": 2081, "tags": ["sci-fi", "space", "award"]}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 2000, "tags": [1]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 805 ", "author": "Octavia Butler", "year": 1867, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y"}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 172 ", "author": "Ursula Le Guin", "year": 1955, "tags": []}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 644 ", "author": "Octavia Butler", "year": 2081, "tags": ["award"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 320 ", "author": "Frank Herbert", "year": 1960, "tags": ["sci-fi"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 752 ", "author": "Frank Herbert", "year": 1733, "tags": ["classic", "sci-fi"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 795 ", "author": "Octavia Butler", "year": 1729, "tags": ["short-stories", "romance", "classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 213 ", "author": "Ursula Le Guin", "year": 1892, "tags": ["short-stories", "space", "classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": "", "author": "Y", "year": 2000}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 855 ", "author": "Frank Herbert", "year": 1746, "tags": ["short-stories", "award"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 404 ", "author": "Octavia Butler", "year": 1586, "tags": ["classic", "sci-fi"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 606 ", "author": "Ted Chiang", "year": 1486, "tags": ["classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 131 ", "author": "jane austen", "year": 1892, "tags": ["award", "short-stories", "classic"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 171 ", "author": "Octavia Butler", "year": 1541, "tags": ["award"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 789 ", "author": "Ursula Le Guin", "year": 1626, "tags": ["space", "short-stories"]}}
+{"method": "POST", "path": "/books", "body": ["Dune"]}
+{"method": "POST", "path": "/books", "body": ["Dune"]}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 2000, "tags": [1]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 631 ", "author": "Frank Herbert", "year": 1507, "tags": ["romance", "classic", "space"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 329 ", "author": "Octavia Butler", "year": 2032, "tags": ["short-stories"]}}
+{"method": "POST", "path": "/books", "body": {"title": "X", "author": "Y", "year": 2000, "tags": ["t", "t", "t", "t", "t", "t", "t", "t", "t", "t", "t"]}}
+{"method": "POST", "path": "/books", "body": {"title": " Book 335 ", "author": "Frank Herbert", "year": 1890, "tags": []}}
+{"method": "GET", "path": "/books?year_from=1453&page=3&per_page=-3"}
+{"method": "GET", "path": "/books?page=x&sort=year"}
+{"method": "GET", "path": "/books?author=Ted%20Chiang&tag=romance&page=2&per_page=-3"}
+{"method": "GET", "path": "/books?tag=space&page=1"}
+{"method": "GET", "path": "/books?year_to=1831&page=x"}
+{"method": "GET", "path": "/books?year_to=1852"}
+{"method": "GET", "path": "/books?year_to=1887&page=0&sort=year"}
+{"method": "GET", "path": "/books?tag=space&page=x&per_page=80"}
+{"method": "GET", "path": "/books/abc"}
+{"method": "GET", "path": "/books/65"}
+{"method": "GET", "path": "/books?tag=award"}
+{"method": "GET", "path": "/books?author=Octavia%20Butler&tag=award&page=1"}
+{"method": "GET", "path": "/books?tag=short-stories&year_to=2012"}
+{"method": "GET", "path": "/books?author=Frank%20Herbert&tag=short-stories&per_page=1"}
+{"method": "GET", "path": "/books?tag=award&page=0&per_page=0"}
+{"method": "GET", "path": "/books/abc"}
+{"method": "GET", "path": "/books?author=Ted%20Chiang"}
+{"method": "GET", "path": "/books?per_page=0"}
+{"method": "GET", "path": "/books?author=Frank%20Herbert&page=0"}
+{"method": "GET", "path": "/books?year_from=1610&per_page=80"}
+{"method": "GET", "path": "/books?author=Octavia%20Butler&tag=award&year_to=2094&page=7"}
+{"method": "GET", "path": "/books?page=1"}
+{"method": "GET", "path": "/books?tag=space"}
+{"method": "GET", "path": "/books?year_to=2000&per_page=10"}
+{"method": "GET", "path": "/books?tag=classic&year_to=1902&page=1&per_page=50"}
+{"method": "GET", "path": "/books?author=Jane%20Austen&year_from=1993&year_to=2051&page=3"}
+{"method": "GET", "path": "/books?author=Octavia%20Butler&page=x"}
+{"method": "GET", "path": "/books?year_from=1576&page=3"}
+{"method": "GET", "path": "/books?year_from=1864"}
+{"method": "GET", "path": "/books/abc"}
+{"method": "GET", "path": "/books/27"}
+{"method": "GET", "path": "/books?year_from=1545&page=2"}
+{"method": "GET", "path": "/books?tag=short-stories&year_from=1749&year_to=1967&per_page=5"}
+{"method": "GET", "path": "/books/50"}
+{"method": "GET", "path": "/books?author=Ted%20Chiang&year_to=1830&page=1&per_page=0"}
+{"method": "GET", "path": "/books?tag=award&year_to=1977&page=x&per_page=1&sort=year"}
+{"method": "GET", "path": "/books?author=Ursula%20Le%20Guin&tag=short-stories&page=2"}
+{"method": "GET", "path": "/books?year_from=1624&year_to=1975&page=1&per_page=80"}
+{"method": "GET", "path": "/books?tag=romance"}
+{"method": "GET", "path": "/books?author=Octavia%20Butler&tag=classic"}
+{"method": "GET", "path": "/books?tag=award&per_page=0"}
+{"method": "GET", "path": "/books?author=Ted%20Chiang&tag=sci-fi&year_to=2008&page=2"}
+{"method": "GET", "path": "/books/105"}
+{"method": "GET", "path": "/books?author=jane%20austen&year_to=1974&page=0"}
+{"method": "GET", "path": "/books?page=1&per_page=80&sort=year"}
+{"method": "GET", "path": "/books?author=Octavia%20Butler&tag=short-stories&year_from=1734&page=2&per_page=80"}
+{"method": "GET", "path": "/books?author=Jane%20Austen&year_from=1610&page=x&per_page=10"}
+{"method": "GET", "path": "/books?author=Ursula%20Le%20Guin&tag=space&per_page=-3"}
+{"method": "GET", "path": "/books?author=jane%20austen&year_from=1970&page=0"}
+{"method": "GET", "path": "/books?page=1&per_page=1"}

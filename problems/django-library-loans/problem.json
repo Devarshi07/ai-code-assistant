@@ -1,0 +1,50 @@
+{
+  "id": "django-library-loans",
+  "title": "Library Lending API",
+  "difficulty": "Medium",
+  "pattern": "REST API · Django ORM",
+  "summary": "Fix a Django REST lending service that hands the same book to two people, add returns, fines and loan filters, then remove the N+1 queries behind its busiest lists.",
+  "minutes": 60,
+  "languages": ["django"],
+  "overview": "You've joined the team behind **Shelfwise**, the back end of a public library's front-desk app. Staff scan a member's card and a book's barcode, and the desk app calls this Django REST Framework API to lend the book, take it back and show what the member owes.\n\nThe project has one app, `library`, laid out the way most DRF services are: `models.py` (`Member`, `Book` with a number of `copies`, and `Loan`), `serializers.py` for the JSON shapes, `services.py` for the lending rules, thin `views.py` and `urls.py`, and `errors.py`, whose exception handler gives every error the shape `{\"error\": {\"code\": \"...\", \"message\": \"...\"}}`. The lending policy (14-day loans, at most 3 books out, 25 cents a day late, a $10 cap) lives in `config/settings.py`. `library/clock.py` provides `today()`, which tests pin with `unittest.mock.patch`.\n\nStart with `README.md`, which lists every endpoint, status code and error code, then read `library/services.py` and `library/models.py`. Tests run on an in-memory SQLite database through DRF's `APIClient`; `demo.py` plays a morning at the desk.",
+  "phases": [
+    {
+      "kind": "bug",
+      "title": "Two members, one copy",
+      "instructions": "The branch manager sent two complaints from the same week:\n\n> *\"We own a single copy of* The Salt Road Atlas*, and the system lent it to two different members on Monday. Both of them were told it was theirs.\"*\n\n> *\"A book that came back last month can't be lent again. The desk says every copy is out, but it's sitting on the returns trolley.\"*\n\nThe catalogue page (`GET /books/`) shows odd `available` numbers for the same titles. Lending limits per member work as expected.\n\nFind the root cause and fix it. Lending an unavailable title must still answer `409` with `{\"error\": {\"code\": \"not_available\", ...}}`.\n\n**Done when:** all tests in `tests/test_phase1.py` pass.",
+      "hints": [
+        "Both complaints are about how many copies the system thinks are out. Where is that number worked out, and what does it actually count?",
+        "Compare `Book.copies_on_loan` with `Member.active_loans` in `library/models.py`. Both look for loans that are still out. Do they ask the same question?",
+        "A loan is out while `returned_on` is empty. `copies_on_loan` filters on `returned_on__isnull=False`, which counts returned loans instead. Flip it to `True`."
+      ],
+      "answer": "**Root cause.** `Book.copies_on_loan()` filters `self.loans.filter(returned_on__isnull=False)`, which counts loans that have been *returned*, not the ones still out. A single-copy book with no history shows 0 copies out, so it can be lent again and again; a book with a returned loan in its history shows that loan as \"out\" forever and can never be lent. Both the lending rule in `services.lend_book` and the `available` field in `GET /books/` use it, so both are wrong.\n\n**Fix.** Count loans that are still out:\n\n```python\ndef copies_on_loan(self):\n    return self.loans.filter(returned_on__isnull=True).count()\n```\n\n**Verify.** `Member.active_loans()` already uses `returned_on__isnull=True`, which is why the per-member limit worked. Lend a single-copy title twice (the second call gets `409 not_available`), create a returned loan and lend again (`201`), and check `available` in `GET /books/`."
+    },
+    {
+      "kind": "feature",
+      "title": "Returns, fines and loan filters",
+      "instructions": "The desk app's next release needs three things from the API. Implement them in `library/services.py` (the views and URLs are already wired).\n\n**1. `POST /loans/<id>/return/`** takes a loan back on `clock.today()`.\n\n- `200` with the loan (`returned_on` set, `status` `\"returned\"`, `fine_cents` recorded). The copy is back on the shelf.\n- The fine is `FINE_PER_DAY_CENTS` (25) for each day after `due_on`, capped at `MAX_FINE_CENTS` (1000). Returning on the due date costs nothing.\n- `404 not_found` for an unknown loan; `409 already_returned` for a loan that has already come back (and the stored loan must not change).\n\n**2. `GET /members/<id>/fines/`** returns:\n\n```json\n{\"member_id\": 3, \"total_cents\": 450, \"items\": [\n  {\"loan_id\": 7, \"title\": \"...\", \"due_on\": \"2026-01-19\", \"days_late\": 3, \"fine_cents\": 75, \"accruing\": false},\n  {\"loan_id\": 9, \"title\": \"...\", \"due_on\": \"2026-02-15\", \"days_late\": 15, \"fine_cents\": 375, \"accruing\": true}]}\n```\n\nItems, by loan id: returned loans with a non-zero recorded fine (`accruing: false`), and loans still out past their due date with the fine so far (`accruing: true`). `404 not_found` for an unknown member.\n\n**3. `GET /loans/?status=`** filters by `active` (out, due today or later), `overdue` (out, due date passed) or `returned`, and combines with `?member=`. An unknown status is `400 validation_error` with `fields.status`.\n\n**Done when:** phase 1 and phase 2 tests pass.",
+      "hints": [
+        "Put the fine rule in one small helper (`fine_for(days_late)`) and use it from both the return and the fines code, so the cap is applied the same way everywhere.",
+        "`return_loan`: fetch with `get_loan` (it raises the 404), raise `AlreadyReturned` from `library/errors.py` if `returned_on` is set, otherwise set `returned_on` and `fine_cents` and `save(update_fields=[...])`. Wrap it in `transaction.atomic`.",
+        "Status filters map onto the ORM directly: `returned_on__isnull=False`; `returned_on__isnull=True, due_on__lt=today`; `returned_on__isnull=True, due_on__gte=today`. A loan due today is still `active`."
+      ],
+      "answer": "**Approach.** Add `fine_for(days_late) = min(max(days_late, 0) * FINE_PER_DAY_CENTS, MAX_FINE_CENTS)`.\n\n- `return_loan` loads the loan (404), refuses one that is already returned with `AlreadyReturned` (409), then records `returned_on = today` and `fine_cents = fine_for((today - due_on).days)` inside `transaction.atomic`.\n- `member_fines` loads the member (404), walks `member.loans.all()` in id order, keeps returned loans with a recorded fine and unreturned loans past `due_on` (fine computed as of today, `accruing: true`), and sums the total.\n- `list_loans` adds one `filter()` per status; the query-string serializer in `views.py` already rejects unknown statuses with `400 validation_error`.\n\n**Complexity.** Each endpoint is linear in the loans it touches. Note that `loan.book.title` in the fines loop and the nested `member`/`book` serializers in `GET /loans/` each load a related row per loan; that is what phase 3 is about."
+    },
+    {
+      "kind": "optimize",
+      "title": "The lists that slow the desk down",
+      "instructions": "The library joined a consortium and the busiest branch now has thousands of loans. The desk app's loan list and catalogue page take seconds to load, and the database log shows hundreds of nearly identical `SELECT`s per request.\n\nMake these endpoints run a fixed number of SQL queries, however much data there is:\n\n- `GET /loans/` (with or without `status` and `member`): **at most 2 queries**.\n- `GET /books/`: **at most 2 queries**, with `available` still correct.\n- `GET /members/<id>/fines/`: **at most 3 queries**.\n\nResponses must not change: same fields, same order, same numbers. The tests count queries with `django.test.utils.CaptureQueriesContext` on seeded data.\n\n**Done when:** all three phases pass.",
+      "hints": [
+        "Count where the queries come from: each nested `MemberSummarySerializer`/`BookSummarySerializer` reads `loan.member` and `loan.book`, and `available` calls a `COUNT` per book. Try `CaptureQueriesContext` in a quick custom test and print the SQL.",
+        "Foreign keys you are going to read for every row can be joined into the first query with `select_related(...)`. That fixes the loan list and the fines endpoint.",
+        "For the catalogue, compute copies out in SQL: `Book.objects.annotate(on_loan=Count(\"loans\", filter=Q(loans__returned_on__isnull=True)))`, and have `get_available` use `book.on_loan` when it is there (a freshly created book from `POST /books/` won't have it)."
+      ],
+      "answer": "**Why phase 2 breaks.** DRF serializes each loan independently, so `loan.member` and `loan.book` are lazy foreign-key loads: 1 + 2N queries for N loans. `BookSerializer.get_available` runs `COUNT(*)` per title (1 + N), and the fines loop loads each loan's book (2 + N).\n\n**Optimized approach.**\n\n- `list_loans` starts from `Loan.objects.select_related(\"member\", \"book\")`, so one `JOIN`ed query feeds the whole list, filters included.\n- `BookList.get_queryset()` returns `Book.objects.annotate(on_loan=Count(\"loans\", filter=Q(loans__returned_on__isnull=True)))`; `get_available` uses the annotation and falls back to `available_copies()` for unannotated instances (the `POST` response).\n- `member_fines` iterates `member.loans.select_related(\"book\")`: one query for the member and one for the loans.\n\n**Complexity.** Each endpoint now runs O(1) queries and O(N) Python work. The tradeoff is wider rows (joined columns) and a `GROUP BY` on the catalogue, both much cheaper than N round trips. `prefetch_related` is the tool for reverse or many-to-many relations; here every relation is a forward foreign key, so `select_related` fits."
+    }
+  ],
+  "debrief": [
+    "How did you confirm that `copies_on_loan` was the root cause, and why did the per-member limit keep working while availability was wrong?",
+    "Where did you put the fine rule, how did you make returning a loan safe to call twice, and why is a loan due today still `active`?",
+    "How did you find the N+1 queries, why does `select_related` fit here rather than `prefetch_related`, and how did you check that the optimized responses are identical?"
+  ]
+}

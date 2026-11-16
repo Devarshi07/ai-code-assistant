@@ -1,0 +1,13 @@
+{"method": "POST", "path": "/payments", "body": {"amount": 0, "currency": "EUR"}, "headers": {"Idempotency-Key": "bad-0"}}
+{"method": "POST", "path": "/payments", "body": {"amount": -5, "currency": "USD"}, "headers": {"Idempotency-Key": "bad-1"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 12.5, "currency": "GBP"}, "headers": {"Idempotency-Key": "bad-2"}}
+{"method": "POST", "path": "/payments", "body": {"amount": "100", "currency": "EUR"}, "headers": {"Idempotency-Key": "bad-3"}}
+{"method": "POST", "path": "/payments", "body": {"amount": true, "currency": "EUR"}, "headers": {"Idempotency-Key": "bad-4"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 100, "currency": "JPY"}, "headers": {"Idempotency-Key": "bad-5"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 100, "currency": "eur"}, "headers": {"Idempotency-Key": "bad-6"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 100}, "headers": {"Idempotency-Key": "bad-7"}}
+{"method": "POST", "path": "/payments", "body": {"currency": "USD"}, "headers": {"Idempotency-Key": "bad-8"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 5, "currency": ["USD"]}, "headers": {"Idempotency-Key": "bad-9"}}
+{"method": "POST", "path": "/payments", "body": [100, "EUR"], "headers": {"Idempotency-Key": "bad-10"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 10, "currency": "USD"}, "headers": {"Idempotency-Key": "bad-0"}}
+{"method": "GET", "path": "/payments"}

@@ -1,0 +1,22 @@
+CREATE TABLE customers (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  city TEXT NOT NULL
+);
+CREATE TABLE orders (
+  id INTEGER PRIMARY KEY,
+  customer_id INTEGER NOT NULL REFERENCES customers(id),
+  total REAL NOT NULL,
+  status TEXT NOT NULL
+);
+INSERT INTO customers VALUES
+  (1, 'Ana Costa', 'Porto'),
+  (2, 'Rui Silva', 'Porto'),
+  (3, 'Marta Lopes', 'Lisbon');
+INSERT INTO orders VALUES
+  (1, 1, 42.5, 'delivered'),
+  (2, 2, 12.0, 'pending'),
+  (3, 2, 60.0, 'cancelled'),
+  (4, 2, 31.0, 'delivered'),
+  (5, 1, 19.99, 'delivered'),
+  (6, 3, 80.0, 'delivered');

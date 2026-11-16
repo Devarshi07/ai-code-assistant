@@ -1,0 +1,2 @@
+region	rep	total	sales_rank
+North	Solo	42	1

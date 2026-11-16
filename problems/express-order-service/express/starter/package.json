@@ -1,0 +1,16 @@
+{
+  "name": "corner-pantry-orders",
+  "version": "1.4.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Orders API behind the Corner Pantry grocery delivery app.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "demo": "node demo.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

@@ -1,0 +1,2 @@
+device	status	recorded_at	copies
+pump	offline	2025-06-04 07:00:00	5

@@ -1,0 +1,4 @@
+1. GET /books -> 200 {"data":[],"page":1,"per_page":10,"total":0,"total_pages":0}
+2. GET /books/1 -> 404 {"error":"book not found"}
+3. GET /books?author=Nobody&page=3 -> 200 {"data":[],"page":3,"per_page":10,"total":0,"total_pages":0}
+4. GET /books/abc -> 404 {"error":"book not found"}

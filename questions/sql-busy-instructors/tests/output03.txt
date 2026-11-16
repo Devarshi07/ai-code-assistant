@@ -1,0 +1,2 @@
+instructor	classes	avg_attendees
+Ivo	3	12

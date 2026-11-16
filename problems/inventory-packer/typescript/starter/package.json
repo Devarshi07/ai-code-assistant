@@ -1,0 +1,11 @@
+{
+  "name": "riverside-shipping",
+  "version": "1.4.0",
+  "private": true,
+  "description": "Plans cartons and bench manifests for the Riverside fulfilment centre",
+  "type": "module",
+  "scripts": {
+    "start": "node main.ts",
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,14 @@
+CREATE TABLE readings (
+  id INTEGER PRIMARY KEY,
+  device TEXT NOT NULL,
+  status TEXT,
+  recorded_at TEXT NOT NULL
+);
+INSERT INTO readings VALUES
+  (1, 'pump', 'offline', '2025-06-04 07:00:00'),
+  (2, 'pump', 'offline', '2025-06-04 07:00:00'),
+  (3, 'pump', 'offline', '2025-06-04 07:00:00'),
+  (4, 'pump', 'offline', '2025-06-04 07:00:00'),
+  (5, 'pump', 'offline', '2025-06-04 07:00:00'),
+  (6, 'pump', 'online', '2025-06-04 06:59:59'),
+  (7, 'pump', NULL, '2025-06-04 07:00:01');

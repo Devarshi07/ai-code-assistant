@@ -1,0 +1,7 @@
+{"method": "POST", "path": "/books", "body": {"title": "A", "author": "Jane Austen", "year": 1811}}
+{"method": "POST", "path": "/books", "body": {"title": "B", "author": "jane austen", "year": 1813}}
+{"method": "GET", "path": "/books?author=jane%20austen"}
+{"method": "GET", "path": "/books?year_from=1812&year_to=1811"}
+{"method": "GET", "path": "/books?year_from=abc"}
+{"method": "GET", "path": "/books?year_to=-1"}
+{"method": "GET", "path": "/books?sort=title&page=1"}

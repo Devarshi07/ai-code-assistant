@@ -1,0 +1,15 @@
+Ana Lima
+--- api data ---
+{
+  "per_page": 3,
+  "resources": {
+    "orders": [
+      {"id": 1, "customer": "Ana Lima", "amount": 120, "status": "paid"},
+      {"id": 2, "customer": "Rui Gomes", "amount": 999, "status": "paid"},
+      {"id": 3, "customer": "Ana Lima", "amount": 40, "status": "refunded"},
+      {"id": 4, "customer": "Ana Lima", "amount": 80, "status": "paid"},
+      {"id": 5, "customer": "Marta Sousa", "amount": 60, "status": "paid"},
+      {"id": 6, "customer": "Ana Lima", "amount": 15, "status": "pending"}
+    ]
+  }
+}

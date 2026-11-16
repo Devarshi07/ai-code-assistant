@@ -1,0 +1,6 @@
+1. POST /payments -> 201 {"amount":1250,"currency":"EUR","id":"pay_1","status":"captured"}
+2. POST /payments -> 201 {"amount":1250,"currency":"EUR","id":"pay_1","status":"captured"}
+3. GET /payments -> 200 {"captured":{"EUR":1250},"count":1}
+4. POST /payments -> 409 {"error":"idempotency key reused with a different payment"}
+5. POST /payments -> 201 {"amount":999,"currency":"USD","id":"pay_2","status":"captured"}
+6. GET /payments -> 200 {"captured":{"EUR":1250,"USD":999},"count":2}

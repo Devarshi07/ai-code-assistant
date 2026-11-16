@@ -1,0 +1,16 @@
+CREATE TABLE sales (
+  id INTEGER PRIMARY KEY,
+  region TEXT NOT NULL,
+  rep TEXT NOT NULL,
+  amount INTEGER NOT NULL,
+  sold_on TEXT NOT NULL
+);
+INSERT INTO sales VALUES
+  (1, 'South', 'Ana', 250, '2025-01-02'),
+  (2, 'South', 'Ben', 250, '2025-01-03'),
+  (3, 'South', 'Cleo', 250, '2025-01-04'),
+  (4, 'South', 'Dev', 250, '2025-01-05'),
+  (5, 'South', 'Eli', 250, '2025-01-06'),
+  (6, 'South', 'Fay', 250, '2025-01-07'),
+  (7, 'North', 'Ana', 10, '2025-01-08'),
+  (8, 'north', 'Ana', 99, '2025-01-09');

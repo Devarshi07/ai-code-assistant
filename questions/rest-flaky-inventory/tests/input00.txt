@@ -1,0 +1,15 @@
+drills
+--- api data ---
+{
+  "per_page": 3,
+  "throttle": "first",
+  "resources": {
+    "stock": [
+      {"sku": "SKU-0001", "category": "drills", "warehouse": "LIS-1", "quantity": 12},
+      {"sku": "SKU-0002", "category": "drills", "warehouse": "OPO-2", "quantity": 20},
+      {"sku": "SKU-0003", "category": "saws", "warehouse": "FAO-3", "quantity": 7},
+      {"sku": "SKU-0004", "category": "drills", "warehouse": "LIS-1", "quantity": 30},
+      {"sku": "SKU-0005", "category": "drills", "warehouse": "OPO-2", "quantity": -5}
+    ]
+  }
+}

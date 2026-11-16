@@ -1,0 +1,5 @@
+{"method": "GET", "path": "/tasks"}
+{"method": "GET", "path": "/tasks/1"}
+{"method": "GET", "path": "/tasks/abc"}
+{"method": "DELETE", "path": "/tasks/1"}
+{"method": "PATCH", "path": "/tasks/1", "body": {"done": true}}

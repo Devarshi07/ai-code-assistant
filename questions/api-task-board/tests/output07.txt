@@ -1,0 +1,120 @@
+1. DELETE /tasks/999 -> 404 {"error":"task not found"}
+2. PATCH /tasks/999 -> 404 {"error":"task not found"}
+3. PATCH /tasks/999 -> 404 {"error":"task not found"}
+4. GET /tasks -> 200 {"tasks":[]}
+5. PATCH /tasks/3 -> 404 {"error":"task not found"}
+6. GET /tasks/11 -> 404 {"error":"task not found"}
+7. GET /tasks/11 -> 404 {"error":"task not found"}
+8. POST /tasks -> 201 {"done":false,"id":1,"priority":2,"title":"Update docs 3"}
+9. GET /tasks/999 -> 404 {"error":"task not found"}
+10. GET /tasks/abc -> 404 {"error":"task not found"}
+11. POST /tasks -> 400 {"error":"invalid task"}
+12. DELETE /tasks/abc -> 404 {"error":"task not found"}
+13. GET /tasks/999 -> 404 {"error":"task not found"}
+14. GET /tasks/999 -> 404 {"error":"task not found"}
+15. PATCH /tasks/5 -> 404 {"error":"task not found"}
+16. DELETE /tasks/999 -> 404 {"error":"task not found"}
+17. POST /tasks -> 400 {"error":"invalid task"}
+18. GET /tasks/abc -> 404 {"error":"task not found"}
+19. GET /tasks -> 200 {"tasks":[{"done":false,"id":1,"priority":2,"title":"Update docs 3"}]}
+20. POST /tasks -> 400 {"error":"invalid task"}
+21. PATCH /tasks/abc -> 404 {"error":"task not found"}
+22. GET /tasks -> 200 {"tasks":[{"done":false,"id":1,"priority":2,"title":"Update docs 3"}]}
+23. POST /tasks -> 400 {"error":"invalid task"}
+24. PATCH /tasks/12 -> 404 {"error":"task not found"}
+25. POST /tasks -> 201 {"done":false,"id":2,"priority":1,"title":"Fix login bug 5"}
+26. GET /tasks/abc -> 404 {"error":"task not found"}
+27. DELETE /tasks/1 -> 204 -
+28. POST /tasks -> 400 {"error":"invalid task"}
+29. GET /tasks -> 200 {"tasks":[{"done":false,"id":2,"priority":1,"title":"Fix login bug 5"}]}
+30. PATCH /tasks/999 -> 404 {"error":"task not found"}
+31. POST /tasks -> 201 {"done":false,"id":3,"priority":3,"title":"Deploy 2"}
+32. DELETE /tasks/abc -> 404 {"error":"task not found"}
+33. GET /tasks/6 -> 404 {"error":"task not found"}
+34. PATCH /tasks/7 -> 404 {"error":"task not found"}
+35. POST /tasks -> 201 {"done":false,"id":4,"priority":3,"title":"Plan sprint 1"}
+36. POST /tasks -> 201 {"done":false,"id":5,"priority":2,"title":"Fix login bug 2"}
+37. GET /tasks -> 200 {"tasks":[{"done":false,"id":2,"priority":1,"title":"Fix login bug 5"},{"done":false,"id":3,"priority":3,"title":"Deploy 2"},{"done":false,"id":4,"priority":3,"title":"Plan sprint 1"},{"done":false,"id":5,"priority":2,"title":"Fix login bug 2"}]}
+38. DELETE /tasks/5 -> 204 -
+39. GET /tasks/abc -> 404 {"error":"task not found"}
+40. GET /tasks/7 -> 404 {"error":"task not found"}
+41. PATCH /tasks/11 -> 404 {"error":"task not found"}
+42. POST /tasks -> 201 {"done":false,"id":6,"priority":3,"title":"Review PR 5"}
+43. POST /tasks -> 201 {"done":false,"id":7,"priority":3,"title":"Review PR 5"}
+44. POST /tasks -> 400 {"error":"invalid task"}
+45. GET /tasks -> 200 {"tasks":[{"done":false,"id":2,"priority":1,"title":"Fix login bug 5"},{"done":false,"id":3,"priority":3,"title":"Deploy 2"},{"done":false,"id":4,"priority":3,"title":"Plan sprint 1"},{"done":false,"id":6,"priority":3,"title":"Review PR 5"},{"done":false,"id":7,"priority":3,"title":"Review PR 5"}]}
+46. PATCH /tasks/999 -> 404 {"error":"task not found"}
+47. POST /tasks -> 201 {"done":false,"id":8,"priority":3,"title":"Review PR 1"}
+48. PATCH /tasks/999 -> 404 {"error":"task not found"}
+49. DELETE /tasks/999 -> 404 {"error":"task not found"}
+50. PATCH /tasks/6 -> 400 {"error":"invalid task"}
+51. PATCH /tasks/abc -> 404 {"error":"task not found"}
+52. POST /tasks -> 201 {"done":false,"id":9,"priority":3,"title":"Write tests 6"}
+53. PATCH /tasks/abc -> 404 {"error":"task not found"}
+54. POST /tasks -> 201 {"done":false,"id":10,"priority":3,"title":"Fix login bug 2"}
+55. POST /tasks -> 201 {"done":false,"id":11,"priority":3,"title":"Update docs 1"}
+56. GET /tasks/999 -> 404 {"error":"task not found"}
+57. PATCH /tasks/9 -> 400 {"error":"invalid task"}
+58. POST /tasks -> 400 {"error":"invalid task"}
+59. PATCH /tasks/4 -> 200 {"done":false,"id":4,"priority":3,"title":"Plan sprint 1"}
+60. POST /tasks -> 400 {"error":"invalid task"}
+61. PATCH /tasks/999 -> 404 {"error":"task not found"}
+62. PATCH /tasks/9 -> 200 {"done":false,"id":9,"priority":5,"title":"Write tests 6"}
+63. POST /tasks -> 400 {"error":"invalid task"}
+64. GET /tasks -> 200 {"tasks":[{"done":false,"id":2,"priority":1,"title":"Fix login bug 5"},{"done":false,"id":3,"priority":3,"title":"Deploy 2"},{"done":false,"id":4,"priority":3,"title":"Plan sprint 1"},{"done":false,"id":6,"priority":3,"title":"Review PR 5"},{"done":false,"id":7,"priority":3,"title":"Review PR 5"},{"done":false,"id":8,"priority":3,"title":"Review PR 1"},{"done":false,"id":9,"priority":5,"title":"Write tests 6"},{"done":false,"id":10,"priority":3,"title":"Fix login bug 2"},{"done":false,"id":11,"priority":3,"title":"Update docs 1"}]}
+65. PATCH /tasks/6 -> 200 {"done":false,"id":6,"priority":3,"title":"Plan sprint"}
+66. GET /tasks -> 200 {"tasks":[{"done":false,"id":2,"priority":1,"title":"Fix login bug 5"},{"done":false,"id":3,"priority":3,"title":"Deploy 2"},{"done":false,"id":4,"priority":3,"title":"Plan sprint 1"},{"done":false,"id":6,"priority":3,"title":"Plan sprint"},{"done":false,"id":7,"priority":3,"title":"Review PR 5"},{"done":false,"id":8,"priority":3,"title":"Review PR 1"},{"done":false,"id":9,"priority":5,"title":"Write tests 6"},{"done":false,"id":10,"priority":3,"title":"Fix login bug 2"},{"done":false,"id":11,"priority":3,"title":"Update docs 1"}]}
+67. POST /tasks -> 201 {"done":false,"id":12,"priority":5,"title":"Call vendor 2"}
+68. POST /tasks -> 201 {"done":false,"id":13,"priority":2,"title":"Review PR 2"}
+69. PATCH /tasks/abc -> 404 {"error":"task not found"}
+70. POST /tasks -> 201 {"done":false,"id":14,"priority":4,"title":"Plan sprint 4"}
+71. GET /tasks -> 200 {"tasks":[{"done":false,"id":2,"priority":1,"title":"Fix login bug 5"},{"done":false,"id":3,"priority":3,"title":"Deploy 2"},{"done":false,"id":4,"priority":3,"title":"Plan sprint 1"},{"done":false,"id":6,"priority":3,"title":"Plan sprint"},{"done":false,"id":7,"priority":3,"title":"Review PR 5"},{"done":false,"id":8,"priority":3,"title":"Review PR 1"},{"done":false,"id":9,"priority":5,"title":"Write tests 6"},{"done":false,"id":10,"priority":3,"title":"Fix login bug 2"},{"done":false,"id":11,"priority":3,"title":"Update docs 1"},{"done":false,"id":12,"priority":5,"title":"Call vendor 2"},{"done":false,"id":13,"priority":2,"title":"Review PR 2"},{"done":false,"id":14,"priority":4,"title":"Plan sprint 4"}]}
+72. DELETE /tasks/999 -> 404 {"error":"task not found"}
+73. DELETE /tasks/abc -> 404 {"error":"task not found"}
+74. POST /tasks -> 201 {"done":false,"id":15,"priority":5,"title":"Plan sprint 6"}
+75. GET /tasks/abc -> 404 {"error":"task not found"}
+76. PATCH /tasks/999 -> 404 {"error":"task not found"}
+77. POST /tasks -> 400 {"error":"invalid task"}
+78. POST /tasks -> 400 {"error":"invalid task"}
+79. DELETE /tasks/9 -> 204 -
+80. POST /tasks -> 201 {"done":false,"id":16,"priority":3,"title":"Review PR 1"}
+81. PATCH /tasks/6 -> 400 {"error":"invalid task"}
+82. DELETE /tasks/999 -> 404 {"error":"task not found"}
+83. GET /tasks -> 200 {"tasks":[{"done":false,"id":2,"priority":1,"title":"Fix login bug 5"},{"done":false,"id":3,"priority":3,"title":"Deploy 2"},{"done":false,"id":4,"priority":3,"title":"Plan sprint 1"},{"done":false,"id":6,"priority":3,"title":"Plan sprint"},{"done":false,"id":7,"priority":3,"title":"Review PR 5"},{"done":false,"id":8,"priority":3,"title":"Review PR 1"},{"done":false,"id":10,"priority":3,"title":"Fix login bug 2"},{"done":false,"id":11,"priority":3,"title":"Update docs 1"},{"done":false,"id":12,"priority":5,"title":"Call vendor 2"},{"done":false,"id":13,"priority":2,"title":"Review PR 2"},{"done":false,"id":14,"priority":4,"title":"Plan sprint 4"},{"done":false,"id":15,"priority":5,"title":"Plan sprint 6"},{"done":false,"id":16,"priority":3,"title":"Review PR 1"}]}
+84. PATCH /tasks/abc -> 404 {"error":"task not found"}
+85. GET /tasks -> 200 {"tasks":[{"done":false,"id":2,"priority":1,"title":"Fix login bug 5"},{"done":false,"id":3,"priority":3,"title":"Deploy 2"},{"done":false,"id":4,"priority":3,"title":"Plan sprint 1"},{"done":false,"id":6,"priority":3,"title":"Plan sprint"},{"done":false,"id":7,"priority":3,"title":"Review PR 5"},{"done":false,"id":8,"priority":3,"title":"Review PR 1"},{"done":false,"id":10,"priority":3,"title":"Fix login bug 2"},{"done":false,"id":11,"priority":3,"title":"Update docs 1"},{"done":false,"id":12,"priority":5,"title":"Call vendor 2"},{"done":false,"id":13,"priority":2,"title":"Review PR 2"},{"done":false,"id":14,"priority":4,"title":"Plan sprint 4"},{"done":false,"id":15,"priority":5,"title":"Plan sprint 6"},{"done":false,"id":16,"priority":3,"title":"Review PR 1"}]}
+86. POST /tasks -> 201 {"done":false,"id":17,"priority":3,"title":"Call vendor 8"}
+87. GET /tasks/1 -> 404 {"error":"task not found"}
+88. PATCH /tasks/11 -> 200 {"done":true,"id":11,"priority":3,"title":"Update docs 1"}
+89. PATCH /tasks/999 -> 404 {"error":"task not found"}
+90. GET /tasks/999 -> 404 {"error":"task not found"}
+91. POST /tasks -> 400 {"error":"invalid task"}
+92. DELETE /tasks/999 -> 404 {"error":"task not found"}
+93. PATCH /tasks/abc -> 404 {"error":"task not found"}
+94. PATCH /tasks/999 -> 404 {"error":"task not found"}
+95. POST /tasks -> 400 {"error":"invalid task"}
+96. GET /tasks -> 200 {"tasks":[{"done":false,"id":2,"priority":1,"title":"Fix login bug 5"},{"done":false,"id":3,"priority":3,"title":"Deploy 2"},{"done":false,"id":4,"priority":3,"title":"Plan sprint 1"},{"done":false,"id":6,"priority":3,"title":"Plan sprint"},{"done":false,"id":7,"priority":3,"title":"Review PR 5"},{"done":false,"id":8,"priority":3,"title":"Review PR 1"},{"done":false,"id":10,"priority":3,"title":"Fix login bug 2"},{"done":true,"id":11,"priority":3,"title":"Update docs 1"},{"done":false,"id":12,"priority":5,"title":"Call vendor 2"},{"done":false,"id":13,"priority":2,"title":"Review PR 2"},{"done":false,"id":14,"priority":4,"title":"Plan sprint 4"},{"done":false,"id":15,"priority":5,"title":"Plan sprint 6"},{"done":false,"id":16,"priority":3,"title":"Review PR 1"},{"done":false,"id":17,"priority":3,"title":"Call vendor 8"}]}
+97. PATCH /tasks/abc -> 404 {"error":"task not found"}
+98. GET /tasks/abc -> 404 {"error":"task not found"}
+99. PATCH /tasks/999 -> 404 {"error":"task not found"}
+100. GET /tasks/abc -> 404 {"error":"task not found"}
+101. PATCH /tasks/8 -> 200 {"done":false,"id":8,"priority":3,"title":"Review PR 1"}
+102. PATCH /tasks/abc -> 404 {"error":"task not found"}
+103. PATCH /tasks/999 -> 404 {"error":"task not found"}
+104. PATCH /tasks/abc -> 404 {"error":"task not found"}
+105. DELETE /tasks/abc -> 404 {"error":"task not found"}
+106. GET /tasks/abc -> 404 {"error":"task not found"}
+107. GET /tasks/999 -> 404 {"error":"task not found"}
+108. DELETE /tasks/abc -> 404 {"error":"task not found"}
+109. DELETE /tasks/999 -> 404 {"error":"task not found"}
+110. DELETE /tasks/11 -> 204 -
+111. DELETE /tasks/4 -> 204 -
+112. GET /tasks/abc -> 404 {"error":"task not found"}
+113. GET /tasks -> 200 {"tasks":[{"done":false,"id":2,"priority":1,"title":"Fix login bug 5"},{"done":false,"id":3,"priority":3,"title":"Deploy 2"},{"done":false,"id":6,"priority":3,"title":"Plan sprint"},{"done":false,"id":7,"priority":3,"title":"Review PR 5"},{"done":false,"id":8,"priority":3,"title":"Review PR 1"},{"done":false,"id":10,"priority":3,"title":"Fix login bug 2"},{"done":false,"id":12,"priority":5,"title":"Call vendor 2"},{"done":false,"id":13,"priority":2,"title":"Review PR 2"},{"done":false,"id":14,"priority":4,"title":"Plan sprint 4"},{"done":false,"id":15,"priority":5,"title":"Plan sprint 6"},{"done":false,"id":16,"priority":3,"title":"Review PR 1"},{"done":false,"id":17,"priority":3,"title":"Call vendor 8"}]}
+114. GET /tasks -> 200 {"tasks":[{"done":false,"id":2,"priority":1,"title":"Fix login bug 5"},{"done":false,"id":3,"priority":3,"title":"Deploy 2"},{"done":false,"id":6,"priority":3,"title":"Plan sprint"},{"done":false,"id":7,"priority":3,"title":"Review PR 5"},{"done":false,"id":8,"priority":3,"title":"Review PR 1"},{"done":false,"id":10,"priority":3,"title":"Fix login bug 2"},{"done":false,"id":12,"priority":5,"title":"Call vendor 2"},{"done":false,"id":13,"priority":2,"title":"Review PR 2"},{"done":false,"id":14,"priority":4,"title":"Plan sprint 4"},{"done":false,"id":15,"priority":5,"title":"Plan sprint 6"},{"done":false,"id":16,"priority":3,"title":"Review PR 1"},{"done":false,"id":17,"priority":3,"title":"Call vendor 8"}]}
+115. GET /tasks/999 -> 404 {"error":"task not found"}
+116. PATCH /tasks/abc -> 404 {"error":"task not found"}
+117. PATCH /tasks/4 -> 404 {"error":"task not found"}
+118. PATCH /tasks/999 -> 404 {"error":"task not found"}
+119. DELETE /tasks/abc -> 404 {"error":"task not found"}
+120. DELETE /tasks/3 -> 204 -

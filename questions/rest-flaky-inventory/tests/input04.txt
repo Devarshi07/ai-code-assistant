@@ -1,0 +1,14 @@
+Drills
+--- api data ---
+{
+  "per_page": 1,
+  "throttle": "first",
+  "resources": {
+    "stock": [
+      {"sku": "SKU-0001", "category": "Drills", "warehouse": "lis-1", "quantity": 5},
+      {"sku": "SKU-0002", "category": "drills", "warehouse": "LIS-1", "quantity": 50},
+      {"sku": "SKU-0003", "category": "Drills", "warehouse": "LIS-1", "quantity": 5},
+      {"sku": "SKU-0004", "category": "Drills", "warehouse": "AVR-4", "quantity": 7}
+    ]
+  }
+}

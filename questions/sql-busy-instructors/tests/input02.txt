@@ -1,0 +1,12 @@
+CREATE TABLE instructors (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL
+);
+CREATE TABLE classes (
+  id INTEGER PRIMARY KEY,
+  instructor_id INTEGER NOT NULL REFERENCES instructors(id),
+  held_on TEXT NOT NULL,
+  attendees INTEGER NOT NULL
+);
+INSERT INTO instructors VALUES
+  (1, 'Ada');

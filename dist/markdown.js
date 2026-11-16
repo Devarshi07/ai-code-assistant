@@ -78,16 +78,38 @@ export function highlight(code, language) {
   return out + escapeHtml(code.slice(last));
 }
 
-function inline(text) {
-  // Escape first, then add markup to the escaped text.
-  let html = escapeHtml(text);
-  const codes = [];
-  html = html.replace(/`([^`]+)`/g, (_, code) => { codes.push(code); return `\u0000${codes.length - 1}\u0000`; });
+// Links: web links open in a new tab; with options.relativeLinks, a relative
+// path becomes a link the page can handle (data-path); other targets show
+// their label only. Text is already escaped, so attributes can't be broken out of.
+function link(label, url, options) {
+  if (/^https?:\/\//i.test(url)) return `<a href="${url}" target="_blank" rel="noreferrer noopener">${label}</a>`;
+  if (options.relativeLinks && !/^[a-z][\w+.-]*:/i.test(url) && !url.startsWith('//')) {
+    return url.startsWith('#') ? `<span class="md-anchor">${label}</span>` : `<a href="#" class="md-file-link" data-path="${url}">${label}</a>`;
+  }
+  return label;
+}
+
+function inline(text, options = {}) {
+  // Escape first, then add markup to the escaped text. Code spans and links
+  // are set aside first so emphasis never reaches into them. The markers that
+  // hold them (\u0000n\u0000) can't come from the input, and a URL can never
+  // contain one, so restored markup only ever lands in element content.
+  let html = escapeHtml(String(text ?? '').replace(/\u0000/g, ''));
+  const held = [];
+  const hold = markup => { held.push(markup); return `\u0000${held.length - 1}\u0000`; };
+  html = html
+    .replace(/``([^`]+?)``|`([^`]+)`/g, (_, a, b) => hold(`<code>${a !== undefined ? a.trim() : b}</code>`))
+    .replace(/!\[([^\]]*)\]\(([^)\s\u0000]+)(?:\s+&quot;[^&\u0000]*&quot;)?\)/g, (_, alt) => hold(`<span class="md-image">${alt ? `[image: ${alt}]` : '[image]'}</span>`))
+    .replace(/\[([^\]]+)\]\(([^)\s\u0000]+)(?:\s+&quot;[^&\u0000]*&quot;)?\)/g, (_, label, url) => hold(link(label, url, options)))
+    .replace(/&lt;(https?:\/\/[^\s&\u0000]+)&gt;/g, (_, url) => hold(link(url, url, options)))
+    .replace(/&lt;br\s*\/?&gt;/gi, () => hold('<br>'));
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/~~([^~]+)~~/g, '<del>$1</del>')
     .replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?=[^*\w]|$)/g, '$1<em>$2</em>')
-    .replace(/(^|[^\w])_([^_\s][^_]*?)_(?=[^\w]|$)/g, '$1<em>$2</em>')
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (_, label, url) => `<a href="${url}" target="_blank" rel="noreferrer noopener">${label}</a>`);
-  return html.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${codes[Number(i)]}</code>`);
+    .replace(/(^|[^\w])_([^_\s][^_]*?)_(?=[^\w]|$)/g, '$1<em>$2</em>');
+  // Link labels may hold code spans, so restore in a few passes.
+  for (let pass = 0; pass < 3 && /\u0000\d+\u0000/.test(html); pass++) html = html.replace(/\u0000(\d+)\u0000/g, (_, n) => held[Number(n)]);
+  return html;
 }
 
 function codeBlock(code, language, {onCopy, codeActions = []} = {}) {
@@ -126,98 +148,188 @@ function codeBlock(code, language, {onCopy, codeActions = []} = {}) {
   return wrapper;
 }
 
-// Renders markdown into a DocumentFragment.
+// Renders markdown into a DocumentFragment. Options: language (for unlabelled
+// code), headingOffset (# becomes h(1 + offset); 2 by default, for chat),
+// softBreaks (wrapped lines join like a README on GitHub; otherwise a newline
+// is a line break, as chat replies expect), relativeLinks, document (also
+// indented code blocks), codeActions and onCopy for code blocks.
 export function renderMarkdown(source, options = {}) {
   const fragment = document.createDocumentFragment();
-  const lines = String(source || '').replace(/\r\n/g, '\n').split('\n');
-  let i = 0;
+  renderBlocks(dropComments(String(source || '').replace(/\r\n?/g, '\n').split('\n')), fragment, options);
+  return fragment;
+}
+
+const LIST_ITEM = /^(\s*)([-*+]|\d{1,9}[.)])(?:[ \t]+(.*))?$/;
+const FENCE = /^(\s*)(`{3,}|~{3,})\s*([\w+#.-]*)/;
+const TABLE_RULE = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/;
+const HR = /^\s{0,3}([-*_])(?:\s*\1){2,}\s*$/;
+const indentOf = line => line.length - line.trimStart().length;
+const startsBlock = line => LIST_ITEM.test(line) || FENCE.test(line) || /^\s{0,3}(#{1,6}\s|>)/.test(line) || HR.test(line);
+const tableCells = row => {
+  let text = row.trim();
+  if (text.startsWith('|')) text = text.slice(1);
+  if (text.endsWith('|') && !text.endsWith('\\|')) text = text.slice(0, -1);
+  return text.split(/(?<!\\)\|/).map(cell => cell.trim().replace(/\\\|/g, '|'));
+};
+
+// HTML comments on their own lines (README badges, notes to editors) are
+// hidden. Comments inside code blocks and inline text are left as written.
+function dropComments(lines) {
+  const out = [];
+  let fence = null, comment = false;
+  for (const line of lines) {
+    if (comment) { if (line.includes('-->')) comment = false; continue; }
+    const marker = line.match(FENCE);
+    if (fence) { if (new RegExp(`^\\s*${fence[0] === '`' ? '`' : '~'}{${fence.length},}\\s*$`).test(line)) fence = null; out.push(line); continue; }
+    if (marker) { fence = marker[2]; out.push(line); continue; }
+    if (/^\s{0,3}<!--/.test(line)) { if (!line.slice(line.indexOf('<!--') + 4).includes('-->')) comment = true; continue; }
+    out.push(line);
+  }
+  return out;
+}
+
+function renderBlocks(lines, parent, options) {
   const paragraph = [];
   const flush = () => {
     if (!paragraph.length) return;
     const p = document.createElement('p');
-    p.innerHTML = paragraph.map(inline).join('<br>');
-    fragment.append(p);
+    p.innerHTML = joinLines(paragraph, options);
+    parent.append(p);
     paragraph.length = 0;
   };
+  const heading = (level, text) => {
+    const h = document.createElement(`h${Math.min(6, level + (options.headingOffset ?? 2))}`);
+    h.innerHTML = inline(text, options);
+    parent.append(h);
+  };
+  let i = 0;
   while (i < lines.length) {
     const line = lines[i];
-    const fence = line.match(/^\s*```\s*([\w+-]*)/);
+    const fence = line.match(FENCE);
     if (fence) {
       flush();
+      const indent = fence[1].length;
+      const closing = new RegExp(`^\\s*${fence[2][0] === '`' ? '`' : '~'}{${fence[2].length},}\\s*$`);
       const body = [];
       i++;
-      while (i < lines.length && !/^\s*```\s*$/.test(lines[i])) body.push(lines[i++]);
+      while (i < lines.length && !closing.test(lines[i])) { const raw = lines[i++]; body.push(raw.slice(Math.min(indent, indentOf(raw)))); }
       i++;
-      fragment.append(codeBlock(body.join('\n'), fence[1] || options.language || '', options));
+      parent.append(codeBlock(body.join('\n'), fence[3] || options.language || '', options));
       continue;
     }
-    const heading = line.match(/^(#{1,4})\s+(.*)$/);
-    if (heading) {
-      flush();
-      const h = document.createElement(`h${Math.min(6, heading[1].length + (options.headingOffset ?? 2))}`);
-      h.innerHTML = inline(heading[2]);
-      fragment.append(h);
-      i++;
+    const atx = line.match(/^\s{0,3}(#{1,6})\s+(.*?)(?:\s+#+)?\s*$/);
+    if (atx) { flush(); heading(atx[1].length, atx[2]); i++; continue; }
+    // In documents, a single line underlined with === or --- is a heading. In
+    // chat, "That is the fix.\n---" means a rule, so it stays a paragraph.
+    if (options.document && !paragraph.length && line.trim() && !startsBlock(line) && !/^\s*\|/.test(line) && /^\s{0,3}(=+|-{2,})\s*$/.test(lines[i + 1] || '')) {
+      heading(lines[i + 1].trim()[0] === '=' ? 1 : 2, line.trim());
+      i += 2;
       continue;
     }
-    if (/^\s*>/.test(line)) {
+    if (/^\s{0,3}>/.test(line)) {
       flush();
       const quote = [];
-      while (i < lines.length && /^\s*>/.test(lines[i])) quote.push(lines[i++].replace(/^\s*>\s?/, ''));
+      while (i < lines.length && /^\s{0,3}>/.test(lines[i])) quote.push(lines[i++].replace(/^\s{0,3}>\s?/, ''));
       const block = document.createElement('blockquote');
-      block.append(renderMarkdown(quote.join('\n'), options));
-      fragment.append(block);
+      renderBlocks(quote, block, options);
+      parent.append(block);
       continue;
     }
-    if (/^\s*\|.*\|\s*$/.test(line) && i + 1 < lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
+    // A table needs a delimiter row with pipes and as many cells as its header.
+    const rule = lines[i + 1] || '';
+    if (line.includes('|') && rule.includes('|') && rule.includes('-') && TABLE_RULE.test(rule) && tableCells(line).length === tableCells(rule).length) {
       flush();
-      const cells = row => row.trim().replace(/^\||\|$/g, '').split('|').map(cell => cell.trim());
-      const table = document.createElement('table');
-      const head = document.createElement('tr');
-      for (const cell of cells(line)) { const th = document.createElement('th'); th.innerHTML = inline(cell); head.append(th); }
-      const thead = document.createElement('thead');
-      thead.append(head);
-      table.append(thead);
-      const tbody = document.createElement('tbody');
-      i += 2;
-      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) {
-        const tr = document.createElement('tr');
-        for (const cell of cells(lines[i++])) { const td = document.createElement('td'); td.innerHTML = inline(cell); tr.append(td); }
-        tbody.append(tr);
-      }
-      table.append(tbody);
-      const scroll = document.createElement('div');
-      scroll.className = 'md-table';
-      scroll.append(table);
-      fragment.append(scroll);
+      i = renderTable(lines, i, parent, options);
       continue;
     }
-    const bullet = line.match(/^(\s*)([-*+]|\d+[.)])\s+(.*)$/);
-    if (bullet) {
-      flush();
-      const ordered = /\d/.test(bullet[2]);
-      const list = document.createElement(ordered ? 'ol' : 'ul');
-      while (i < lines.length) {
-        const item = lines[i].match(/^(\s*)([-*+]|\d+[.)])\s+(.*)$/);
-        if (!item) {
-          if (/^\s{2,}\S/.test(lines[i]) && list.lastChild) { list.lastChild.innerHTML += '<br>' + inline(lines[i].trim()); i++; continue; }
-          break;
-        }
-        const li = document.createElement('li');
-        li.innerHTML = inline(item[3]);
-        list.append(li);
-        i++;
-      }
-      fragment.append(list);
-      continue;
-    }
-    if (/^\s*(---|\*\*\*)\s*$/.test(line)) { flush(); fragment.append(document.createElement('hr')); i++; continue; }
+    if (HR.test(line)) { flush(); parent.append(document.createElement('hr')); i++; continue; }
+    const item = line.match(LIST_ITEM);
+    // Only a list starting at 1 can interrupt a paragraph ("version\n2. Next" is one paragraph).
+    if (item && !(paragraph.length && /\d/.test(item[2]) && parseInt(item[2], 10) !== 1)) { flush(); i = renderList(lines, i, parent, options); continue; }
     if (!line.trim()) { flush(); i++; continue; }
+    if (options.document && !paragraph.length && /^( {4}|\t)/.test(line)) {
+      const body = [];
+      while (i < lines.length && (/^( {4}|\t)/.test(lines[i]) || (!lines[i].trim() && /^( {4}|\t)/.test(lines[i + 1] || '')))) body.push(lines[i++].replace(/^( {4}|\t)/, ''));
+      parent.append(codeBlock(body.join('\n'), options.language || '', options));
+      continue;
+    }
     paragraph.push(line);
     i++;
   }
   flush();
-  return fragment;
+}
+
+// Lines of one paragraph: joined with spaces (softBreaks) or line breaks. A
+// line ending in two spaces or a backslash always breaks.
+function joinLines(lines, options) {
+  if (!options.softBreaks) return lines.map(line => inline(line, options)).join('<br>');
+  return lines.map((line, n) => {
+    const last = n === lines.length - 1;
+    const hard = !last && /( {2,}|\\)$/.test(line);
+    return inline(line.trim().replace(/\\$/, ''), options) + (last ? '' : hard ? '<br>' : ' ');
+  }).join('');
+}
+
+function renderTable(lines, start, parent, options) {
+  const cells = tableCells;
+  const align = cells(lines[start + 1]).map(rule => rule.startsWith(':') && rule.endsWith(':') ? 'center' : rule.endsWith(':') ? 'right' : '');
+  const table = document.createElement('table');
+  const thead = document.createElement('thead'), head = document.createElement('tr');
+  cells(lines[start]).forEach((cell, n) => { const th = document.createElement('th'); th.innerHTML = inline(cell, options); if (align[n]) th.style.textAlign = align[n]; head.append(th); });
+  thead.append(head);
+  table.append(thead);
+  const tbody = document.createElement('tbody');
+  let i = start + 2;
+  while (i < lines.length && lines[i].includes('|') && lines[i].trim()) {
+    const tr = document.createElement('tr');
+    cells(lines[i++]).forEach((cell, n) => { const td = document.createElement('td'); td.innerHTML = inline(cell, options); if (align[n]) td.style.textAlign = align[n]; tr.append(td); });
+    tbody.append(tr);
+  }
+  table.append(tbody);
+  const scroll = document.createElement('div');
+  scroll.className = 'md-table';
+  scroll.append(table);
+  parent.append(scroll);
+  return i;
+}
+
+// A list and its items, nested lists and paragraphs included. Items separated
+// by blank lines stay one list, so numbering continues.
+function renderList(lines, start, parent, options) {
+  const first = lines[start].match(LIST_ITEM);
+  const base = first[1].length, ordered = /\d/.test(first[2]);
+  const list = document.createElement(ordered ? 'ol' : 'ul');
+  if (ordered && parseInt(first[2], 10) !== 1) list.start = parseInt(first[2], 10);
+  let i = start;
+  while (i < lines.length) {
+    const item = lines[i].match(LIST_ITEM);
+    if (!item || item[1].length > base + 1 || item[1].length + 1 < base || /\d/.test(item[2]) !== ordered) break;
+    const contentIndent = item[1].length + item[2].length + 1;
+    const body = [item[3] || ''];
+    let blank = false;
+    i++;
+    while (i < lines.length) {
+      const next = lines[i];
+      if (!next.trim()) { body.push(''); blank = true; i++; continue; }
+      const indent = indentOf(next);
+      if (LIST_ITEM.test(next) && indent <= base + 1) break;
+      if (indent > base) { body.push(next.slice(Math.min(indent, contentIndent))); blank = false; i++; continue; }
+      // A wrapped line that isn't indented still belongs to the item.
+      if (!blank && !startsBlock(next) && !/^\s*\|/.test(next)) { body.push(next.trim()); i++; continue; }
+      break;
+    }
+    while (body.length > 1 && !body[body.length - 1].trim()) body.pop();
+    const li = document.createElement('li');
+    const task = body[0].match(/^\[( |x|X)\]\s+(.*)$/);
+    if (task) { li.className = 'md-task'; li.dataset.done = String(task[1] !== ' '); body[0] = task[2]; }
+    const simple = !body.some(line => !line.trim()) && !body.slice(1).some(line => startsBlock(line) || /^\s*\|/.test(line));
+    if (simple) li.innerHTML = joinLines(body, options);
+    else renderBlocks(body, li, options);
+    if (task) li.prepend(Object.assign(document.createElement('span'), {className: 'md-check', textContent: task[1] === ' ' ? '☐' : '☑'}));
+    list.append(li);
+  }
+  parent.append(list);
+  return i;
 }
 
 export function codeView(code, language) {

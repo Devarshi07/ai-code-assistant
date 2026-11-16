@@ -1,0 +1,6 @@
+CREATE TABLE readings (
+  id INTEGER PRIMARY KEY,
+  device TEXT NOT NULL,
+  status TEXT,
+  recorded_at TEXT NOT NULL
+);

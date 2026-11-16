@@ -1,0 +1,65 @@
+{
+  "id": "ml-causal-attention",
+  "title": "Masked Attention",
+  "difficulty": "Hard",
+  "maxScore": 80,
+  "kind": "ml",
+  "languages": [
+    "python"
+  ],
+  "skills": [
+    "Machine Learning",
+    "Math"
+  ],
+  "summary": "Implement causal scaled dot-product attention with a numerically stable softmax.",
+  "statement": "Implement the attention step of a decoder-only transformer for one head.\n\nGiven query, key and value matrices `Q`, `K` and `V`, each `n × d` (row `i` belongs to token `i`), compute:\n\n1. **Scores:** `S = Q · Kᵀ / √d`, an `n × n` matrix.\n2. **Causal mask:** token `i` may only look at tokens `j ≤ i`. Treat every score with `j > i` as `−∞`.\n3. **Softmax** each row of the masked scores: `A[i][j] = e^(S[i][j]) / Σ_j' e^(S[i][j'])` over the allowed `j'`.\n4. **Output:** `O = A · V`, an `n × d` matrix.\n\nScores can reach several hundred, and `e^800` overflows a float. Compute the softmax in a numerically stable way: subtracting each row's maximum score before exponentiating leaves the result unchanged.",
+  "functionDescription": "Complete the **causalAttention** function in the editor below.\n\n**causalAttention** has the following parameters:\n\n- `float Q[n][d]`, `float K[n][d]`, `float V[n][d]`: the queries, keys and values\n\n**Returns**\n\n- `float[n][d]`: the output `O`\n\nNumPy is available as `np`.",
+  "inputFormat": "The first line contains two integers `n` and `d`.\n\nThe next `n` lines hold the rows of `Q`, then `n` lines hold the rows of `K`, then `n` lines hold the rows of `V`; each row has `d` space-separated numbers.",
+  "constraints": "- `1 ≤ n ≤ 400`\n- `1 ≤ d ≤ 64`\n- Every value is between `-10` and `10`, with at most 2 decimal places.",
+  "outputFormat": "The template prints `O` one row per line, each value rounded to 4 decimal places.",
+  "samples": [
+    {
+      "input": "2 2\n1 0\n1 1\n0 0\n1 1\n1 0\n0 1\n",
+      "output": "1.0000 0.0000\n0.1956 0.8044\n",
+      "explanation": "Token 0 can only see itself, so its output is `V[0] = (1, 0)`. Token 1 sees both tokens with scores `0` and `2/√2 = 1.414`, so the weights are about `0.196` and `0.804`, and its output is `0.196 · (1, 0) + 0.804 · (0, 1)`."
+    },
+    {
+      "input": "3 8\n10 10 10 10 10 10 10 10\n10 10 10 10 10 10 10 10\n-10 -10 -10 -10 -10 -10 -10 -10\n10 10 10 10 10 10 10 10\n9.5 9.5 9.5 9.5 9.5 9.5 9.5 9.5\n10 10 10 10 10 10 10 10\n1 2 3 4 5 6 7 8\n-1 -1 -1 -1 -1 -1 -1 -1\n0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5\n",
+      "output": "1.0000 2.0000 3.0000 4.0000 5.0000 6.0000 7.0000 8.0000\n1.0000 2.0000 3.0000 4.0000 5.0000 6.0000 7.0000 8.0000\n-1.0000 -1.0000 -1.0000 -1.0000 -1.0000 -1.0000 -1.0000 -1.0000\n",
+      "explanation": "Token 1 scores `283` against token 0 and `269` against itself, so nearly all its weight goes to token 0 and its output is `V[0]`. Token 2's largest score is with token 1, so it copies `V[1]`. Here the scores stay below 709, where `e^x` overflows, but in hidden tests they don't: subtract each row's maximum first."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06"
+    },
+    {
+      "file": "07",
+      "weight": 2
+    },
+    {
+      "file": "08",
+      "weight": 2
+    }
+  ]
+}

@@ -4,6 +4,7 @@
 // produce the report.
 import {LANGUAGES, localize} from './problems.mjs';
 import {summarize} from './practice.mjs';
+import {chatRequest} from './ai-runtime.mjs';
 
 export const AREAS = [
   {key: 'problem_solving', label: 'Problem solving', description: 'Understood the codebase, broke the work down, chose sound approaches and finished phases.'},
@@ -178,10 +179,10 @@ export async function review(state, problem, {llm, model, diff}) {
   let generated = null, error = null;
   if (llm && model) {
     try {
-      const response = await llm({model: model.name, stream: false, format: reviewSchema, keep_alive: '5m', ...(model.thinking ? {think: false} : {}), options: {num_ctx: 16384, num_predict: 1800, temperature: 0.2}, messages: [
+      const response = await llm(chatRequest(model, {stream: false, format: reviewSchema, temperature: 0.2, numPredict: 1800, messages: [
         {role: 'system', content: SYSTEM},
         {role: 'user', content: JSON.stringify(evidencePacket(state, problem, stats, diff, limits))}
-      ]});
+      ]}));
       generated = JSON.parse(response.message.content);
       if (!Array.isArray(generated.areas) || !Array.isArray(generated.topFixes)) throw new Error('incomplete review');
     } catch (e) { error = e.message; generated = null; }

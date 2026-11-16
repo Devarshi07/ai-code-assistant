@@ -1,0 +1,2 @@
+instructor	classes	avg_attendees
+Sam	3	13

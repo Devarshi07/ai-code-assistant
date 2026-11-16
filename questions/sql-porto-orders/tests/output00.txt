@@ -1,0 +1,3 @@
+order_id	customer_name	total
+1	Ana Costa	42.5
+4	Rui Silva	31

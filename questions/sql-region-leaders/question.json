@@ -1,0 +1,61 @@
+{
+  "id": "sql-region-leaders",
+  "title": "Region Leaderboard",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "kind": "sql",
+  "languages": [
+    "sql"
+  ],
+  "skills": [
+    "SQL"
+  ],
+  "summary": "Rank sales reps inside each region with a window function, ties included.",
+  "statement": "A solar-panel company pays a bonus to the top sellers in each region. Every sale is one row in `sales`.\n\nFor each region, add up each rep's `amount` to get their `total`, then rank the reps of that region by `total`, highest first, using **standard competition ranking**: reps with equal totals share a rank and the next rank skips ahead (`1, 1, 3`). Return the reps whose rank is **1 or 2**.\n\nReturn the columns `region`, `rep`, `total` and `sales_rank`, sorted by `region`, then `sales_rank`, then `rep` (all ascending).",
+  "functionDescription": "Write one **SELECT** statement in the editor. Every test case creates this table and fills it with its own rows:\n\n```sql\nCREATE TABLE sales (\n  id INTEGER PRIMARY KEY,\n  region TEXT NOT NULL,\n  rep TEXT NOT NULL,\n  amount INTEGER NOT NULL,\n  sold_on TEXT NOT NULL\n);\n```\n\nA rep is identified by name and can sell in several regions; rank each region separately. The query runs on SQLite, which supports window functions such as `RANK() OVER (...)`.",
+  "inputFormat": "The test input is the SQL that creates and fills the table, as shown in the samples. Hidden test cases use different rows.",
+  "constraints": "- `0 ≤` rows in `sales` `≤ 30000`\n- `1 ≤ amount ≤ 50000`\n- Names and regions are compared exactly (they are case-sensitive).",
+  "outputFormat": "The first line holds the column names in lower case, separated by tabs: `region`, `rep`, `total`, `sales_rank`. Each following line is one row, with values separated by tabs, in the order described above.",
+  "samples": [
+    {
+      "input": "CREATE TABLE sales (\n  id INTEGER PRIMARY KEY,\n  region TEXT NOT NULL,\n  rep TEXT NOT NULL,\n  amount INTEGER NOT NULL,\n  sold_on TEXT NOT NULL\n);\nINSERT INTO sales VALUES\n  (1, 'North', 'Ana', 500, '2025-01-02'),\n  (2, 'North', 'Ben', 700, '2025-01-03'),\n  (3, 'North', 'Ana', 400, '2025-01-04'),\n  (4, 'North', 'Cleo', 300, '2025-01-05'),\n  (5, 'South', 'Dev', 500, '2025-01-06'),\n  (6, 'South', 'Eli', 200, '2025-01-07'),\n  (7, 'South', 'Eli', 300, '2025-01-08'),\n  (8, 'South', 'Fay', 400, '2025-01-09');\n",
+      "output": "region\trep\ttotal\tsales_rank\nNorth\tAna\t900\t1\nNorth\tBen\t700\t2\nSouth\tDev\t500\t1\nSouth\tEli\t500\t1\n",
+      "explanation": "In North, Ana totals `900` (rank 1) and Ben `700` (rank 2); Cleo's `300` ranks 3. In South, Dev and Eli tie at `500` and share rank 1, so Fay's `400` is rank 3 and isn't listed."
+    },
+    {
+      "input": "CREATE TABLE sales (\n  id INTEGER PRIMARY KEY,\n  region TEXT NOT NULL,\n  rep TEXT NOT NULL,\n  amount INTEGER NOT NULL,\n  sold_on TEXT NOT NULL\n);\nINSERT INTO sales VALUES\n  (1, 'East', 'Ana', 900, '2025-01-02'),\n  (2, 'West', 'Ana', 100, '2025-01-03'),\n  (3, 'West', 'Gil', 50, '2025-01-04'),\n  (4, 'West', 'Hal', 30, '2025-01-05'),\n  (5, 'West', 'Hal', 20, '2025-01-06'),\n  (6, 'West', 'Ivy', 40, '2025-01-07'),\n  (7, 'East', 'Jon', 800, '2025-01-08');\n",
+      "output": "region\trep\ttotal\tsales_rank\nEast\tAna\t900\t1\nEast\tJon\t800\t2\nWest\tAna\t100\t1\nWest\tGil\t50\t2\nWest\tHal\t50\t2\n",
+      "explanation": "Ana sells in both regions and is ranked separately in each. In West, Gil and Hal tie for rank 2, so both are listed."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06",
+      "weight": 2
+    },
+    {
+      "file": "07",
+      "weight": 2
+    }
+  ]
+}

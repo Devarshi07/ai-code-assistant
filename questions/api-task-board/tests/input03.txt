@@ -1,0 +1,14 @@
+{"method": "POST", "path": "/tasks", "body": {"title": ""}}
+{"method": "POST", "path": "/tasks", "body": {"title": "   "}}
+{"method": "POST", "path": "/tasks", "body": {"title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}}
+{"method": "POST", "path": "/tasks", "body": {"title": 42}}
+{"method": "POST", "path": "/tasks", "body": {"priority": 2}}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": 0}}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": 6}}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": true}}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": 2.5}}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": "3"}}
+{"method": "POST", "path": "/tasks", "body": {"title": "Ok", "priority": null}}
+{"method": "POST", "path": "/tasks", "body": ["Write tests"]}
+{"method": "POST", "path": "/tasks", "body": {"title": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}}
+{"method": "GET", "path": "/tasks"}

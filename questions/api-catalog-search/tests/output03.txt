@@ -1,0 +1,13 @@
+1. POST /books -> 400 {"error":"invalid book"}
+2. POST /books -> 400 {"error":"invalid book"}
+3. POST /books -> 400 {"error":"invalid book"}
+4. POST /books -> 400 {"error":"invalid book"}
+5. POST /books -> 400 {"error":"invalid book"}
+6. POST /books -> 400 {"error":"invalid book"}
+7. POST /books -> 400 {"error":"invalid book"}
+8. POST /books -> 400 {"error":"invalid book"}
+9. POST /books -> 400 {"error":"invalid book"}
+10. POST /books -> 400 {"error":"invalid book"}
+11. POST /books -> 400 {"error":"invalid book"}
+12. POST /books -> 201 {"author":"Ted Chiang","id":1,"tags":["tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt"],"title":"Trimmed","year":2002}
+13. GET /books?author=Ted%20Chiang -> 200 {"data":[{"author":"Ted Chiang","id":1,"tags":["tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt","tttttttttttttttttttttttttttttt"],"title":"Trimmed","year":2002}],"page":1,"per_page":10,"total":1,"total_pages":1}

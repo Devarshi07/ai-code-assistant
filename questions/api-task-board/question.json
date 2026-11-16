@@ -1,0 +1,66 @@
+{
+  "id": "api-task-board",
+  "title": "Task Board API",
+  "difficulty": "Easy",
+  "maxScore": 30,
+  "kind": "api",
+  "languages": [
+    "python",
+    "javascript"
+  ],
+  "skills": [
+    "API Design",
+    "REST APIs"
+  ],
+  "summary": "Build a small JSON API for tasks: create, read, update and delete, with validation.",
+  "statement": "Build the back end of a team task board as a JSON API. Tasks live in memory: a fresh copy of your app starts for every test case.\n\nA task looks like `{\"id\": 1, \"title\": \"Write tests\", \"priority\": 2, \"done\": false}`. Ids start at `1`, go up by one for each new task and are never reused, even after a delete.\n\n**Validation.** A valid `title` is a string that has 1 to 100 characters after trimming surrounding spaces (store the trimmed title). A valid `priority` is an integer from 1 to 5 (`true` is not an integer). A valid `done` is `true` or `false`. A request body that isn't a JSON object is invalid.\n\n| Method and path | Behaviour |\n| --- | --- |\n| `POST /tasks` | Body: `title` (required) and `priority` (optional, default `3`). Creates the task with `done: false` and returns `201` with it. Invalid body: `400` `{\"error\": \"invalid task\"}`. |\n| `GET /tasks` | `200` `{\"tasks\": [...]}` with every task, in id order. |\n| `GET /tasks/<id>` | `200` with the task, or `404` `{\"error\": \"task not found\"}`. |\n| `PATCH /tasks/<id>` | Body: any of `title`, `priority` and `done`; other fields are ignored. Unknown task: `404`. If any given field is invalid, change nothing and return `400` `{\"error\": \"invalid task\"}`. Otherwise apply the changes and return `200` with the task. |\n| `DELETE /tasks/<id>` | `204` with an empty body, or `404` `{\"error\": \"task not found\"}`. |\n\nAn `<id>` that isn't a whole number, such as `abc`, matches no task.",
+  "functionDescription": "Complete the web app in the editor. The template already creates the app, the in-memory storage and one handler per endpoint; each handler currently answers `501`.\n\n- **Python:** a Flask 3 app. Read the body with `request.get_json(silent=True)` and answer with `jsonify(...)` and a status code.\n- **JavaScript:** an Express 4 app with `express.json()`. Read `req.body` and answer with `res.status(...).json(...)`; use `res.status(204).end()` for an empty body.\n\nThe app must listen on `127.0.0.1` at the port in the `PORT` environment variable, as the template does.",
+  "inputFormat": "Each test case is a list of HTTP requests, one JSON object per line, with `method`, `path` and, for requests that send one, `body` (and sometimes `headers`). The judge starts your app and sends the requests in order.",
+  "constraints": "- At most `120` requests per test case.\n- Titles in the tests are ASCII.\n- Bodies, when present, are JSON objects or arrays.",
+  "outputFormat": "For each request, the judge prints `<n>. <METHOD> <path> -> <status> <body>`. The body is your JSON with its keys sorted and no spaces, or `-` when it is empty. Your output matches when every status and body matches.",
+  "samples": [
+    {
+      "input": "{\"method\": \"POST\", \"path\": \"/tasks\", \"body\": {\"title\": \"Write tests\", \"priority\": 2}}\n{\"method\": \"POST\", \"path\": \"/tasks\", \"body\": {\"title\": \"  Ship it  \"}}\n{\"method\": \"GET\", \"path\": \"/tasks/2\"}\n{\"method\": \"GET\", \"path\": \"/tasks\"}\n",
+      "output": "1. POST /tasks -> 201 {\"done\":false,\"id\":1,\"priority\":2,\"title\":\"Write tests\"}\n2. POST /tasks -> 201 {\"done\":false,\"id\":2,\"priority\":3,\"title\":\"Ship it\"}\n3. GET /tasks/2 -> 200 {\"done\":false,\"id\":2,\"priority\":3,\"title\":\"Ship it\"}\n4. GET /tasks -> 200 {\"tasks\":[{\"done\":false,\"id\":1,\"priority\":2,\"title\":\"Write tests\"},{\"done\":false,\"id\":2,\"priority\":3,\"title\":\"Ship it\"}]}\n",
+      "explanation": "Two tasks are created. The second has no priority, so it gets `3`, and its title is stored trimmed. `GET /tasks` lists both in id order."
+    },
+    {
+      "input": "{\"method\": \"POST\", \"path\": \"/tasks\", \"body\": {\"title\": \"\"}}\n{\"method\": \"POST\", \"path\": \"/tasks\", \"body\": {\"title\": \"Fix bug\", \"priority\": 9}}\n{\"method\": \"POST\", \"path\": \"/tasks\", \"body\": {\"title\": \"Fix bug\", \"priority\": 5}}\n{\"method\": \"PATCH\", \"path\": \"/tasks/1\", \"body\": {\"done\": true}}\n{\"method\": \"DELETE\", \"path\": \"/tasks/1\"}\n{\"method\": \"GET\", \"path\": \"/tasks/1\"}\n",
+      "output": "1. POST /tasks -> 400 {\"error\":\"invalid task\"}\n2. POST /tasks -> 400 {\"error\":\"invalid task\"}\n3. POST /tasks -> 201 {\"done\":false,\"id\":1,\"priority\":5,\"title\":\"Fix bug\"}\n4. PATCH /tasks/1 -> 200 {\"done\":true,\"id\":1,\"priority\":5,\"title\":\"Fix bug\"}\n5. DELETE /tasks/1 -> 204 -\n6. GET /tasks/1 -> 404 {\"error\":\"task not found\"}\n",
+      "explanation": "An empty title and a priority of `9` are rejected, so the first created task gets id `1`. After the delete, the task is gone and `GET` answers `404`."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06"
+    },
+    {
+      "file": "07",
+      "weight": 2
+    },
+    {
+      "file": "08",
+      "weight": 2
+    }
+  ]
+}

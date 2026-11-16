@@ -1,0 +1,63 @@
+{
+  "id": "rest-top-rated-titles",
+  "title": "Top Rated Titles",
+  "difficulty": "Medium",
+  "maxScore": 50,
+  "kind": "rest",
+  "languages": [
+    "python",
+    "javascript"
+  ],
+  "skills": [
+    "REST APIs",
+    "Sorting"
+  ],
+  "summary": "Collect a genre's movies from a paginated API, filter by year and keep the k best.",
+  "statement": "A streaming service's catalogue API lists movies by genre, a page at a time. Given a genre, a first year and a number `k`, print the titles of the `k` highest-rated movies of that genre released in or after that year.\n\nOrder the movies by `rating` (highest first); break ties by `title` in plain character order, where uppercase letters come before lowercase ones (the default string order in Python, and JavaScript's `<`). If fewer than `k` movies qualify, print all of them. If none qualify, print `NONE`.\n\nFetch the movies with:\n\n```\nGET {API_BASE_URL}/api/movies?genre=<genre>&page=<n>\n```\n\nThe response is JSON:\n\n```json\n{\n  \"page\": 1,\n  \"per_page\": 4,\n  \"total\": 6,\n  \"total_pages\": 2,\n  \"data\": [\n    {\"id\": 7, \"title\": \"Night Train\", \"genre\": \"Drama\", \"year\": 2019, \"rating\": 8.1}\n  ]\n}\n```\n\n- `genre` keeps only that genre (exact match). Encode it for the URL.\n- Pages start at `1`, and `total_pages` is `0` when nothing matches.\n- `rating` has one decimal place. The API does **not** filter by year or sort the results: you have to look at every page.",
+  "functionDescription": "Complete the **topRated** function in the editor below.\n\n**topRated** has the following parameters:\n\n- `string genre`: the genre to look up\n- `int minYear`: the first release year to include\n- `int k`: how many titles to return\n\n**Returns**\n\n- `string[]`: up to `k` titles, best first\n\nThe API's address is in the `API_BASE_URL` environment variable; the template reads it into `BASE_URL`. In JavaScript the function is `async`.",
+  "inputFormat": "The first line contains the genre, the second line `minYear` and the third line `k`.\n\nIn the samples, the lines after `--- api data ---` show the movies that test's API serves. Your program doesn't receive them on stdin.",
+  "constraints": "- The API holds at most `3000` movies.\n- `1 ≤ per_page ≤ 10`\n- `1 ≤ k ≤ 50`\n- `1950 ≤ year, minYear ≤ 2030`\n- `0.0 ≤ rating ≤ 10.0`\n- Titles are ASCII and unique within a genre.",
+  "outputFormat": "Print each title on its own line, best first, or `NONE` if no movie qualifies.",
+  "samples": [
+    {
+      "input": "Drama\n2015\n3\n--- api data ---\n{\n  \"per_page\": 4,\n  \"resources\": {\n    \"movies\": [\n      {\"id\": 1, \"title\": \"Night Train\", \"genre\": \"Drama\", \"year\": 2019, \"rating\": 8.1},\n      {\"id\": 2, \"title\": \"Big Laugh\", \"genre\": \"Comedy\", \"year\": 2020, \"rating\": 9.5},\n      {\"id\": 3, \"title\": \"Blue Hour\", \"genre\": \"Drama\", \"year\": 2016, \"rating\": 7.4},\n      {\"id\": 4, \"title\": \"Old Harbor\", \"genre\": \"Drama\", \"year\": 2009, \"rating\": 9.0},\n      {\"id\": 5, \"title\": \"Atlas\", \"genre\": \"Drama\", \"year\": 2021, \"rating\": 7.4},\n      {\"id\": 6, \"title\": \"Small Rooms\", \"genre\": \"Drama\", \"year\": 2015, \"rating\": 6.8}\n    ]\n  }\n}\n",
+      "output": "Night Train\nAtlas\nBlue Hour\n",
+      "explanation": "Of the drama titles from 2015 on, `Night Train` (8.1) leads. `Blue Hour` and `Atlas` share 7.4, and `Atlas` comes first in character order. `Old Harbor` is from 2009, so it doesn't count even with its 9.0."
+    },
+    {
+      "input": "Horror\n2020\n5\n--- api data ---\n{\n  \"per_page\": 2,\n  \"resources\": {\n    \"movies\": [\n      {\"id\": 1, \"title\": \"alpha\", \"genre\": \"Horror\", \"year\": 2021, \"rating\": 6.0},\n      {\"id\": 2, \"title\": \"Old Crypt\", \"genre\": \"Horror\", \"year\": 2010, \"rating\": 7.0},\n      {\"id\": 3, \"title\": \"Zed\", \"genre\": \"Horror\", \"year\": 2022, \"rating\": 6.0},\n      {\"id\": 4, \"title\": \"Fun Run\", \"genre\": \"Comedy\", \"year\": 2023, \"rating\": 8.0}\n    ]\n  }\n}\n",
+      "output": "Zed\nalpha\n",
+      "explanation": "Only two horror movies are from 2020 or later, so both are printed although `k` is 5. `Zed` sorts before `alpha` because uppercase letters come first."
+    }
+  ],
+  "tests": [
+    {
+      "file": "00",
+      "sample": true
+    },
+    {
+      "file": "01",
+      "sample": true
+    },
+    {
+      "file": "02"
+    },
+    {
+      "file": "03"
+    },
+    {
+      "file": "04"
+    },
+    {
+      "file": "05"
+    },
+    {
+      "file": "06",
+      "weight": 2
+    },
+    {
+      "file": "07",
+      "weight": 2
+    }
+  ]
+}

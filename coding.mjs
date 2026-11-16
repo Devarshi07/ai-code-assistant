@@ -3,14 +3,24 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {JUDGE_LANGUAGES, judge, ensureJudgeImage} from './judge.mjs';
+import {KINDS, RUNTIME_IMAGES, REST_MARKER, runtimeFor, judge, ensureJudgeImage} from './judge.mjs';
+import {referenceMatcher} from './guardrails.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 export const QUESTIONS_DIR = path.join(ROOT, 'questions');
+// The general-purpose languages every classic question ships in. Kinds such
+// as SQL or build-an-API questions list their own languages.
 export const CODE_LANGUAGES = ['python', 'javascript', 'java', 'cpp', 'go'];
-export const TEMPLATE_FILES = {python: 'python.py', javascript: 'javascript.js', java: 'Solution.java', cpp: 'cpp.cpp', go: 'go.go'};
-export const SKILLS = ['Arrays', 'Strings', 'Hash Tables', 'Sorting', 'Searching', 'Two Pointers', 'Sliding Window', 'Stacks', 'Queues', 'Linked Lists', 'Trees', 'Graphs', 'BFS', 'DFS', 'Greedy', 'Dynamic Programming', 'Recursion', 'Math', 'Bit Manipulation', 'Heaps', 'Intervals', 'Simulation', 'Implementation'];
+export const ALL_LANGUAGES = [...CODE_LANGUAGES, 'sql'];
+export const TEMPLATE_FILES = {python: 'python.py', javascript: 'javascript.js', java: 'Solution.java', cpp: 'cpp.cpp', go: 'go.go', sql: 'query.sql'};
+export const SKILLS = ['Arrays', 'Strings', 'Hash Tables', 'Sorting', 'Searching', 'Two Pointers', 'Sliding Window', 'Stacks', 'Queues', 'Linked Lists', 'Trees', 'Graphs', 'BFS', 'DFS', 'Greedy', 'Dynamic Programming', 'Recursion', 'Math', 'Bit Manipulation', 'Heaps', 'Intervals', 'Simulation', 'Implementation', 'Machine Learning', 'SQL', 'REST APIs', 'API Design'];
 const SCORES = {Easy: 30, Medium: 50, Hard: 80};
+const KIND_LANGUAGES = {algorithm: CODE_LANGUAGES, ml: ['python'], sql: ['sql'], rest: ['python', 'javascript'], api: ['python', 'javascript']};
+
+export const kindOf = q => q.kind || 'algorithm';
+export const languagesOf = q => Array.isArray(q.languages) && q.languages.length ? q.languages : KIND_LANGUAGES[kindOf(q)] || CODE_LANGUAGES;
+// What the judge needs to know about the question to run a language.
+export const judgeOptions = (q, language) => ({kind: kindOf(q), image: q.images?.[language], ordered: q.ordered !== false});
 
 export function validateQuestion(q, dirName) {
   const errors = [];
@@ -22,37 +32,56 @@ export function validateQuestion(q, dirName) {
   if (!Array.isArray(q.samples) || !q.samples.length || q.samples.some(s => typeof s.input !== 'string' || typeof s.output !== 'string')) errors.push('samples need input and output strings');
   if (!Array.isArray(q.tests) || q.tests.length < 6 || q.tests.some(t => !/^\d{2,3}$/.test(t.file || ''))) errors.push('tests must list at least 6 entries with a 2-3 digit file id');
   else if (q.tests.filter(t => t.sample).length !== q.samples.length) errors.push('mark exactly one test as sample per entry in samples');
+  if (q.kind !== undefined && !KINDS.includes(q.kind)) errors.push(`kind must be one of ${KINDS.join(', ')}`);
+  const allowed = KIND_LANGUAGES[kindOf(q)] || [];
+  if (q.languages !== undefined && (!Array.isArray(q.languages) || !q.languages.length || q.languages.some(l => !allowed.includes(l)) || new Set(q.languages).size !== q.languages.length)) errors.push(`languages must be distinct values from ${allowed.join(', ')} for ${kindOf(q)} questions`);
+  if (q.images !== undefined && (typeof q.images !== 'object' || Object.entries(q.images).some(([language, name]) => !languagesOf(q).includes(language) || !RUNTIME_IMAGES[name]))) errors.push(`images must map the question's languages to ${Object.keys(RUNTIME_IMAGES).join(', ')}`);
+  if (q.ordered !== undefined && typeof q.ordered !== 'boolean') errors.push('ordered must be true or false');
   return errors;
 }
 
 let cached = null, cachedAt = 0;
-export async function loadQuestions({fresh = false} = {}) {
-  if (cached && !fresh && Date.now() - cachedAt < 10000) return cached;
-  const list = [];
-  let entries = [];
-  try { entries = await fs.readdir(QUESTIONS_DIR, {withFileTypes: true}); } catch {}
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    try {
-      const q = JSON.parse(await fs.readFile(path.join(QUESTIONS_DIR, entry.name, 'question.json'), 'utf8'));
-      if (!validateQuestion(q, entry.name).length) list.push(q);
-    } catch {}
+// By default only classic questions come back (every one of the five languages):
+// practice tests and mock interviews offer all five. {all: true} returns every kind.
+export async function loadQuestions({fresh = false, all = false} = {}) {
+  if (!cached || fresh || Date.now() - cachedAt >= 10000) {
+    const list = [];
+    let entries = [];
+    try { entries = await fs.readdir(QUESTIONS_DIR, {withFileTypes: true}); } catch {}
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      try {
+        const q = JSON.parse(await fs.readFile(path.join(QUESTIONS_DIR, entry.name, 'question.json'), 'utf8'));
+        if (!validateQuestion(q, entry.name).length) list.push(q);
+      } catch {}
+    }
+    const order = {Easy: 0, Medium: 1, Hard: 2};
+    cached = list.sort((a, b) => order[a.difficulty] - order[b.difficulty] || a.title.localeCompare(b.title));
+    cachedAt = Date.now();
   }
-  const order = {Easy: 0, Medium: 1, Hard: 2};
-  cached = list.sort((a, b) => order[a.difficulty] - order[b.difficulty] || a.title.localeCompare(b.title));
-  cachedAt = Date.now();
-  return cached;
+  return all ? cached : cached.filter(q => kindOf(q) === 'algorithm' && CODE_LANGUAGES.every(l => languagesOf(q).includes(l)));
 }
 
 export async function getQuestion(id) {
-  const q = (await loadQuestions()).find(item => item.id === id);
+  const q = (await loadQuestions({all: true})).find(item => item.id === id);
   if (!q) throw new Error('Unknown question.');
   return q;
 }
 
 export async function readTemplate(q, language, kind = 'templates') {
-  if (!TEMPLATE_FILES[language]) throw new Error('Choose a supported language.');
+  if (!TEMPLATE_FILES[language] || !languagesOf(q).includes(language)) throw new Error('Choose a supported language.');
   return fs.readFile(path.join(QUESTIONS_DIR, q.id, kind, TEMPLATE_FILES[language]), 'utf8');
+}
+
+const matchers = new Map();
+// Recognises code that is too close to one of the question's reference solutions.
+export function solutionMatcher(q) {
+  if (!matchers.has(q.id)) matchers.set(q.id, (async () => {
+    const read = kind => Promise.all(languagesOf(q).map(language => readTemplate(q, language, kind).catch(() => '')));
+    const [references, templates] = await Promise.all([read('solutions'), read('templates')]);
+    return referenceMatcher(references.filter(Boolean), templates.filter(Boolean));
+  })());
+  return matchers.get(q.id);
 }
 
 export async function readTests(q, {samplesOnly = false} = {}) {
@@ -72,11 +101,22 @@ export async function readTests(q, {samplesOnly = false} = {}) {
 }
 
 export function publicQuestion(q) {
-  const {tests, ...rest} = q;
-  return {...rest, testCount: tests.length, sampleCount: tests.filter(t => t.sample).length, languages: CODE_LANGUAGES.map(id => {
-    const {label, limit, version, memory, notes} = JUDGE_LANGUAGES[id];
+  const {tests, images, ...rest} = q;
+  return {...rest, kind: kindOf(q), testCount: tests.length, sampleCount: tests.filter(t => t.sample).length, languages: languagesOf(q).map(id => {
+    const {label, limit, version, memory, notes} = runtimeFor({...judgeOptions(q, id), language: id});
     return {id, label, limit, version, memory, notes};
   })};
+}
+
+// Custom input for a REST question reuses the first sample's API data, so a
+// candidate can try their own query values without writing a whole fixture.
+async function withSampleApi(question, input) {
+  const text = String(input ?? '');
+  if (kindOf(question) !== 'rest' || text.split('\n').includes(REST_MARKER)) return text;
+  const sample = (await readTests(question, {samplesOnly: true}))[0];
+  const lines = sample?.input.split('\n') || [];
+  const cut = lines.indexOf(REST_MARKER);
+  return cut < 0 ? text : `${text.replace(/\n*$/, '\n')}${lines.slice(cut).join('\n')}`;
 }
 
 export function codingRoutes({SESSIONS, run, job}) {
@@ -97,12 +137,14 @@ export function codingRoutes({SESSIONS, run, job}) {
   };
 
   async function evaluate({question, language, code, customInput, mode, progress}) {
-    await ensureJudgeImage(run, language, progress);
+    if (!languagesOf(question).includes(language)) throw new Error('Choose a supported language.');
+    const options = judgeOptions(question, language);
+    await ensureJudgeImage(run, language, progress, options);
     let cases;
-    if (mode === 'custom') cases = [{name: 'Custom input', input: String(customInput ?? ''), custom: true}];
+    if (mode === 'custom') cases = [{name: 'Custom input', input: await withSampleApi(question, customInput), custom: true}];
     else cases = await readTests(question, {samplesOnly: mode === 'run'});
     if (mode === 'submit') progress(`Running ${cases.length} test cases…`);
-    const result = await judge(run, {language, code, cases, scratch: path.join(SESSIONS, 'coding', 'runs'), onProgress: progress});
+    const result = await judge(run, {language, code, cases, scratch: path.join(SESSIONS, 'coding', 'runs'), onProgress: progress, ...options});
     result.score = mode === 'submit' ? Math.round(question.maxScore * (result.fraction ?? 0) * 100) / 100 : undefined;
     result.maxScore = question.maxScore;
     result.mode = mode;
@@ -113,8 +155,8 @@ export function codingRoutes({SESSIONS, run, job}) {
     const p = url.pathname;
     if (!p.startsWith('/api/coding')) return undefined;
     if (req.method === 'GET' && p === '/api/coding/questions') {
-      const questions = await loadQuestions();
-      return Promise.all(questions.map(async q => ({id: q.id, title: q.title, difficulty: q.difficulty, maxScore: q.maxScore, skills: q.skills, summary: q.summary, ...summary(await readState(q.id))})));
+      const questions = await loadQuestions({all: true});
+      return Promise.all(questions.map(async q => ({id: q.id, title: q.title, difficulty: q.difficulty, maxScore: q.maxScore, skills: q.skills, summary: q.summary, kind: kindOf(q), languages: languagesOf(q), ...summary(await readState(q.id))})));
     }
     if (req.method === 'GET' && p === '/api/coding/question') {
       const q = await getQuestion(url.searchParams.get('id'));
@@ -128,11 +170,11 @@ export function codingRoutes({SESSIONS, run, job}) {
     if (req.method !== 'POST') return undefined;
     const q = await getQuestion(data.id);
     if (p === '/api/coding/save') {
-      if (!CODE_LANGUAGES.includes(data.language) || typeof data.code !== 'string' || data.code.length > 200000) throw new Error('Invalid draft.');
+      if (!languagesOf(q).includes(data.language) || typeof data.code !== 'string' || data.code.length > 200000) throw new Error('Invalid draft.');
       return exclusive(q.id, async () => { const state = await readState(q.id); state.drafts[data.language] = data.code; state.language = data.language; await writeState(q.id, state); return {saved: true}; });
     }
     if (p === '/api/coding/run' || p === '/api/coding/submit') {
-      if (!CODE_LANGUAGES.includes(data.language)) throw new Error('Choose a supported language.');
+      if (!languagesOf(q).includes(data.language)) throw new Error('Choose a supported language.');
       const mode = p.endsWith('submit') ? 'submit' : data.customInput !== undefined && data.customInput !== null ? 'custom' : 'run';
       return job(async progress => {
         const result = await evaluate({question: q, language: data.language, code: data.code, customInput: data.customInput, mode, progress});

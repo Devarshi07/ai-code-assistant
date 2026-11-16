@@ -1,0 +1,6 @@
+1. GET /payments -> 200 {"captured":{},"count":0}
+2. GET /payments/pay_1 -> 404 {"error":"payment not found"}
+3. POST /payments/pay_1/refund -> 404 {"error":"payment not found"}
+4. POST /payments -> 400 {"error":"missing idempotency key"}
+5. POST /payments -> 400 {"error":"invalid idempotency key"}
+6. POST /payments -> 201 {"amount":10,"currency":"USD","id":"pay_1","status":"captured"}

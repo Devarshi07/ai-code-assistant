@@ -1,0 +1,9 @@
+{"method": "POST", "path": "/payments", "body": {"amount": 300, "currency": "EUR"}, "headers": {"Idempotency-Key": "x"}}
+{"method": "POST", "path": "/payments", "body": {"amount": 300, "currency": "EUR"}, "headers": {"Idempotency-Key": "y"}}
+{"method": "POST", "path": "/payments/pay_2/refund"}
+{"method": "POST", "path": "/payments", "body": {"amount": 300, "currency": "EUR"}, "headers": {"Idempotency-Key": "y"}}
+{"method": "GET", "path": "/payments/pay_2"}
+{"method": "POST", "path": "/payments", "body": {"amount": 50, "currency": "GBP"}, "headers": {"Idempotency-Key": "z"}}
+{"method": "POST", "path": "/payments/pay_3/refund"}
+{"method": "POST", "path": "/payments/pay_3/refund"}
+{"method": "GET", "path": "/payments"}

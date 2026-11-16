@@ -1,0 +1,8 @@
+{"method": "POST", "path": "/tasks", "body": {"title": "Edit me", "priority": 1}}
+{"method": "PATCH", "path": "/tasks/1", "body": {"title": "Renamed", "priority": 9}}
+{"method": "GET", "path": "/tasks/1"}
+{"method": "PATCH", "path": "/tasks/1", "body": {"title": "  Renamed  ", "priority": 4, "done": true, "owner": "sam"}}
+{"method": "PATCH", "path": "/tasks/1", "body": {}}
+{"method": "PATCH", "path": "/tasks/1", "body": ["done"]}
+{"method": "PATCH", "path": "/tasks/1", "body": {"done": "yes"}}
+{"method": "GET", "path": "/tasks/1"}

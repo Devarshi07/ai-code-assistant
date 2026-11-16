@@ -1,0 +1,13 @@
+1. POST /payments -> 400 {"error":"invalid payment"}
+2. POST /payments -> 400 {"error":"invalid payment"}
+3. POST /payments -> 400 {"error":"invalid payment"}
+4. POST /payments -> 400 {"error":"invalid payment"}
+5. POST /payments -> 400 {"error":"invalid payment"}
+6. POST /payments -> 400 {"error":"invalid payment"}
+7. POST /payments -> 400 {"error":"invalid payment"}
+8. POST /payments -> 400 {"error":"invalid payment"}
+9. POST /payments -> 400 {"error":"invalid payment"}
+10. POST /payments -> 400 {"error":"invalid payment"}
+11. POST /payments -> 400 {"error":"invalid payment"}
+12. POST /payments -> 201 {"amount":10,"currency":"USD","id":"pay_1","status":"captured"}
+13. GET /payments -> 200 {"captured":{"USD":10},"count":1}

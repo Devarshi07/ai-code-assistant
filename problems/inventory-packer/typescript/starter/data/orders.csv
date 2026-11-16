@@ -1,0 +1,16 @@
+order_id,sku,description,weight_kg,qty,flags
+A1001,TEA-BRK-80,Breakfast tea 80 bags,0.25,2,
+A1001,MUG-STN-350,Stoneware mug 350 ml,0.38,2,fragile
+A1002,PAN-CI-26,Cast iron skillet 26 cm,2.03,1,
+A1002,TRV-CI-20,Cast iron trivet,1.015,3,
+A1002,TWL-LIN-2,"Linen tea towels, set of 2",0.18,2,
+A1003,LMP-CMP-01,Camping lantern,0.64,1,
+A1003,BAT-LI-18,Lithium battery 18650,0.33,1,hazmat
+A1003,MAT-SLP-01,Sleeping mat,0.82,1,
+A1004,KTL-ENM-15,Enamel kettle 1.5 l,1.005,1,
+A1004,APR-LIN-01,Linen apron,0.42,1,
+A1004,WRP-BEE-03,"Beeswax wraps, pack of 3",0.576,1,
+A1005,GLS-WIN-04,"Wine glasses, set of 4",1.12,3,fragile
+A1005,BRD-OAK-40,Oak serving board,1.9,2,
+A1005,DCN-GLS-01,Glass decanter,1.35,1,fragile
+A1005,NAP-LIN-06,"Linen napkins, set of 6",0.31,2,

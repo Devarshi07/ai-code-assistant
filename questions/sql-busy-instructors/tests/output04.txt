@@ -1,0 +1,3 @@
+instructor	classes	avg_attendees
+Noor	6	12
+Raj	6	12

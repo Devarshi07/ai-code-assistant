@@ -20,7 +20,7 @@ Each file holds an array. Group questions by topic, for example `mcq/data-struct
 }
 ```
 
-- `topic`: Data Structures, Algorithms, Complexity, Databases, Operating Systems, Networking, Concurrency, Security, Object-Oriented Design, System Design, Testing, Git, Web, Python, JavaScript, Java.
+- `topic`: Data Structures, Algorithms, Complexity, Databases, Operating Systems, Networking, Concurrency, Security, Object-Oriented Design, System Design, Testing, Git, Web, Python, JavaScript, Java, Machine Learning, Deep Learning, LLMs and RAG, ML Systems, REST APIs, SQL. The general quizzes (Sample test, full assessment, CS fundamentals) draw only from the first sixteen; the ML and back-end templates name their topics.
 - `points`: Easy 5, Medium 10, Hard 15. Scoring is all-or-nothing.
 - `type`: `single` (exactly one answer) or `multiple` (two or more answers; the question must say "Select all that apply").
 - 4–6 distinct options, `answer` as option indexes (0-based).

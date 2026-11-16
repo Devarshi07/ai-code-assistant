@@ -1,0 +1,4 @@
+1. POST /tasks -> 201 {"done":false,"id":1,"priority":2,"title":"Write tests"}
+2. POST /tasks -> 201 {"done":false,"id":2,"priority":3,"title":"Ship it"}
+3. GET /tasks/2 -> 200 {"done":false,"id":2,"priority":3,"title":"Ship it"}
+4. GET /tasks -> 200 {"tasks":[{"done":false,"id":1,"priority":2,"title":"Write tests"},{"done":false,"id":2,"priority":3,"title":"Ship it"}]}
