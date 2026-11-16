@@ -1,6 +1,6 @@
 # Debug Gym
 
-A local practice environment for **AI-assisted coding interviews**. It recreates the three formats you are likely to meet: assessment-style coding questions with an AI assistant beside the editor, multi-file **code repos** in an AI-assisted development environment with an agent you direct and approve, and **mock interviews** with an AI interviewer that end in a scored report. No npm dependencies and no cloud services: Node.js 22+, Ollama for the AI, and Docker Desktop for code execution.
+A local practice environment for **AI-assisted coding interviews and online assessments**. It recreates the formats you are likely to meet: assessment-style **coding questions** with an AI assistant beside the editor, full timed **practice tests** that behave like real online assessments, multi-file **code repos** in an AI-assisted development environment with an agent you direct and approve, and **mock interviews** with an AI interviewer that end in a scored report. No npm dependencies and no cloud services: Node.js 22+, Ollama for the AI, and Docker Desktop for code execution.
 
 The layouts and workflows follow the conventions of current AI-assisted interview platforms. Debug Gym is an independent practice tool, not affiliated with any of them, and all questions, problems and text are original.
 
@@ -50,14 +50,14 @@ npm start
 
 Open http://127.0.0.1:3210. There's no `npm install` or build step: the browser code in `dist/` is written by hand, and the Monaco editor is vendored under `dist/vendor/monaco`. **Local setup** in the top bar shows what is running and can download both models.
 
-Any installed Ollama chat model appears in the assistant's model picker. The app prefers `qwen3:8b`, then `qwen3.5:9b` and other 7–14B models for the assistant, agent and interviewer, and `qwen3.5:9b` then `qwen3:8b` for feedback. Inline suggestions use a fill-in-the-middle model such as `qwen2.5-coder:3b`.
+Any installed Ollama chat model appears in the assistant's model picker. For the assistant, agent and interviewer the app prefers `qwen3:8b`, then `qwen3.5:9b`, then other 7–14B models, then smaller ones; for feedback it prefers `qwen3.5:9b`, then `qwen3:8b`. Inline suggestions use a fill-in-the-middle model such as `qwen2.5-coder:3b`.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `PORT` | `3210` | App port (the smoke scripts assume 3210) |
 | `DG_ASSISTANT_MODEL` | first available from the preference list | Default assistant, agent and interviewer model |
 | `DG_REVIEW_MODEL` | first available from the preference list | Model that writes feedback |
-| `DG_COMPLETION_MODEL` | first installed `qwen2.5-coder` model | Inline-suggestion model |
+| `DG_COMPLETION_MODEL` | `qwen2.5-coder:3b` if installed, otherwise another installed fill-in-the-middle model | Inline-suggestion model |
 | `DG_ASSISTANT_CTX` | 16384 for models of 6B and up, otherwise 8192 | Context window for the assistant |
 | `DG_OPEN_DIR` | `~/debug-gym-practice` | Where take-home starter projects are created |
 
@@ -78,7 +78,7 @@ Questions live in `questions/<id>/`; see [questions/AUTHORING.md](questions/AUTH
 
 | Part | What it does |
 | --- | --- |
-| Left rail | **Question** (the task, phases, hints) or **Brief**, **Sessions** (saved agent conversations) and, in AI-fluency interviews, **Interviewer** |
+| Left rail | **Question** (the task, phases, hints) or **Brief**, **Sessions** (saved agent conversations) and, in AI-assisted repo interviews, **Interviewer** |
 | Centre | The AI assistant |
 | Right | **Editor** (file tree with filter and change markers, tabs, Monaco), **Diff** (every changed file against the starting code, side by side or inline), **Terminal** (commands in a disposable sandbox copy, with history), **Tests** (results grouped by phase, or the repo's test output and test settings) |
 
@@ -152,7 +152,7 @@ Ready-made tests: a sample test, a coding screen, a full software-engineer asses
 
 **AI-assisted repo interview.** A guided repo opens in the workspace with an Interviewer panel. It asks how you plan to use the AI, why you prompted it the way you did, and how you checked its work. Phase changes are reported to it.
 
-**Feedback.** Ending the interview (or running out of time) runs your final code against every test case, then the reviewer model scores each area from 1 to 5 within bounds set by the recorded evidence:
+**Feedback.** When you end the interview (or time runs out), a coding interview first runs your final code against every test case. Then the reviewer model scores each area from 1 to 5 within bounds set by the recorded evidence:
 
 | Interview | Areas | Evidence used for the bounds |
 | --- | --- | --- |
@@ -220,7 +220,7 @@ Browser (dist/) ──HTTP + NDJSON streams──> Node.js server (server.mjs)
 | `sandbox.mjs`, `harness/pyrunner.py` | Python sandbox for guided repos |
 | `task-source.mjs`, `runtimes.mjs`, `challenges.mjs` | SWE-bench task catalog, runtime presets, built-in incidents |
 | `locks.mjs` | Serialized updates to session files |
-| `questions/`, `problems/`, `open-tasks/` | Content, each with an authoring guide |
+| `questions/`, `mcq/`, `problems/`, `open-tasks/` | Content: coding questions, multiple-choice and written-answer questions, guided problems and take-home tasks, each with an authoring guide |
 | `dist/app.js` | Shell, routing, home, activity, guide and local setup |
 | `dist/coding.js` | Question library and the coding workspace |
 | `dist/repos.js` | Code repos lobby, guided start dialog, answer key and guided feedback |
@@ -231,7 +231,6 @@ Browser (dist/) ──HTTP + NDJSON streams──> Node.js server (server.mjs)
 | `dist/style.css`, `dist/app.css`, `dist/figma.css` | Base styles; layouts for the new screens; the design layer loaded last (Inter, neutral greys with a blue accent, compact controls, floating panels, dark menus), in the spirit of design-tool editors such as Figma |
 | `dist/vendor/inter/` | The Inter variable font (SIL Open Font License 1.1), served locally |
 | `dist/vendor/monaco-vim/`, `dist/vendor/monaco-emacs/` | Vim and Emacs key bindings for the editor (both MIT), loaded on first use |
-| `questions/`, `mcq/` | Coding questions; multiple-choice and written-answer questions |
 | `dist/open-ended.js`, `dist/report.js`, `dist/markdown.js`, `dist/ui.js` | Take-home pages, report parts, safe markdown, DOM helpers |
 | `dist/runner-core.js`, `dist/runner-worker.js` | In-browser JavaScript test runner |
 | `tests/`, `scripts/` | Automated checks, validators and live smoke scripts |
