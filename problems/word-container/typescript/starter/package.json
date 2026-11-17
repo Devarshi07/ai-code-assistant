@@ -1,0 +1,10 @@
+{
+  "name": "word-container",
+  "private": true,
+  "type": "module",
+  "description": "Trie-backed word store for Gridword, a crossword helper.",
+  "scripts": {
+    "start": "node --experimental-strip-types main.ts",
+    "test": "node --test --experimental-strip-types \"tests/*.test.ts\""
+  }
+}

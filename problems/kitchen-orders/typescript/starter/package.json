@@ -1,0 +1,10 @@
+{
+  "name": "kitchen-orders",
+  "private": true,
+  "type": "module",
+  "description": "Kitchen display system for Ember & Oak.",
+  "scripts": {
+    "start": "node --experimental-strip-types main.ts",
+    "test": "node --test --experimental-strip-types \"tests/*.test.ts\""
+  }
+}

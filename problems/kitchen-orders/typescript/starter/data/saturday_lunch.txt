@@ -1,0 +1,19 @@
+# Saturday lunch: ticket printer log (front counter + delivery tablet)
+11:40am order 101: burger, fries
+11:43am order 102: caesar salad, tomato soup
+11:47am order 103: cheeseburger, onion rings | due 12:05pm
+11:52am order 104: margherita, house salad | app | due 12:10pm
+11:55am order 105: 2x burger, 2x fries
+11:58am order 106: wings | app | due 12:15pm
+12:01pm order 107: steak frites, caesar salad
+12:03pm order 108: chicken sandwich, fries, brownie | due 12:20pm
+12:03pm order 109: fish and chips | app | due 12:20pm
+12:06pm order 110: flatbread, house salad
+12:10pm order 111: 2x cheeseburger, onion rings, fries | due 12:35pm
+12:14pm order 112: margherita, wings | app | due 12:40pm
+12:20pm order 113: tomato soup, house salad
+12:31pm order 114: burger, onion rings
+12:44pm order 115: steak frites | due 1:05pm
+12:58pm order 116: fish and chips, fries | app | due 1:15pm
+1:12pm order 117: chicken sandwich, caesar salad
+1:25pm order 118: brownie, brownie

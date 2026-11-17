@@ -7,7 +7,7 @@ The layouts and workflows follow the conventions of current AI-assisted intervie
 | Area | What you do |
 | --- | --- |
 | **Coding questions** | 39 single-file problems (Easy, Medium, Hard) in four tracks: 24 **algorithm** problems in Python, JavaScript, Java, C++ and Go; 5 **machine learning** problems in Python with NumPy; 4 **SQL** queries on SQLite; and 6 **API** problems in Python or JavaScript, either calling a paginated REST API or building one with Flask or Express. **Run Code** runs the sample tests or your custom input, **Submit Code** runs every test case including hidden ones and scores you. An AI assistant beside the editor sees the statement and your code. |
-| **Code repos** | A workspace laid out like a code editor: file tree and editor (or the diff of your changes) in the middle, Terminal and Tests docked underneath, and an AI assistant with **Ask**, **Plan** and **Agent** modes on the right. The agent reads and searches files, edits them, runs commands and runs the tests; each change waits for your approval and can be undone on its own. Choose a guided three-phase problem (13, timed, with a debrief and a graded review), a back-end API project in Express, Django REST, FastAPI or Spring Boot (8, scored the same way), a real issue from SWE-bench (800 tasks in 10 languages), a short incident, any public GitHub repository, or a take-home task in your own editor. |
+| **Code repos** | A workspace laid out like a code editor: file tree and editor (or the diff of your changes) in the middle, Terminal and Tests docked underneath, and an AI assistant with **Ask**, **Plan** and **Agent** modes on the right. The agent reads and searches files, edits them, runs commands and runs the tests; each change waits for your approval and can be undone on its own. Choose a guided three-phase problem (13, timed, in Python, JavaScript, TypeScript, Java or Go, with a debrief and a graded review), a back-end API project in Express, Django REST, FastAPI or Spring Boot (8, scored the same way), a real issue from SWE-bench (800 tasks in 10 languages), a short incident, any public GitHub repository, or a take-home task in your own editor. |
 | **Practice tests** | Full timed assessments that behave like real online tests: a landing page and onboarding, **Test home**, a numbered question strip, **Run Code / Run Tests / Save & Proceed**, a countdown that turns amber and then red, multiple-choice and written-answer questions, integrity checks (tab tracking, Secure mode, Proctored with a local webcam face check) and **Submit test**. The report adds an **integrity review** with a Low/Medium/High risk rating and a timeline, a **replay of your coding**, and **AI-usage grades**. Ready-made tests (including ML engineer and API/SQL back-end assessments), a sample test and a custom-test builder. |
 | **Mock interviews** | A **coding interview** with an AI interviewer (text or voice) and a code editor; **technical screen**, **system design** (with a notes pane), **behavioural** and **AI fluency** conversation interviews; **ML system design**, **ML fundamentals** and **ML project deep dive** interviews; and an **AI-assisted repo interview** where you solve a guided repo with the agent while the interviewer watches. Each ends with scores, an overall recommendation and a 15-minute follow-up conversation about the feedback. |
 | **Prep guides** | Short guides to AI-assisted rounds, timed online assessments, ML interviews, API and back-end questions and SQL, with checklists you can tick and links to practise each format. |
@@ -20,7 +20,7 @@ For the development history and earlier decisions, see [PROJECT_SUMMARY.md](PROJ
 | --- | --- |
 | Node.js 22 or later | Everything |
 | [Ollama](https://ollama.com/download) and a chat model with tool support | The assistant, the agent, the interviewer and AI feedback. The app still works without it. |
-| Docker Desktop (WSL 2 on Windows) | Running code for coding questions, Python repos, real-world repos and agent commands. Guided JavaScript repos run their tests in the browser. |
+| Docker Desktop (WSL 2 on Windows) | Running code for coding questions, guided repos in Python, TypeScript, Java and Go, API projects, real-world repos and agent commands. Guided JavaScript repos run their tests in the browser. |
 | Git | Real-world repos and GitHub imports |
 
 **Set up Docker first.** Install [Docker Desktop](https://www.docker.com/products/docker-desktop/); on Windows, choose the WSL 2 backend and Linux containers. Start it and wait until it reports that the engine is running, then check from a terminal:
@@ -29,7 +29,7 @@ For the development history and earlier decisions, see [PROJECT_SUMMARY.md](PROJ
 docker info   # should print server details, not "Cannot connect to the Docker daemon"
 ```
 
-Docker Desktop has to be running whenever you use the app. You don't need to pull images yourself: the app downloads each one the first time it's needed, so the first run in a language can take a few minutes. Coding questions use `python:3.12-slim`, `node:22-alpine`, `eclipse-temurin:21-jdk-alpine`, `gcc:14` and `golang:1.24-alpine`; Python guided repos use `python:3.12-slim`; API projects build `debug-gym/node-api`, `python-django`, `python-fastapi` and `java-spring` from `docker/` on first use; other runtime presets and real-world tasks pull their own images, and SWE-bench task images can be several GB. To download the coding-question images ahead of time:
+Docker Desktop has to be running whenever you use the app. You don't need to pull images yourself: the app downloads each one the first time it's needed, so the first run in a language can take a few minutes. Coding questions use `python:3.12-slim`, `node:22-alpine`, `eclipse-temurin:21-jdk-alpine`, `gcc:14` and `golang:1.24-alpine`; Python guided repos use `python:3.12-slim`; guided repos in TypeScript, Java and Go build `debug-gym/node-api`, `java-junit` and `go-test`, and API projects build `debug-gym/node-api`, `python-django`, `python-fastapi` and `java-spring` from `docker/` on first use; other runtime presets and real-world tasks pull their own images, and SWE-bench task images can be several GB. To download the coding-question images ahead of time:
 
 ```sh
 docker pull python:3.12-slim
@@ -114,7 +114,7 @@ On phones the three areas become tabs at the bottom.
 
 ### Guided problems
 
-13 problems (3 Easy, 6 Medium, 4 Hard), each in Python or JavaScript, in 45 minutes:
+13 problems (3 Easy, 6 Medium, 4 Hard), each in Python, JavaScript, TypeScript, Java and Go, in 45 minutes:
 
 | Difficulty | Problems |
 | --- | --- |
@@ -122,9 +122,21 @@ On phones the three areas become tabs at the bottom.
 | Medium | Card Game, Friend Recommender, Maze Solver, Route Planner, Task Scheduler, Word Container |
 | Hard | Connect Four, Kitchen Orders, Maximize Unique Characters, Nonogram Solver |
 
-Phase 1 fixes a bug, phase 2 builds the core feature and phase 3 optimizes against stricter tests. Phases unlock when their tests pass (or when you skip, which is recorded). Provided tests are read-only and run in their original form; add your own as `tests/test_custom.py` or `tests/custom.test.js`. Python runs in Docker; JavaScript runs in the browser, including when the agent asks to run the tests.
+Phase 1 fixes a bug, phase 2 builds the core feature and phase 3 optimizes against stricter tests. Phases unlock when their tests pass (or when you skip, which is recorded). Provided tests are read-only and run in their original form; add your own next to them, for example `tests/test_custom.py`, `tests/custom.test.js`, `tests/custom.test.ts`, `tests/CustomTest.java` or `tests/custom_test.go`. Every language has the same story, bug, feature and checks; phase-3 time limits are calibrated per language.
 
-Practice is meant to be repeated: **Restart** (on the problem card, in the workspace **⋯** menu or in the debrief) closes the current attempt without a review and starts a fresh codebase with a new timer; the old attempt stays in Your activity as Restarted.
+| Language | Tests | Where they run |
+| --- | --- | --- |
+| Python | `unittest` | `python:3.12-slim` in Docker |
+| JavaScript | `node:test` | Your browser, in a Web Worker, including when the agent asks to run the tests |
+| TypeScript | `node:test` | `debug-gym/node-api` in Docker: Node.js 22 runs the files by stripping the types, with no type check |
+| Java | JUnit 5 | `debug-gym/java-junit` in Docker (JDK 21); each run compiles `src/` and `tests/` first |
+| Go | `go test` | `debug-gym/go-test` in Docker (Go 1.24, standard library only) |
+
+The three `debug-gym` images are built from `docker/` the first time you start a problem in that language (this needs internet once).
+
+**Switching language.** The language chip in the workspace header, or **⋯ › Switch language**, moves the attempt to another language without restarting it. The timer keeps running and phase progress carries over. Each language keeps its own code: switch back during the same phase and your earlier code comes back; otherwise the language starts from the current phase's codebase. Phases you passed in a row from phase 1 come with their reference fixes in the new language, so you continue where you were; a skipped phase stays unsolved. The read-only tests and the **Changes** view follow the new language, the AI assistant opens a new chat, and any agent change still waiting for approval is cancelled. The language is fixed during a mock interview.
+
+Practice is meant to be repeated: **Restart** (on the problem card, in the workspace **⋯** menu or in the debrief) closes the current attempt without a review and starts a fresh codebase with a new timer, in the same language or another one you choose; the old attempt stays in Your activity as Restarted.
 
 Submit (or run out of time), answer three debrief questions, and get a report on **problem solving**, **control over the AI**, **verification** and **communication**, each scored from 1 to 4. Scores are bounded by recorded evidence before any AI is involved: phases passed, test runs, hints, prompts (whether they name real files and functions, whether you pasted the task into the AI), AI code changes (pasted or applied by the agent) and whether a test run followed each one, and your debrief answers. The reviewer model writes the narrative and may move each score at most one level from the evidence baseline. Every problem has an answer key. To add problems, see [problems/AUTHORING.md](problems/AUTHORING.md); `node scripts/validate-problems.mjs` checks them.
 
@@ -224,7 +236,8 @@ The average maps to an overall recommendation: **Strong Hire** (4.5 and above), 
 ```sh
 # Automated checks; no model or running app needed
 npm test
-npm run validate                       # guided problems, API projects (Docker) and take-home tasks
+npm run validate                       # guided problems in every language, API projects (Docker) and take-home tasks
+node scripts/measure-phase3.mjs <id>   # a guided problem's timed phase-3 checks in TypeScript, Java and Go (Docker)
 node scripts/validate-questions.mjs    # every coding question in all five languages (Docker)
 node scripts/validate-mcq.mjs          # the multiple-choice and written-answer bank
 

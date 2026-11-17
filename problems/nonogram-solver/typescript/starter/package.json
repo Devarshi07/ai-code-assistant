@@ -1,0 +1,10 @@
+{
+  "name": "pixelwise",
+  "private": true,
+  "type": "module",
+  "description": "Back-office toolkit for Pixelwise, a picture-logic (nonogram) app.",
+  "scripts": {
+    "start": "node --experimental-strip-types main.ts",
+    "test": "node --test --experimental-strip-types \"tests/*.test.ts\""
+  }
+}

@@ -13,9 +13,9 @@ import (
 // phase2_test.go.
 
 const (
-	fullSize   = 20_000      // entries in the full dictionary
-	batchSize  = 1_000       // right-click lookups in the timed test
-	batchLimit = time.Second // allowed for the whole batch
+	fullSize   = 20_000                 // entries in the full dictionary
+	batchSize  = 1_000                  // right-click lookups in the timed test
+	batchLimit = 500 * time.Millisecond // allowed for the whole batch
 )
 
 var (

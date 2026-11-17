@@ -1,0 +1,10 @@
+{
+  "name": "connect-four",
+  "private": true,
+  "type": "module",
+  "description": "Game engine for a Connect Four app: board, rules, computer player and puzzle solver.",
+  "scripts": {
+    "start": "node --experimental-strip-types main.ts",
+    "test": "node --test --experimental-strip-types \"tests/*.test.ts\""
+  }
+}

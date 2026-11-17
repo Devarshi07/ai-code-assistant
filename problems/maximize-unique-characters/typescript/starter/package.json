@@ -1,0 +1,10 @@
+{
+  "name": "one-of-each",
+  "private": true,
+  "type": "module",
+  "description": "Puzzle desk tools for One of Each, a daily word game.",
+  "scripts": {
+    "start": "node --experimental-strip-types main.ts",
+    "test": "node --test --experimental-strip-types \"tests/*.test.ts\""
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "foundry-ci-orchestrator",
+  "private": true,
+  "type": "module",
+  "description": "Foundry: parses CI pipeline files, validates the dependency graph and plans runs across runners.",
+  "scripts": {
+    "start": "node main.ts",
+    "test": "node --test \"tests/*.test.ts\""
+  }
+}

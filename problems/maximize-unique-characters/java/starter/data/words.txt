@@ -1,0 +1,103 @@
+# One of Each: candidate words for the puzzle desk.
+# word        difficulty   themes (comma separated)
+
+# kitchen
+wok           1            kitchen
+pan           1            kitchen
+jam           1            kitchen, music
+fig           1            kitchen, garden
+oven          1            kitchen
+whisk         2            kitchen
+ladle         2            kitchen
+knife         1            kitchen
+spoon         1            kitchen
+butter        1            kitchen
+kettle        2            kitchen
+coffee        1            kitchen
+bread         1            kitchen
+flour         1            kitchen
+sugar         1            kitchen
+zest          2            kitchen
+quiche        3            kitchen
+dough         2            kitchen
+plum          1            kitchen, garden
+mixer         2            kitchen
+
+# animals
+cat           1            animals
+dog           1            animals
+fox           1            animals
+yak           2            animals
+zebra         1            animals
+owl           1            animals
+gnu           3            animals
+lynx          2            animals
+wolf          1            animals
+bison         2            animals
+camel         1            animals
+otter         1            animals
+llama         1            animals
+rabbit        1            animals
+sloth         2            animals
+quail         3            animals
+hyena         2            animals
+viper         2            animals
+crab          1            animals
+newt          2            animals
+kiwi          2            animals, kitchen
+
+# music
+banjo         2            music
+violin        1            music
+guitar        1            music
+piano         1            music
+drum          1            music
+flute         1            music
+harp          1            music
+tuba          2            music
+oboe          2            music
+sax           2            music
+horn          1            music
+cello         2            music
+jazz          2            music
+waltz         3            music
+chord         2            music
+lyric         2            music
+tempo         2            music
+hymn          3            music
+kazoo         3            music
+
+# travel
+map           1            travel
+jet           1            travel
+taxi          1            travel
+bus           1            travel
+ferry         2            travel
+visa          2            travel
+hotel         1            travel
+cabin         1            travel
+kayak         2            travel
+yacht         2            travel
+quay          3            travel
+wharf         3            travel
+fjord         3            travel
+globe         2            travel
+depot         2            travel
+
+# garden
+rake          1            garden
+hoe           1            garden
+spade         1            garden
+tulip         1            garden
+fern          1            garden
+moss          1            garden
+ivy           2            garden
+hedge         2            garden
+bulb          2            garden
+mulch         2            garden
+vine          1            garden
+shrub         2            garden
+gnome         2            garden
+daisy         1            garden
+orchid        2            garden
+poppy         2            garden
