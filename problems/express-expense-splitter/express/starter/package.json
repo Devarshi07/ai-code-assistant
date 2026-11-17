@@ -1,0 +1,16 @@
+{
+  "name": "tallyup-expenses-api",
+  "version": "0.9.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Shared expenses API behind the TallyUp flatmates-and-trips app.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "demo": "node demo.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

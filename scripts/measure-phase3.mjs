@@ -14,7 +14,10 @@ import {runStack, ensureStackImage} from '../stack-runner.mjs';
 
 const args = process.argv.slice(2);
 const id = args.find(a => !a.startsWith('--'));
-const langs = args.find(a => a.startsWith('--lang='))?.slice(7).split(',') || ['typescript', 'java', 'go'];
+// By default, every language of the problem that runs in Docker (Python and
+// JavaScript guided problems run elsewhere: use validate-problems.mjs for them).
+const listed = id ? JSON.parse(await fs.readFile(path.join(PROBLEMS_DIR, id, 'problem.json'), 'utf8')).languages : [];
+const langs = (args.find(a => a.startsWith('--lang='))?.slice(7).split(',') || listed).filter(l => LANGUAGES[l]?.runner === 'docker');
 const runs = Number(args.find(a => a.startsWith('--runs='))?.slice(7)) || 1;
 if (!id) { console.error('Usage: node scripts/measure-phase3.mjs <problem-id> [--lang=...] [--runs=N]'); process.exit(2); }
 
@@ -30,19 +33,23 @@ function docker(command, list, {timeout = 60000} = {}) {
   });
 }
 
-// Forces "elapsed < LIMIT" (TypeScript, Java) and "elapsed >= limit" (Go) to fail.
+// Forces the time checks to fail, by language family: "elapsed < LIMIT"
+// (TypeScript, Express, Java, Spring), "elapsed >= limit" (Go) and
+// "assertLess(elapsed, LIMIT" (Django, FastAPI).
 const FORCE = {
-  typescript: text => text.replace(/\b(elapsed\w*)\s*<\s*[\w.]+/g, '$1 < 0'),
+  javascript: text => text.replace(/\b(elapsed\w*)\s*<\s*[\w.]+/g, '$1 < 0'),
   java: text => text.replace(/\b(elapsed\w*)\s*<\s*[\w.]+/g, '$1 < 0'),
-  go: text => text.replace(/\b(elapsed\w*)\s*>=\s*[\w.]+/g, '$1 >= 0')
+  go: text => text.replace(/\b(elapsed\w*)\s*>=\s*[\w.]+/g, '$1 >= 0'),
+  python: text => text.replace(/assertLess\(\s*(elapsed\w*)\s*,\s*[\w.]+/g, 'assertLess($1, 0')
 };
 // With --untimed, the phase-2 solution also runs with every time comparison
 // forced to pass, so any failure left is a wrong result: a check that expected
 // values computed with the optimized solution agree with the plain one.
 const RELAX = {
-  typescript: text => text.replace(/\b(elapsed\w*)\s*<\s*[\w.]+/g, '$1 < Infinity'),
+  javascript: text => text.replace(/\b(elapsed\w*)\s*<\s*[\w.]+/g, '$1 < Infinity'),
   java: text => text.replace(/\b(elapsed\w*)\s*<\s*[\w.]+/g, '$1 < Double.MAX_VALUE'),
-  go: text => text.replace(/\b(elapsed\w*)\s*>=\s*[\w.]+/g, '$1 >= 1<<62')
+  go: text => text.replace(/\b(elapsed\w*)\s*>=\s*[\w.]+/g, '$1 >= 1<<62'),
+  python: text => text.replace(/assertLess\(\s*(elapsed\w*)\s*,\s*[\w.]+/g, "assertLess($1, float('inf')")
 };
 const untimed = args.includes('--untimed');
 
@@ -50,7 +57,7 @@ async function stage(language, overlays, patch) {
   const files = {};
   for (const name of overlays) Object.assign(files, await readTree(path.join(PROBLEMS_DIR, id, language, ...name.split('/'))));
   const test = LANGUAGES[language].test(3);
-  if (patch) files[test] = (patch === 'relax' ? RELAX : FORCE)[language](files[test]);
+  if (patch) files[test] = (patch === 'relax' ? RELAX : FORCE)[LANGUAGES[language].family](files[test]);
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'dg-measure-'));
   for (const [name, text] of Object.entries(files)) {
     await fs.mkdir(path.join(dir, path.dirname(name)), {recursive: true});

@@ -1,0 +1,53 @@
+{
+  "id": "fastapi-weather-readings",
+  "title": "Weather Station API",
+  "difficulty": "Easy",
+  "pattern": "REST API · Python + FastAPI",
+  "summary": "Fix a Fahrenheit conversion that reports absurd temperatures, add per-day temperature summaries and duplicate-reading protection, then keep the summaries fast on a station with 300,000 readings.",
+  "minutes": 45,
+  "languages": [
+    "fastapi"
+  ],
+  "overview": "You've joined the team behind **Weather Station API**, the service that a network of hobbyist weather stations posts to. Every few minutes a station sends a reading: a timestamp with a UTC offset, a temperature in Celsius or Fahrenheit, humidity and, for stations with a barometer, pressure. The API stores the readings and serves summaries to the public map.\n\nThe service is a small FastAPI app with a conventional layered layout: thin routers in `app/routers/`, business rules in `app/services/`, an in-memory repository standing in for the database in `app/repository.py`, Pydantic v2 models in `app/schemas.py`, and one error format for every failure in `app/errors.py`.\n\nStart with `README.md` (it documents the conventions, endpoints, status codes and the error format), then `app/main.py` and `app/services/readings.py`. `demo.py` seeds two stations and prints a few requests and responses. Tests use FastAPI's `TestClient`, so nothing listens on a port.",
+  "phases": [
+    {
+      "kind": "bug",
+      "title": "Temperatures that don't add up",
+      "instructions": "Station owners are complaining on the forum:\n\n> *\"My station reports in Fahrenheit. It was 68 degrees here this afternoon, and the map says it was 64.8 degrees Celsius. At freezing, 32 F, it shows the right number, so it's only wrong sometimes.\"*\n\n> *\"Minus 40 is minus 40 in both scales, but the map shows minus 129.6.\"*\n\nReadings sent in Celsius look fine. Find out why Fahrenheit readings come out wrong and fix it. Stored temperatures are Celsius rounded to 2 decimals, as the README says.\n\n**Done when:** all tests in `tests/test_phase1.py` pass.",
+      "hints": [
+        "Reproduce it through the test client: POST a reading with `\"unit\": \"F\"` and a few well-known temperatures (32, 104, -40) and compare `temperature_c` with what you expect.",
+        "Only one place in the code knows about units. Which function turns the posted temperature into `temperature_c`?",
+        "Look at the arithmetic for the Fahrenheit branch of `to_celsius` in `app/services/units.py`. Subtracting 32 is right; what is the scale factor between the two scales, and in which direction are you converting?"
+      ],
+      "answer": "**Root cause.** `to_celsius` in `app/services/units.py` multiplies `(value - 32)` by `1.8`. That is the factor for converting Celsius to Fahrenheit. Going the other way the factor is 5/9. It is only correct at 32 F, where the term is zero, and at no other point that matters.\n\n**Fix.**\n\n```python\nreturn round((value - 32) * 5 / 9, 2)\n```\n\n**Verify.** 32 F gives 0, 104 F gives 40, -40 F gives -40, 68 F gives 20 and 70 F gives 21.11. The phase 1 tests check these through the API."
+    },
+    {
+      "kind": "feature",
+      "title": "Daily summaries and duplicate readings",
+      "instructions": "The map's history chart needs daily numbers, and stations occasionally resend a reading they already posted. `ReadingService.daily_summary` is a stub; add the schemas, the service logic and the route.\n\n### `GET /stations/{id}/daily?from=YYYY-MM-DD&to=YYYY-MM-DD`\n\nOne entry per **UTC calendar day** that has at least one reading in the range (both ends inclusive), oldest first:\n\n```json\n{\"station_id\": \"ridge-01\", \"days\": [{\"date\": \"2025-03-10\", \"min_c\": 10.0, \"max_c\": 12.5, \"mean_c\": 11.17, \"count\": 3}]}\n```\n\n- `min_c`, `max_c` and `mean_c` are in Celsius. The mean is rounded half up to 2 decimals; use the `mean_c` helper in `app/services/units.py`.\n- Days are UTC days of the stored (UTC) timestamp. Days without readings are left out, and a station without readings returns `\"days\": []`.\n- `from` and `to` are both required dates. A malformed date, `to` before `from`, or a range longer than 366 days is `422 validation_error`; for the last two, `fields` has `query.to`.\n- An unknown station is `404 not_found`.\n\n### Duplicate readings\n\n`POST /stations/{id}/readings` with the same station and the same **instant** as an existing reading, whatever offset it is written in, is `409` with code `duplicate_reading` and `details: {\"station_id\", \"timestamp\"}`. A rejected reading is not stored.\n\n`from` is a Python keyword, so the query parameter needs an alias.\n\n**Done when:** all tests in `tests/test_phase1.py` and `tests/test_phase2.py` pass.",
+      "hints": [
+        "Work layer by layer: response models in `schemas.py`, the rules in `ReadingService.daily_summary`, then the route in `app/routers/readings.py`. Use `Annotated[date, Query(alias=\"from\")]` for the query parameters; FastAPI and the existing handler give you the 422s for a missing or malformed date.",
+        "Readings are already stored in UTC, so `reading.timestamp.date()` is the UTC day. Group by that, and keep `to_hundredths(reading.temperature_c)` values so the mean can use the `mean_c` helper.",
+        "`to` before `from` and the 366-day limit are not things Pydantic can check for you. `app/errors.py` has an `invalid(...)` helper that builds a 422 with a `fields` map.",
+        "For duplicates, ingestion happens often, so don't scan the station's readings to check. Keep a set of `(station_id, timestamp)` in the repository and ask it from the service before storing."
+      ],
+      "answer": "**Summary.** Add `DailySummary` and `DailySummaryResponse` to `schemas.py` (the `date` field is typed `dt.date`), and a `GET /stations/{station_id}/daily` route with `start: Annotated[date, Query(alias=\"from\")]` and `end` for `to`. In `ReadingService.daily_summary`: reject `end < start` and ranges of 366 days or more with `invalid({\"query.to\": ...})`, require the station (404), then walk `repo.readings_for(station_id)`, bucket the values (in integer hundredths) of readings whose UTC date is in range, and build one `DailySummary` per day in date order with `mean_c(sum, count)`.\n\n**Duplicates.** The repository keeps `_seen`, a set of `(station_id, utc_timestamp)` filled by `add_reading`, with a `has_reading` method. `ingest` normalises the timestamp to UTC first, so the same instant in another offset collides, and raises `conflict(\"duplicate_reading\", ..., station_id=..., timestamp=...)` before anything is stored.\n\n**Complexity.** A summary is O(n) for the station's n readings; ingest is O(1). Fine for a small station, but not for one that has posted for a year."
+    },
+    {
+      "kind": "optimize",
+      "title": "A station with 300,000 readings",
+      "instructions": "The oldest stations have been posting every couple of minutes for a year, and the map now asks for yearly charts all day long. A station with about **300,000 readings** makes `GET /stations/{id}/daily` crawl, because each request walks every reading the station ever posted.\n\nMake the daily summary depend on the length of the requested range, not on how many readings the station has stored, without changing any of its output or the rules from phase 2 (UTC days, rounding, validation, 404, duplicates). Per-day figures must stay correct as new readings arrive, in any order and in any offset, and a rejected duplicate must not change them.\n\nThe tests seed a station with 300,000 readings through the service, compare every day with an independent ledger, count how many stored readings the summaries pull out of the repository (`readings_for`), and time 45 two-month summaries against a 1 second limit.\n\n**Done when:** all three test files pass.",
+      "hints": [
+        "Per request you only need min, max, a sum and a count for each day. Those can be updated one reading at a time when the reading is stored, instead of recomputed from all readings when someone asks.",
+        "Keep a dictionary per station, keyed by UTC date, holding the running min, max, total (in integer hundredths) and count. Update it in `add_reading`, right next to the duplicate set.",
+        "The summary then loops over the days in the requested range (at most 366) and looks each one up, rather than looping over readings. Make sure a duplicate is rejected before `add_reading`, so it never reaches the aggregate."
+      ],
+      "answer": "**Maintained aggregates.** The repository keeps `_days[station_id][utc_date] = DayAggregate(min_h, max_h, total_h, count)`, updated in `add_reading` in O(1) (min/max compare, total and count add). Integer hundredths keep the mean exact regardless of arrival order. A new `day_aggregates(station_id, start, end)` walks the days in the range and returns the ones that exist, and `daily_summary` formats them with `mean_c`. A request now costs O(days in range), at most 366, instead of O(readings) for the station.\n\n**Why phase 2 breaks.** The straightforward version scans all 300,000 readings per request, a few tenths of a second each, so 45 summaries take several seconds and the test counts millions of rows read. The aggregates version touches no stored readings and finishes in a few tens of milliseconds.\n\n**Correctness.** Duplicates are rejected before `add_reading`, so they never reach the aggregates; out-of-order and other-offset readings land on their UTC day like any other. In production you would update the aggregate in the same transaction as the insert, or in a `daily_stats` table maintained with an upsert."
+    }
+  ],
+  "debrief": [
+    "How did you confirm that the Fahrenheit problem was the conversion formula rather than rounding or the request model, and which inputs made the wrong factor obvious?",
+    "Why is a UTC day the right bucket for the daily summary, and how did you make sure a reading sent with a non-UTC offset, and a duplicate sent in another offset, were handled correctly? What would change if the map wanted days in the station's local time?",
+    "Your phase 3 aggregates trade a little work on every write for fast reads. What happens to them if readings can be deleted or corrected, and how would you check that they never drift from a full recomputation?"
+  ]
+}

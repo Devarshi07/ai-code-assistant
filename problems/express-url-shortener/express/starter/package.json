@@ -1,0 +1,16 @@
+{
+  "name": "tinylink-api",
+  "version": "0.9.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Internal link shortener API.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "demo": "node demo.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
