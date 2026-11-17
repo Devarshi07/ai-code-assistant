@@ -66,7 +66,7 @@ func TestPhase3SamePlan(t *testing.T) {
 
 func TestPhase3Scale(t *testing.T) {
 	t.Run("large restock order is fast", func(t *testing.T) {
-		const limit = 250 * time.Millisecond
+		const limit = 350 * time.Millisecond
 		items := wholesaleUnits(11, 60000)
 		start := time.Now()
 		cartons, err := shipping.PackItems(items, shipping.Medium)

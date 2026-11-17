@@ -5,7 +5,7 @@
   "pattern": "Graph Search & Pathfinding",
   "summary": "Fix a city transit network that strands riders, plan the fastest journey with transfer penalties, then scale it to a regional network.",
   "minutes": 45,
-  "languages": ["python", "javascript"],
+  "languages": ["python", "javascript", "typescript", "java", "go"],
   "overview": {
     "python": "You've joined the journey-planning team of the **Harbour City** transit app. The scheduling team publishes the network as a plain-text timetable:\n\n```\nline Red: Airport 4 Central 3 Harbor 6 Museum\nline Ferry oneway: Harbor 8 Island Pier 5 Lighthouse 10 Harbor\n```\n\nEach entry lists a line's stops separated by the running time in minutes. Trains run both ways unless a line is marked `oneway`.\n\nStart with `README.md`, then `transit/models.py` (stations, lines, legs and journeys), `transit/network.py` (the connection graph) and `transit/timetable.py` (the loader). Route finding lives in `transit/planner.py`. `main.py` prints routes and journeys for a few common trips.",
     "javascript": "You've joined the journey-planning team of the **Harbour City** transit app. The scheduling team publishes the network as a plain-text timetable:\n\n```\nline Red: Airport 4 Central 3 Harbor 6 Museum\nline Ferry oneway: Harbor 8 Island Pier 5 Lighthouse 10 Harbor\n```\n\nEach entry lists a line's stops separated by the running time in minutes. Trains run both ways unless a line is marked `oneway`.\n\nStart with `README.md`, then `src/models.js` (stations, lines, legs and journeys), `src/network.js` (the connection graph) and `src/timetable.js` (the loader). Route finding lives in `src/planner.js`. `main.js` prints routes and journeys for a few common trips.",

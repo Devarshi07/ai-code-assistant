@@ -81,7 +81,7 @@ func TestPhase3Scale(t *testing.T) {
 		run := simulate(t, orders, stadiumMenu, stations)
 		elapsed := time.Since(start)
 		assertEqual(t, fingerprint(run), []int{64000, 272343025, 8975418334516, 7643, 17775, 24585134}, "fingerprint")
-		if limit := 700 * time.Millisecond; elapsed >= limit {
+		if limit := 550 * time.Millisecond; elapsed >= limit {
 			t.Fatalf("took %dms; a 64,000-order game day must simulate in under %dms", elapsed.Milliseconds(), limit.Milliseconds())
 		}
 	})

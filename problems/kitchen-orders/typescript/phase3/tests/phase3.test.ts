@@ -45,6 +45,6 @@ describe('scale', () => {
     const run = simulate(orders, STADIUM_MENU, line);
     const elapsed = performance.now() - start;
     assert.deepEqual(fingerprint(run), [48000, 203373725, 5078165980802, 7655, 13299, 18011430]);
-    assert.ok(elapsed < 900, `took ${elapsed.toFixed(0)}ms; a 48,000-order game day must simulate in under 900ms`);
+    assert.ok(elapsed < 750, `took ${elapsed.toFixed(0)}ms; a 48,000-order game day must simulate in under 750ms`);
   });
 });

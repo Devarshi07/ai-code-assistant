@@ -5,7 +5,7 @@
   "pattern": "Graph Search & Pathfinding",
   "summary": "Route players through puzzle levels with one-way gates, then find the shortest run that collects every gem.",
   "minutes": 45,
-  "languages": ["python", "javascript"],
+  "languages": ["python", "javascript", "typescript", "java", "go"],
   "overview": {
     "python": "You've joined the tools team for **Labyrinth**, a grid puzzle game. Level designers write levels as text, and this codebase checks them: it parses a layout, finds the shortest route from the start tile `S` to the exit `E`, and renders previews.\n\nLevels contain walls `#`, floor `.`, gems `$`, and **one-way gates** `> < ^ v`. A gate can only be entered while moving in its arrow's direction, and the player must keep moving that way to leave it.\n\nStart with `README.md`, then `maze/level.py` (the grid model and movement rules) and `maze/solver.py` (route finding). `main.py` prints routes for the sample levels in `maze/levels.py`.",
     "javascript": "You've joined the tools team for **Labyrinth**, a grid puzzle game. Level designers write levels as text, and this codebase checks them: it parses a layout, finds the shortest route from the start tile `S` to the exit `E`, and renders previews.\n\nLevels contain walls `#`, floor `.`, gems `$`, and **one-way gates** `> < ^ v`. A gate can only be entered while moving in its arrow's direction, and the player must keep moving that way to leave it.\n\nStart with `README.md`, then `src/level.js` (the grid model and movement rules) and `src/solver.js` (route finding). `main.js` prints routes for the sample levels in `src/levels.js`.",

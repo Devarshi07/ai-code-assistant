@@ -7,7 +7,10 @@
   "minutes": 45,
   "languages": [
     "python",
-    "javascript"
+    "javascript",
+    "typescript",
+    "java",
+    "go"
   ],
   "overview": {
     "python": "You've joined the puzzle desk for **One of Each**, a daily word game. Each day players get a themed board of words, and the rule that makes it a puzzle is simple: **no letter appears on the board more than once**. A word can't repeat a letter (`otter` is out), and two words can't share one (`harp` and `drum` both use `r`). The more of the alphabet a board covers, the better it plays.\n\nDesigners pick boards by hand from a candidate list, and this codebase checks them before they're published: it loads the word list (difficulty and theme tags), validates a board, and renders previews. Letters are handled as 26-bit masks, so two words clash exactly when `a.mask & b.mask` is non-zero.\n\nStart with `README.md`, then `oneofeach/models.py` (the `Word` and `Puzzle` model), `oneofeach/validator.py` (the publishing rules) and `oneofeach/solver.py` (where board suggestions will live). `main.py` checks this week's hand-picked boards.",

@@ -76,7 +76,7 @@ class Phase3Test {
             KitchenRun run = Simulator.simulate(orders, Generator.STADIUM_MENU, line);
             long elapsed = (System.nanoTime() - start) / 1_000_000;
             assertEquals(List.of(72000L, 303724922L, 11226866561866L, 7536L, 19922L, 26675248L), Generator.fingerprint(run));
-            assertTrue(elapsed < 1100, "took " + elapsed + "ms; a 72,000-order game day must simulate in under 1100ms");
+            assertTrue(elapsed < 900, "took " + elapsed + "ms; a 72,000-order game day must simulate in under 900ms");
         }
     }
 }
